@@ -1,0 +1,4 @@
+#ifndef R_TYPE_CLIENT_HPP
+#define R_TYPE_CLIENT_HPP
+
+#endif //R_TYPE_CLIENT_HPP

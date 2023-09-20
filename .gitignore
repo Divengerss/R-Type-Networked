@@ -1,0 +1,12 @@
+r-type_client
+r-type_server
+Build/
+*.o
+.idea/
+.vscode/
+
+cmake_install.cmake
+CMakeCache.txt
+Makefile
+CMakeFiles/
+cmake-build-debug/
