@@ -52,6 +52,30 @@ namespace net
             void setHost(const std::string &host) {_host = host;}
             void setPort(std::uint16_t port) {_port = port;}
 
+            static void forceShutdown(const asio::error_code &err, int signum)
+            {
+                throw Error("Unexpected shutdown occured: " + err.message() + " " + std::to_string(signum));
+            };
+            static void asioContextRun(asio::io_context &ioContext)
+            {
+                try {
+                    ioContext.run();
+                } catch (const Error &e) {
+                    std::cerr << "Error: " << e.what() << std::endl;
+                }
+                // Disconnect clients here
+                std::exit(0);
+            }
+            static void asioServiceRun(asio::io_context &ioContext, asio::io_service &ioService)
+            {
+                try {
+                    ioService.run();
+                } catch (const Error &e) {
+                    std::cerr << "Error: " << e.what() << std::endl;
+                }
+                ioContext.stop();
+            }
+
         private:
             asio::io_context &_ioContext;
             asio::io_context &_ioService;

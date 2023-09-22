@@ -8,10 +8,7 @@ int main(int argc, const char *argv[]) {
     asio::io_service ioService;
     try {
         rtype::Game game(ioContext, ioService);
-        asio::signal_set signals(ioService, SIGINT);
-        // signals.async_wait(srv.forceShutdown);
-        // std::thread thread_context(srv.asioContextRun, std::ref(ioContext), std::ref(srv));
-        // std::thread thread_service(srv.asioServiceRun, std::ref(ioContext), std::ref(ioService));
+        game.runNetwork(ioContext, ioService, game);
     } catch (const Error &e) {
         std::cerr << e.what() << std::endl;
     } catch (const std::exception &e) {
