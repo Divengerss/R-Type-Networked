@@ -26,7 +26,7 @@ namespace net
                 _ioService(ioService),
                 _host(DEFAULT_HOST),
                 _port(DEFAULT_PORT),
-                _socket(ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), DEFAULT_PORT))
+                _socket(_ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), DEFAULT_PORT))
             {
                 utils::ParseCFG config(utils::getCurrDir() + CONFIG_FILE_PATH);
                 try {
@@ -38,15 +38,14 @@ namespace net
                 }
                 asio::ip::udp::socket::reuse_address option(true);
                 _socket.set_option(option);
-                _socket = asio::ip::udp::socket(ioContext, asio::ip::udp::endpoint(asio::ip::make_address(_host), _port));
-                _threadPool.emplace_back([&]()
-                {
-                    ioContext.run();
+                _socket = asio::ip::udp::socket(_ioContext, asio::ip::udp::endpoint(asio::ip::make_address(_host), _port));
+                _threadPool.emplace_back([&]() {
+                    _ioContext.run();
                 });
-                _threadPool.emplace_back([&]()
-                {
-                    ioService.run();
+                _threadPool.emplace_back([&]() {
+                    _ioService.run();
                 });
+                std::signal(SIGINT, signalHandler);
                 receive();
             };
 
@@ -63,6 +62,7 @@ namespace net
             void setHost(const std::string &host) {_host = host;}
             void setPort(std::uint16_t port) {_port = port;}
             void setConnection(const std::string &host, std::uint16_t port) {_host = host; _port = port;}
+            static void setServerInstance(Server* instance) {serverInstance = instance;}
 
             void handleReceiveFrom(const asio::error_code &err_code)
             {
@@ -83,7 +83,23 @@ namespace net
             }
 
             void startServer() {
+                setServerInstance(this);
                 receive();
+            }
+
+            static void signalHandler(int signum) {
+                if (signum == SIGINT)
+                    std::cout << "Received SIGINT (CTRL-C). Shutting down gracefully..." << std::endl;
+                if (serverInstance) {
+                    serverInstance->_ioContext.stop();
+                    serverInstance->_ioService.stop();
+                    for (auto &thread : serverInstance->_threadPool) {
+                        if (thread.joinable()) {
+                            thread.join();
+                        }
+                    }
+                }
+                std::exit(EXIT_SUCCESS);
             }
 
         private:
@@ -96,11 +112,13 @@ namespace net
             asio::error_code _errCode;
             std::vector<std::thread> _threadPool;
             std::array<char, 1024> _buffer;
+            static Server* serverInstance;
     };
+
+    Server* Server::serverInstance = nullptr;
 
     class Client
     {
-
     };
 };
 
