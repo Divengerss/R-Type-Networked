@@ -111,7 +111,7 @@ namespace net
 
         private:
             asio::io_context &_ioContext;
-            asio::io_context &_ioService;
+            asio::io_service &_ioService;
             std::string _host;
             std::uint16_t _port;
             asio::ip::udp::endpoint _serverEndpoint;
