@@ -16,15 +16,19 @@ namespace rtype
 
             ~Game() = default;
 
-            void runNetwork(asio::io_context &ioContext, asio::io_context &ioService, Game &game)
+            void runNetwork()
             {
-                asio::signal_set signals(ioService, SIGINT);
-                signals.async_wait(getServerContext().forceShutdown);
-                std::thread thread_context(net::Server::asioContextRun, std::ref(ioContext));
-                std::thread thread_service(net::Server::asioServiceRun, std::ref(ioContext), std::ref(ioService));
+                _server.startServer();
+                std::cout << "Server running at " << _server.getHost() << " with port " << _server.getPort() << std::endl;
+            
             }
 
             const net::Server &getServerContext() const noexcept {return _server;}
+
+            void runGame() {
+                while (true) { // TO CHANGE
+                }
+            };
 
         private:
             net::Server _server;

@@ -8,7 +8,8 @@ int main(int argc, const char *argv[]) {
     asio::io_service ioService;
     try {
         rtype::Game game(ioContext, ioService);
-        game.runNetwork(ioContext, ioService, game);
+        game.runNetwork();
+        game.runGame();
     } catch (const Error &e) {
         std::cerr << e.what() << std::endl;
     } catch (const std::exception &e) {

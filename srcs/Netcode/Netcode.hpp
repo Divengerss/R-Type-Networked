@@ -6,11 +6,12 @@
 #include <asio.hpp>
 #include <iostream>
 #include "CFGParser.hpp"
+#include "Packet.hpp"
 
 // Used to initialize the server, host and port are set from the CFG config file.
 // If the parsing fails, these values will be used
 #define DEFAULT_HOST    "127.0.0.1"
-#define DEFAULT_PORT    60000
+#define DEFAULT_PORT    12345
 
 #define CONFIG_FILE_PATH   "/server.cfg"
 
@@ -21,8 +22,11 @@ namespace net
         public:
             Server() = delete;
             Server(asio::io_context &ioContext, asio::io_context &ioService) :
-                _ioContext(ioContext), _ioService(ioService), _host(DEFAULT_HOST), _port(DEFAULT_PORT),
-                _socket(asio::ip::udp::socket(ioContext, asio::ip::udp::endpoint(asio::ip::make_address(DEFAULT_HOST), DEFAULT_PORT)))
+                _ioContext(ioContext),
+                _ioService(ioService),
+                _host(DEFAULT_HOST),
+                _port(DEFAULT_PORT),
+                _socket(ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), DEFAULT_PORT))
             {
                 utils::ParseCFG config(utils::getCurrDir() + CONFIG_FILE_PATH);
                 try {
@@ -30,13 +34,20 @@ namespace net
                     _port = std::stoi(config.getData<std::string>("port"));
                 } catch (const Error &e) {
                     std::cerr << e.what() << std::endl;
-                    _host = DEFAULT_HOST;
-                    _port = DEFAULT_PORT;
+                    setConnection(DEFAULT_HOST, DEFAULT_PORT);
                 }
-                std::cout << _host << " " << _port << std::endl;
                 asio::ip::udp::socket::reuse_address option(true);
                 _socket.set_option(option);
                 _socket = asio::ip::udp::socket(ioContext, asio::ip::udp::endpoint(asio::ip::make_address(_host), _port));
+                _threadPool.emplace_back([&]()
+                {
+                    ioContext.run();
+                });
+                _threadPool.emplace_back([&]()
+                {
+                    ioService.run();
+                });
+                receive();
             };
 
             ~Server() = default;
@@ -51,29 +62,28 @@ namespace net
 
             void setHost(const std::string &host) {_host = host;}
             void setPort(std::uint16_t port) {_port = port;}
+            void setConnection(const std::string &host, std::uint16_t port) {_host = host; _port = port;}
 
-            static void forceShutdown(const asio::error_code &err, int signum)
+            void handleReceiveFrom(const asio::error_code &err_code)
             {
-                throw Error("Unexpected shutdown occured: " + err.message() + " " + std::to_string(signum));
-            };
-            static void asioContextRun(asio::io_context &ioContext)
-            {
-                try {
-                    ioContext.run();
-                } catch (const Error &e) {
-                    std::cerr << "Error: " << e.what() << std::endl;
-                }
-                // Disconnect clients here
-                std::exit(0);
+                std::cout << "Entering handle receive" << std::endl;
+                receive();
+                std::cout << "Exiting handle receive" << std::endl;
             }
-            static void asioServiceRun(asio::io_context &ioContext, asio::io_service &ioService)
+
+            void receive()
             {
-                try {
-                    ioService.run();
-                } catch (const Error &e) {
-                    std::cerr << "Error: " << e.what() << std::endl;
-                }
-                ioContext.stop();
+                std::cout << "Entering receive" << std::endl;
+                _socket.async_receive_from(
+                    asio::buffer(_buffer),
+                    _serverEndpoint,
+                    std::bind(&Server::handleReceiveFrom, this, _errCode)
+                );
+                std::cout << "Exiting receive" << std::endl;
+            }
+
+            void startServer() {
+                receive();
             }
 
         private:
@@ -84,6 +94,8 @@ namespace net
             asio::ip::udp::endpoint _serverEndpoint;
             asio::ip::udp::socket _socket;
             asio::error_code _errCode;
+            std::vector<std::thread> _threadPool;
+            std::array<char, 1024> _buffer;
     };
 
     class Client
