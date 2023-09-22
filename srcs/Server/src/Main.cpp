@@ -1,8 +1,9 @@
 #include "Game.hpp"
 #include "Error.hpp"
 #include <iostream>
+#include <filesystem>
 
-int main() {
+int main(int argc, const char *argv[]) {
     asio::io_context ioContext;
     asio::io_service ioService;
     try {

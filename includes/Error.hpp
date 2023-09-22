@@ -6,7 +6,7 @@
 
 class Error: public std::exception {
     public:
-        Error(const std::string &message, const std::string &where) noexcept :
+        Error(const std::string &message, const std::string &where = "") noexcept :
             _message(message)
         {
             if (where.size() != 0)
@@ -15,7 +15,7 @@ class Error: public std::exception {
 
         ~Error() = default;
 
-        const char *what() const noexcept {return ( _message.c_str());}
+        const char *what() const noexcept final {return ( _message.c_str());}
 
     private:
         std::string _message;
