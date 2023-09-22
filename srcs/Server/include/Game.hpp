@@ -19,8 +19,6 @@ namespace rtype
             void runNetwork()
             {
                 _server.startServer();
-                std::cout << "Server running at " << _server.getHost() << " with port " << _server.getPort() << std::endl;
-            
             }
 
             const net::Server &getServerContext() const noexcept {return _server;}

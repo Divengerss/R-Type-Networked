@@ -10,3 +10,4 @@ CMakeCache.txt
 Makefile
 CMakeFiles/
 cmake-build-debug/
+*.log

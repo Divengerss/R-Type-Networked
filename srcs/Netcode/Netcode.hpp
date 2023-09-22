@@ -7,6 +7,7 @@
 #include <iostream>
 #include "CFGParser.hpp"
 #include "Packet.hpp"
+#include "Logs.hpp"
 
 // Used to initialize the server, host and port are set from the CFG config file.
 // If the parsing fails, these values will be used
@@ -14,6 +15,7 @@
 #define DEFAULT_PORT    12345
 
 #define CONFIG_FILE_PATH   "/server.cfg"
+#define SERVER_LOG_FILE    "/server.log"
 
 namespace net
 {
@@ -26,23 +28,30 @@ namespace net
                 _ioService(ioService),
                 _host(DEFAULT_HOST),
                 _port(DEFAULT_PORT),
-                _socket(_ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), DEFAULT_PORT))
+                _socket(_ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), DEFAULT_PORT)),
+                _logs(Log(utils::getCurrDir() + SERVER_LOG_FILE))
             {
+                _logs.logTo(INFO, "Starting up R-Type server...");
                 utils::ParseCFG config(utils::getCurrDir() + CONFIG_FILE_PATH);
                 try {
                     _host = config.getData<std::string>("host");
                     _port = std::stoi(config.getData<std::string>("port"));
+                    _logs.logTo(INFO, "Retrieved configs successfully");
                 } catch (const Error &e) {
-                    std::cerr << e.what() << std::endl;
+                    std::string err = e.what();
                     setConnection(DEFAULT_HOST, DEFAULT_PORT);
+                    _logs.logTo(ERR, "Failed to retrieve configs: " + err);
+                    _logs.logTo(WARN, "Default host and ports applied");
                 }
                 asio::ip::udp::socket::reuse_address option(true);
                 _socket.set_option(option);
                 _socket = asio::ip::udp::socket(_ioContext, asio::ip::udp::endpoint(asio::ip::make_address(_host), _port));
                 _threadPool.emplace_back([&]() {
+                    _logs.logTo(INFO, "Starting network execution context");
                     _ioContext.run();
                 });
                 _threadPool.emplace_back([&]() {
+                    _logs.logTo(INFO, "Starting network execution service");
                     _ioService.run();
                 });
                 std::signal(SIGINT, signalHandler);
@@ -66,31 +75,29 @@ namespace net
 
             void handleReceiveFrom(const asio::error_code &err_code)
             {
-                std::cout << "Entering handle receive" << std::endl;
+                _logs.logTo(INFO, "TEST PURPOSE, Received connection!");
                 receive();
-                std::cout << "Exiting handle receive" << std::endl;
             }
 
             void receive()
             {
-                std::cout << "Entering receive" << std::endl;
                 _socket.async_receive_from(
                     asio::buffer(_buffer),
                     _serverEndpoint,
                     std::bind(&Server::handleReceiveFrom, this, _errCode)
                 );
-                std::cout << "Exiting receive" << std::endl;
             }
 
             void startServer() {
                 setServerInstance(this);
+                _logs.logTo(INFO, "Server initialized successfully");
+                _logs.logTo(INFO, "Listening at " + _host + " on port " + std::to_string(_port));
                 receive();
             }
 
             static void signalHandler(int signum) {
-                if (signum == SIGINT)
-                    std::cout << "Received SIGINT (CTRL-C). Shutting down gracefully..." << std::endl;
-                if (serverInstance) {
+                if (signum == SIGINT && serverInstance) {
+                    serverInstance->_logs.logTo(INFO, "Received SIGINT (CTRL-C). Shutting down gracefully...");
                     serverInstance->_ioContext.stop();
                     serverInstance->_ioService.stop();
                     for (auto &thread : serverInstance->_threadPool) {
@@ -112,6 +119,7 @@ namespace net
             asio::error_code _errCode;
             std::vector<std::thread> _threadPool;
             std::array<char, 1024> _buffer;
+            Log _logs;
             static Server* serverInstance;
     };
 
