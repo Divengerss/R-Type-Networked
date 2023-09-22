@@ -13,8 +13,17 @@
 namespace utils
 {
     static const std::string getCurrDir() {
+#ifdef _WIN32
+        wchar_t buffer[MAX_PATH];
+        GetModuleFileNameW(NULL, buffer, MAX_PATH);
+        std::wstringstream wss;
+        wss << buffer;
+        std::wstring wstr = wss.str();
+        std::filesystem::path executablePath(wstr);
+#else
         std::filesystem::path executablePath = std::filesystem::path(
         std::getenv("PWD")) / std::filesystem::read_symlink("/proc/self/exe");
+#endif /* !_WIN32 */
         return (executablePath.parent_path().string());
     }
 

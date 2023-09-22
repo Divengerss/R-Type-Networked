@@ -15,8 +15,13 @@
 #define DEFAULT_HOST    "127.0.0.1"
 #define DEFAULT_PORT    12345
 
-#define CONFIG_FILE_PATH   "/server.cfg"
-#define SERVER_LOG_FILE    "/server.log"
+#ifdef _WIN32
+    #define CONFIG_FILE_PATH   "\\server.cfg"
+    #define SERVER_LOG_FILE    "\\server.log"
+#else
+    #define CONFIG_FILE_PATH   "/server.cfg"
+    #define SERVER_LOG_FILE    "/server.log"
+#endif /* !_WIN32 */
 
 namespace net
 {
