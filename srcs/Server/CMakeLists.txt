@@ -9,5 +9,10 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/srcs/Netcode
     ${CMAKE_SOURCE_DIR}/includes
 )
-set(PATH_ASIO ${CMAKE_SOURCE_DIR}/vcpkg/packages/asio_x64-linux/include)
+if (WIN32)
+    set(PATH_ASIO ${CMAKE_SOURCE_DIR}/vcpkg/packages/asio_x64-windows/include)
+endif (WIN32)
+if (UNIX)
+    set(PATH_ASIO ${CMAKE_SOURCE_DIR}/vcpkg/packages/asio_x64-linux/include)
+endif (UNIX)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PATH_ASIO})

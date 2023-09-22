@@ -15,7 +15,7 @@ namespace utils
     static const std::string getCurrDir() {
         std::filesystem::path executablePath = std::filesystem::path(
         std::getenv("PWD")) / std::filesystem::read_symlink("/proc/self/exe");
-        return (executablePath.parent_path());
+        return (executablePath.parent_path().string());
     }
 
     class ParseCFG

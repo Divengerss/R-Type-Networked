@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <asio.hpp>
 #include <iostream>
+#include <csignal>
 #include "CFGParser.hpp"
 #include "Packet.hpp"
 #include "Logs.hpp"

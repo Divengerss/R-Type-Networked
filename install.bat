@@ -1,9 +1,9 @@
 @echo off
 
-cd \vcpkg
+cd vcpkg
 
-bootstrap-vcpkg.bat
-vcpkg integrate install
-vcpkg install sfml
+call bootstrap-vcpkg.bat
+call vcpkg integrate install
+call vcpkg install sfml asio
 
 cd ..
