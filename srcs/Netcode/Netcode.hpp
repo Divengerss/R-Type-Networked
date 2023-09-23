@@ -81,14 +81,35 @@ namespace net
             void setConnection(const std::string &host, std::uint16_t port) {_host = host; _port = port;}
             static void setServerInstance(Server* instance) {serverInstance = instance;}
 
+            template<typename T>
+            void fillBufferFromRequest(T &packet, std::size_t size)
+            {
+                std::memcpy(&packet, _buffer.data(), size);
+            }
+
+            template<typename T>
+            void sendResponse(T &packet)
+            {
+                _socket.send_to(asio::buffer(&packet, sizeof(packet)), _serverEndpoint);
+            }
+
+            template<typename T>
+            void handleRequestStatus(T &packet)
+            {
+                if (packet.status == REQUEST) {
+                    _logs.logTo(INFO, "Connection received from client");
+                    packet::connectionRequest response(ACCEPTED);
+                    sendResponse(response);
+                    _logs.logTo(INFO, "Connection response sent to client");
+                }
+            }
+
             void handleReceiveFrom(const asio::error_code &errCode, std::size_t bytesReceived)
             {
                 if (!errCode) {
                     packet::connectionRequest request;
-                    std::memcpy(&request, _buffer.data(), bytesReceived);
-                    if (request.status == 0x00) {
-                        _logs.logTo(INFO, "Connection received from client");
-                    }
+                    fillBufferFromRequest(request, bytesReceived);
+                    handleRequestStatus(request);
                 } else {
                     _logs.logTo(ERR, "Error receiving packet: " + errCode.message());
                 }
@@ -159,13 +180,20 @@ namespace net
             }
             ~Client() = default;
 
+            template<typename T>
+            T &sendToServer(T &packet)
+            {
+                asio::ip::udp::endpoint sender_endpoint;
+                _socket.send_to(asio::buffer(&packet, sizeof(packet)), _endpoint);
+                _socket.receive_from(asio::buffer(&packet, sizeof(packet)), sender_endpoint);
+                return packet;
+            }
+
             void connect()
             {
                 packet::connectionRequest request;
-                std::cout << "Request type is " << std::to_string(request.type) << std::endl;
-                _socket.send_to(asio::buffer(&request, sizeof(request)), _endpoint);
-                asio::ip::udp::endpoint sender_endpoint;
-                _socket.receive_from(asio::buffer(&request, sizeof(request)), sender_endpoint);
+                request = sendToServer(request);
+                std::cout << "Got response " << std::to_string(request.status) << " from the server" << std::endl;
             }
 
             void disconnect()
