@@ -7,7 +7,7 @@
 #include <iostream>
 #include <csignal>
 #include "CFGParser.hpp"
-#include "Packet.hpp"
+#include "Packets.hpp"
 #include "Logs.hpp"
 
 // Used to initialize the server, host and port are set from the CFG config file.
@@ -16,11 +16,13 @@
 #define DEFAULT_PORT    12345
 
 #ifdef _WIN32
-    #define CONFIG_FILE_PATH   "\\server.cfg"
-    #define SERVER_LOG_FILE    "\\server.log"
+    #define SERVER_CONFIG_FILE_PATH     "\\server.cfg"
+    #define CLIENT_CONFIG_FILE_PATH     "\\client.cfg"
+    #define SERVER_LOG_FILE             "\\server.log"
 #else
-    #define CONFIG_FILE_PATH   "/server.cfg"
-    #define SERVER_LOG_FILE    "/server.log"
+    #define SERVER_CONFIG_FILE_PATH     "/server.cfg"
+    #define CLIENT_CONFIG_FILE_PATH     "/client.cfg"
+    #define SERVER_LOG_FILE             "/server.log"
 #endif /* !_WIN32 */
 
 namespace net
@@ -38,7 +40,7 @@ namespace net
                 _logs(Log(utils::getCurrDir() + SERVER_LOG_FILE))
             {
                 _logs.logTo(INFO, "Starting up R-Type server...");
-                utils::ParseCFG config(utils::getCurrDir() + CONFIG_FILE_PATH);
+                utils::ParseCFG config(utils::getCurrDir() + SERVER_CONFIG_FILE_PATH);
                 try {
                     _host = config.getData<std::string>("host");
                     _port = std::stoi(config.getData<std::string>("port"));
@@ -79,18 +81,27 @@ namespace net
             void setConnection(const std::string &host, std::uint16_t port) {_host = host; _port = port;}
             static void setServerInstance(Server* instance) {serverInstance = instance;}
 
-            void handleReceiveFrom(const asio::error_code &err_code)
+            void handleReceiveFrom(const asio::error_code &errCode, std::size_t bytesReceived)
             {
-                _logs.logTo(INFO, "TEST PURPOSE, Received connection!");
+                if (!errCode) {
+                    packet::connectionRequest request;
+                    std::memcpy(&request, _buffer.data(), bytesReceived);
+                    if (request.status == 0x00) {
+                        _logs.logTo(INFO, "Connection received from client");
+                    }
+                } else {
+                    _logs.logTo(ERR, "Error receiving packet: " + errCode.message());
+                }
                 receive();
             }
 
             void receive()
             {
+                packet::connectionRequest request;
                 _socket.async_receive_from(
-                    asio::buffer(_buffer),
+                    asio::buffer(_buffer, _buffer.size()),
                     _serverEndpoint,
-                    std::bind(&Server::handleReceiveFrom, this, _errCode)
+                    std::bind(&Server::handleReceiveFrom, this, std::placeholders::_1, std::placeholders::_2)
                 );
             }
 
@@ -124,7 +135,7 @@ namespace net
             asio::ip::udp::socket _socket;
             asio::error_code _errCode;
             std::vector<std::thread> _threadPool;
-            std::array<char, 1024> _buffer;
+            std::array<std::uint8_t, 1024> _buffer;
             Log _logs;
             static Server* serverInstance;
     };
@@ -133,6 +144,39 @@ namespace net
 
     class Client
     {
+        public:
+            Client() = delete;
+            Client(asio::io_context &ioContext, const std::string &host, const std::string &port) :
+                _errCode(asio::error_code()), _resolver(ioContext), _endpoint(*_resolver.resolve(asio::ip::udp::v4(), host, port).begin()),
+                _socket(asio::ip::udp::socket(ioContext))
+            {
+                try {
+                    _socket.open(asio::ip::udp::v4());
+                } catch (const asio::system_error &sysErr) {
+                    std::cerr << "Error opening socket: " << sysErr.what() << std::endl;
+                    throw;
+                }
+            }
+            ~Client() = default;
+
+            void connect()
+            {
+                packet::connectionRequest request;
+                std::cout << "Request type is " << std::to_string(request.type) << std::endl;
+                _socket.send_to(asio::buffer(&request, sizeof(request)), _endpoint);
+                asio::ip::udp::endpoint sender_endpoint;
+                _socket.receive_from(asio::buffer(&request, sizeof(request)), sender_endpoint);
+            }
+
+            void disconnect()
+            {
+            }
+
+        private:
+            asio::error_code _errCode;
+            asio::ip::udp::resolver _resolver;
+            asio::ip::udp::endpoint _endpoint;
+            asio::ip::udp::socket _socket;
     };
 };
 

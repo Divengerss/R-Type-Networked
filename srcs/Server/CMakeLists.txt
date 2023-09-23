@@ -9,6 +9,13 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/srcs/Netcode
     ${CMAKE_SOURCE_DIR}/includes
 )
+
+if(MSVC)
+  target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
+else()
+  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 if (WIN32)
     set(PATH_ASIO ${CMAKE_SOURCE_DIR}/vcpkg/packages/asio_x64-windows/include)
 endif (WIN32)

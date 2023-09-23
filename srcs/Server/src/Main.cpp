@@ -3,7 +3,7 @@
 #include <iostream>
 #include <filesystem>
 
-int main(int argc, const char *argv[]) {
+int main() {
     asio::io_context ioContext;
     asio::io_service ioService;
     try {
