@@ -83,6 +83,7 @@ namespace net
             const asio::ip::udp::endpoint &getServerEndpoint() const noexcept {return _serverEndpoint;}
             const asio::ip::udp::socket &getSocket() const noexcept {return _socket;}
             const asio::error_code &getAsioErrorCode() const noexcept {return _errCode;}
+            const std::unordered_map<std::string, asio::ip::udp::endpoint> &getClients() const noexcept {return _clients;}
 
             void setHost(const std::string &host) {_host = host;}
             void setPort(std::uint16_t port) {_port = port;}
@@ -104,12 +105,12 @@ namespace net
             template<typename T>
             void handleRequestStatus(T &packet)
             {
-                if (packet.status == REQUEST && packet.type == 0x01) {
+                if (packet.status == REQUEST && packet.type == packet::CONNECTION_REQUEST) {
                     std::string cliUuid = addClient();
                     packet::connectionRequest response(ACCEPTED, cliUuid);
                     _logs.logTo(INFO, "New connection received: UUID [" + cliUuid + "]");
                     sendResponse(response);
-                } else if (packet.status == REQUEST && packet.type == 0x02) {
+                } else if (packet.status == REQUEST && packet.type == packet::DISCONNECTION_REQUEST) {
                     std::string cliUuid(UUID_SIZE, 0);
                     std::memcpy(cliUuid.data(), &packet.uuid, UUID_SIZE);
                     _clients.erase(cliUuid);
@@ -165,7 +166,7 @@ namespace net
             std::string addClient()
             {
                 std::string cliUuid = uuid::generateUUID();
-                _clients[cliUuid] = _clients.size();
+                _clients[cliUuid] = _serverEndpoint;
                 return cliUuid;
             }
 
@@ -180,7 +181,7 @@ namespace net
             std::vector<std::thread> _threadPool;
             std::array<std::uint8_t, 1024> _buffer;
             Log _logs;
-            std::unordered_map<std::string, std::uint32_t> _clients;
+            std::unordered_map<std::string, asio::ip::udp::endpoint> _clients;
             static Server* serverInstance;
 
     };
@@ -201,25 +202,65 @@ namespace net
                     std::cerr << "Error opening socket: " << sysErr.what() << std::endl;
                     throw;
                 }
+                _network = std::thread([&] () {
+                    std::signal(SIGINT, signalHandler);
+                    setClientInstance(this);
+                    connect();
+                    listenServer();
+                });
             }
             ~Client()
             {
+                if (_network.joinable())
+                    _network.join();
                 _socket.close();
             };
+
+            static void setClientInstance(Client* instance) {clientInstance = instance;}
 
             template<typename T>
             T &sendToServer(T &packet)
             {
-                asio::ip::udp::endpoint sender_endpoint;
                 _socket.send_to(asio::buffer(&packet, sizeof(packet)), _endpoint);
-                _socket.receive_from(asio::buffer(&packet, sizeof(packet)), sender_endpoint);
+                _socket.receive_from(asio::buffer(&packet, sizeof(packet)), _endpoint);
                 return packet;
+            }
+
+            template<typename T>
+            T &waitForPacket(T &packet, std::uint8_t type)
+            {
+                while (packet.type != type) {
+                    _socket.receive_from(asio::buffer(&packet, sizeof(packet)), _endpoint);
+                    std::cout << "Got type " << std::to_string(packet.type) << std::endl;
+                }
+                return packet;
+            }
+
+            void listenServer()
+            {
+                packet::placeholder data;
+                _socket.receive_from(asio::buffer(&data, sizeof(data)), _endpoint);
+                handleReceive(data);
+            }
+
+            template<typename T>
+            void handleReceive(T &packet)
+            {
+                if (!_errCode) {
+                    if (packet.type == packet::PLACEHOLDER) {
+                        std::cout << "Received a placeholder packet from server" << std::endl;
+                    }
+                    if (!_uuid.empty())
+                        listenServer();
+                }
             }
 
             void connect()
             {
                 packet::connectionRequest request;
                 request = sendToServer(request);
+                if (request.type != packet::CONNECTION_REQUEST)
+                    waitForPacket(request, packet::CONNECTION_REQUEST);
                 std::memcpy(_uuid.data(), request.uuid.data(), UUID_SIZE);
                 std::cout << "Got UUID " << _uuid << " from the server" << std::endl;
             }
@@ -232,13 +273,24 @@ namespace net
                 _uuid.clear();
             }
 
+            static void signalHandler(int signum) {
+                if (signum == SIGINT && clientInstance) {
+                    clientInstance->disconnect();
+                }
+                std::exit(EXIT_SUCCESS);
+            }
+
         private:
             asio::error_code _errCode;
             asio::ip::udp::resolver _resolver;
             asio::ip::udp::endpoint _endpoint;
             asio::ip::udp::socket _socket;
             std::string _uuid;
+            std::thread _network;
+            static Client* clientInstance;
     };
+
+    Client* Client::clientInstance = nullptr;
 };
 
 #endif /* !NETCODE_HPP */

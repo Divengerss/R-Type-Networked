@@ -14,17 +14,31 @@
 
 namespace packet
 {
+    enum packetTypes
+    {
+        PLACEHOLDER,
+        CONNECTION_REQUEST,
+        DISCONNECTION_REQUEST,
+    };
+
+    struct placeholder
+    {
+        std::uint8_t type;
+
+        placeholder() : type(PLACEHOLDER) {}
+    };
+
     struct connectionRequest
     {
         std::uint8_t type;
         std::uint8_t status;
         std::array<std::uint8_t, UUID_SIZE> uuid;
 
-        connectionRequest() : type(0x01), status(REQUEST)
+        connectionRequest() : type(CONNECTION_REQUEST), status(REQUEST)
         {
             std::memset(&uuid, 0, UUID_SIZE);
         }
-        connectionRequest(uint8_t status, const std::string &cliUuid) : type(0x01), status(status)
+        connectionRequest(uint8_t status, const std::string &cliUuid) : type(CONNECTION_REQUEST), status(status)
         {
             std::memcpy(&uuid, cliUuid.data(), UUID_SIZE);
         }
@@ -36,11 +50,11 @@ namespace packet
         std::uint8_t status;
         std::array<std::uint8_t, UUID_SIZE> uuid;
 
-        disconnectionRequest(const std::string &cliUuid) : type(0x02), status(REQUEST)
+        disconnectionRequest(const std::string &cliUuid) : type(DISCONNECTION_REQUEST), status(REQUEST)
         {
             std::memcpy(&uuid, cliUuid.data(), UUID_SIZE);
         }
-        disconnectionRequest(uint8_t status) : type(0x02), status(status) {}
+        disconnectionRequest(uint8_t status) : type(DISCONNECTION_REQUEST), status(status) {}
     };
 };
 
