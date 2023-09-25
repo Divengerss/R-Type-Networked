@@ -53,7 +53,13 @@ namespace net
                 }
                 asio::ip::udp::socket::reuse_address option(true);
                 _socket.set_option(option);
-                _socket = asio::ip::udp::socket(_ioContext, asio::ip::udp::endpoint(asio::ip::make_address(_host), _port));
+                try {
+                    _socket = asio::ip::udp::socket(_ioContext, asio::ip::udp::endpoint(asio::ip::make_address(_host), _port));
+                } catch (const std::exception &e) {
+                    std::string err = e.what();
+                    _logs.logTo(ERR, "Failed to start the server: " + err);
+                    throw std::runtime_error("bind");
+                }
                 _threadPool.emplace_back([&]() {
                     _logs.logTo(INFO, "Starting network execution context");
                     _ioContext.run();

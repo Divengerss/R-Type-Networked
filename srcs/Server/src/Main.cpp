@@ -12,7 +12,11 @@ int main() {
         game.runGame();
     } catch (const Error &e) {
         std::cerr << e.what() << std::endl;
+        std::exit(EXIT_FAILURE);
+    } catch (const std::runtime_error &e) {
+        std::exit(EXIT_FAILURE);
     } catch (const std::exception &e) {
         std::cerr << "Error " << e.what() << std::endl;
+        std::exit(EXIT_FAILURE);
     }
 }
