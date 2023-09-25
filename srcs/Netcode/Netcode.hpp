@@ -9,6 +9,7 @@
 #include "CFGParser.hpp"
 #include "Packets.hpp"
 #include "Logs.hpp"
+#include "Uuid.hpp"
 
 // Used to initialize the server, host and port are set from the CFG config file.
 // If the parsing fails, these values will be used
@@ -37,7 +38,8 @@ namespace net
                 _host(DEFAULT_HOST),
                 _port(DEFAULT_PORT),
                 _socket(_ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), DEFAULT_PORT)),
-                _logs(Log(utils::getCurrDir() + SERVER_LOG_FILE))
+                _logs(Log(utils::getCurrDir() + SERVER_LOG_FILE)),
+                _clients({})
             {
                 _logs.logTo(INFO, "Starting up R-Type server...");
                 utils::ParseCFG config(utils::getCurrDir() + SERVER_CONFIG_FILE_PATH);
@@ -102,11 +104,18 @@ namespace net
             template<typename T>
             void handleRequestStatus(T &packet)
             {
-                if (packet.status == REQUEST) {
-                    _logs.logTo(INFO, "Connection received from client");
-                    packet::connectionRequest response(ACCEPTED);
+                if (packet.status == REQUEST && packet.type == 0x01) {
+                    std::string cliUuid = addClient();
+                    packet::connectionRequest response(ACCEPTED, cliUuid);
+                    _logs.logTo(INFO, "New connection received: UUID [" + cliUuid + "]");
                     sendResponse(response);
-                    _logs.logTo(INFO, "Connection response sent to client");
+                } else if (packet.status == REQUEST && packet.type == 0x02) {
+                    std::string cliUuid(UUID_SIZE, 0);
+                    std::memcpy(cliUuid.data(), &packet.uuid, UUID_SIZE);
+                    _clients.erase(cliUuid);
+                    _logs.logTo(INFO, "Disconnection received from [" + cliUuid + "]");
+                    packet::disconnectionRequest response(ACCEPTED);
+                    sendResponse(response);
                 }
             }
 
@@ -153,6 +162,13 @@ namespace net
                 std::exit(EXIT_SUCCESS);
             }
 
+            std::string addClient()
+            {
+                std::string cliUuid = uuid::generateUUID();
+                _clients[cliUuid] = _clients.size();
+                return cliUuid;
+            }
+
         private:
             asio::io_context &_ioContext;
             asio::io_service &_ioService;
@@ -164,7 +180,9 @@ namespace net
             std::vector<std::thread> _threadPool;
             std::array<std::uint8_t, 1024> _buffer;
             Log _logs;
+            std::unordered_map<std::string, std::uint32_t> _clients;
             static Server* serverInstance;
+
     };
 
     Server* Server::serverInstance = nullptr;
@@ -175,7 +193,7 @@ namespace net
             Client() = delete;
             Client(asio::io_context &ioContext, const std::string &host, const std::string &port) :
                 _errCode(asio::error_code()), _resolver(ioContext), _endpoint(*_resolver.resolve(asio::ip::udp::v4(), host, port).begin()),
-                _socket(asio::ip::udp::socket(ioContext))
+                _socket(asio::ip::udp::socket(ioContext)), _uuid(UUID_SIZE, 0)
             {
                 try {
                     _socket.open(asio::ip::udp::v4());
@@ -184,7 +202,10 @@ namespace net
                     throw;
                 }
             }
-            ~Client() = default;
+            ~Client()
+            {
+                _socket.close();
+            };
 
             template<typename T>
             T &sendToServer(T &packet)
@@ -199,11 +220,16 @@ namespace net
             {
                 packet::connectionRequest request;
                 request = sendToServer(request);
-                std::cout << "Got response " << std::to_string(request.status) << " from the server" << std::endl;
+                std::memcpy(_uuid.data(), request.uuid.data(), UUID_SIZE);
+                std::cout << "Got UUID " << _uuid << " from the server" << std::endl;
             }
 
             void disconnect()
             {
+                packet::disconnectionRequest request(_uuid.data());
+                request = sendToServer(request);
+                std::cout << "Disconnected from the server." << std::endl;
+                _uuid.clear();
             }
 
         private:
@@ -211,6 +237,7 @@ namespace net
             asio::ip::udp::resolver _resolver;
             asio::ip::udp::endpoint _endpoint;
             asio::ip::udp::socket _socket;
+            std::string _uuid;
     };
 };
 

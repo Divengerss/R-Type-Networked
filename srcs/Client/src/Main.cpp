@@ -10,6 +10,7 @@ int main() {
         std::string port = config.getData<std::string>("port");
         net::Client client(ioContext, host, port);
         client.connect();
+        client.disconnect();
     } catch (const Error &e) {
         std::cerr << e.what() << std::endl;
     } catch (const std::exception &e) {
