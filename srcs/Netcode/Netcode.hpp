@@ -113,7 +113,7 @@ namespace net
                 } else if (packet.status == REQUEST && packet.type == packet::DISCONNECTION_REQUEST) {
                     std::string cliUuid(UUID_SIZE, 0);
                     std::memcpy(cliUuid.data(), &packet.uuid, UUID_SIZE);
-                    _clients.erase(cliUuid);
+                    _clients.erase(cliUuid.data());
                     _logs.logTo(INFO, "Disconnection received from [" + cliUuid + "]");
                     packet::disconnectionRequest response(ACCEPTED);
                     sendResponse(response);
