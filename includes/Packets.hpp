@@ -21,24 +21,25 @@ namespace packet
         DISCONNECTION_REQUEST,
     };
 
-    struct placeholder
+    struct packetHeader
     {
-        std::uint8_t type;
+        packetTypes type;
+        std::uint16_t dataSize;
 
-        placeholder() : type(PLACEHOLDER) {}
+        packetHeader() : type(PLACEHOLDER), dataSize(0) {}
+        packetHeader(packetTypes type, std::uint16_t dataSize) : type(type), dataSize(dataSize) {}
     };
 
     struct connectionRequest
     {
-        std::uint8_t type;
         std::uint8_t status;
         std::array<std::uint8_t, UUID_SIZE> uuid;
 
-        connectionRequest() : type(CONNECTION_REQUEST), status(REQUEST)
+        connectionRequest() : status(REQUEST)
         {
             std::memset(&uuid, 0, UUID_SIZE);
         }
-        connectionRequest(uint8_t status, const std::string &cliUuid) : type(CONNECTION_REQUEST), status(status)
+        connectionRequest(uint8_t status, const std::string &cliUuid) : status(status)
         {
             std::memcpy(&uuid, cliUuid.data(), UUID_SIZE);
         }
@@ -46,15 +47,14 @@ namespace packet
 
     struct disconnectionRequest
     {
-        std::uint8_t type;
         std::uint8_t status;
-        std::array<std::uint8_t, UUID_SIZE> uuid;
+        std::array<packetTypes, UUID_SIZE> uuid;
 
-        disconnectionRequest(const std::string &cliUuid) : type(DISCONNECTION_REQUEST), status(REQUEST)
+        disconnectionRequest(const std::string &cliUuid) : status(REQUEST)
         {
             std::memcpy(&uuid, cliUuid.data(), UUID_SIZE);
         }
-        disconnectionRequest(uint8_t status) : type(DISCONNECTION_REQUEST), status(status) {}
+        disconnectionRequest(uint8_t status) : status(status) {}
     };
 };
 

@@ -74,7 +74,14 @@ namespace net
                 receive();
             };
 
-            ~Server() = default;
+            ~Server()
+            {
+                for (auto &thread : _threadPool) {
+                    if (thread.joinable()) {
+                        thread.join();
+                    }
+                }
+            };
 
             asio::io_context &getIoContext() const noexcept {return _ioContext;}
             asio::io_context &getIoService() const noexcept {return _ioService;}
@@ -97,35 +104,49 @@ namespace net
             }
 
             template<typename T>
-            void sendResponse(T &packet)
+            void sendResponse(const packet::packetTypes &type, T &packet)
             {
-                _socket.send_to(asio::buffer(&packet, sizeof(packet)), _serverEndpoint);
+                packet::packetHeader header(type, sizeof(packet));
+                std::array<std::uint8_t, sizeof(header) + sizeof(packet)> buffer;
+                std::memcpy(&buffer, &header, sizeof(header));
+                std::memcpy(&buffer[sizeof(header)], &packet, header.dataSize);
+                _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
             }
 
-            template<typename T>
-            void handleRequestStatus(T &packet)
+            void handleRequestStatus()
             {
-                if (packet.status == REQUEST && packet.type == packet::CONNECTION_REQUEST) {
+                packet::packetHeader header = *reinterpret_cast<packet::packetHeader *>(_buffer.data());
+                if (header.type == packet::CONNECTION_REQUEST) {
                     std::string cliUuid = addClient();
                     packet::connectionRequest response(ACCEPTED, cliUuid);
                     _logs.logTo(INFO, "New connection received: UUID [" + cliUuid + "]");
-                    sendResponse(response);
-                } else if (packet.status == REQUEST && packet.type == packet::DISCONNECTION_REQUEST) {
+                    packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(response));
+                    std::array<std::uint8_t, sizeof(header) + sizeof(response)> buffer;
+                    std::memcpy(&buffer, &header, sizeof(header));
+                    std::memcpy(&buffer[sizeof(header)], &response, sizeof(response));
+                    _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
+
+                    packet::packetHeader header2;
+                    packet::connectionRequest req;
+                    std::memmove(&header2, &buffer, sizeof(header));
+                    std::memmove(&req, &buffer[sizeof(header)], sizeof(req));
+                } else if (header.type == packet::DISCONNECTION_REQUEST) {
+                    packet::disconnectionRequest request(ACCEPTED);
+                    std::memcpy(&request, &_buffer[sizeof(header)], sizeof(request));
                     std::string cliUuid(UUID_SIZE, 0);
-                    std::memcpy(cliUuid.data(), &packet.uuid, UUID_SIZE);
+                    std::memcpy(cliUuid.data(), &request.uuid, UUID_SIZE);
                     _clients.erase(cliUuid.data());
                     _logs.logTo(INFO, "Disconnection received from [" + cliUuid + "]");
                     packet::disconnectionRequest response(ACCEPTED);
-                    sendResponse(response);
                 }
             }
 
             void handleReceiveFrom(const asio::error_code &errCode, std::size_t bytesReceived)
             {
                 if (!errCode) {
-                    packet::connectionRequest request;
-                    fillBufferFromRequest(request, bytesReceived);
-                    handleRequestStatus(request);
+                    handleRequestStatus();
+                } else if (bytesReceived == 0) {
+                    _logs.logTo(INFO, "The received packet was empty. " + errCode.message());
                 } else {
                     _logs.logTo(ERR, "Error receiving packet: " + errCode.message());
                 }
@@ -134,7 +155,6 @@ namespace net
 
             void receive()
             {
-                packet::connectionRequest request;
                 _socket.async_receive_from(
                     asio::buffer(_buffer, _buffer.size()),
                     _serverEndpoint,
@@ -202,28 +222,30 @@ namespace net
                     std::cerr << "Error opening socket: " << sysErr.what() << std::endl;
                     throw;
                 }
-                _network = std::thread([&] () {
+                _threadPool.emplace_back([&] () {
                     std::signal(SIGINT, signalHandler);
                     setClientInstance(this);
-                    connect();
                     listenServer();
+                    connect();
+                    ioContext.run();
                 });
             }
             ~Client()
             {
-                if (_network.joinable())
-                    _network.join();
+                for (auto &thread : clientInstance->_threadPool) {
+                    if (thread.joinable()) {
+                        thread.join();
+                    }
+                }
                 _socket.close();
             };
 
             static void setClientInstance(Client* instance) {clientInstance = instance;}
 
             template<typename T>
-            T &sendToServer(T &packet)
+            void sendToServer(T &packet)
             {
                 _socket.send_to(asio::buffer(&packet, sizeof(packet)), _endpoint);
-                _socket.receive_from(asio::buffer(&packet, sizeof(packet)), _endpoint);
-                return packet;
             }
 
             template<typename T>
@@ -238,44 +260,59 @@ namespace net
 
             void listenServer()
             {
-                packet::placeholder data;
-                _socket.receive_from(asio::buffer(&data, sizeof(data)), _endpoint);
-                handleReceive(data);
+                try {
+                    _socket.async_receive_from(
+                        asio::buffer(&_buffer, sizeof(_buffer)),
+                        _endpoint,
+                        std::bind(&Client::handleReceive, this, std::placeholders::_1));
+                } catch (const asio::system_error &e) {
+                    std::cerr << "Failed to receive packet: " << e.what() << std::endl;
+                }
             }
 
-            template<typename T>
-            void handleReceive(T &packet)
+            void handleReceive(const asio::error_code &errCode)
             {
-                if (!_errCode) {
-                    if (packet.type == packet::PLACEHOLDER) {
+                if (!errCode) {
+                    packet::packetHeader header;
+                    std::memcpy(&header, &_buffer, sizeof(header));
+                    if (header.type == packet::PLACEHOLDER) {
                         std::cout << "Received a placeholder packet from server" << std::endl;
+                    } else if (header.type == packet::CONNECTION_REQUEST) {
+                        packet::connectionRequest request;
+                        std::memcpy(&request, &_buffer[sizeof(header)], header.dataSize);
+                        std::memcpy(_uuid.data(), &request.uuid, UUID_SIZE);
+                        std::cout << "Got uuid = " << _uuid << std::endl;
                     }
-                    if (!_uuid.empty())
-                        listenServer();
                 }
+                listenServer();
             }
 
             void connect()
             {
                 packet::connectionRequest request;
-                request = sendToServer(request);
-                if (request.type != packet::CONNECTION_REQUEST)
-                    waitForPacket(request, packet::CONNECTION_REQUEST);
-                std::memcpy(_uuid.data(), request.uuid.data(), UUID_SIZE);
-                std::cout << "Got UUID " << _uuid << " from the server" << std::endl;
+                packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(request));
+                std::array<std::uint8_t, sizeof(header) + sizeof(request)> buffer;
+                std::memmove(&buffer, &header, sizeof(header));
+                std::memmove(&buffer[sizeof(header)], &request, sizeof(request));
+                sendToServer(buffer);
             }
 
             void disconnect()
             {
                 packet::disconnectionRequest request(_uuid.data());
-                request = sendToServer(request);
+                packet::packetHeader header(packet::DISCONNECTION_REQUEST, sizeof(request));
+                std::array<std::uint8_t, sizeof(header) + sizeof(request)> buffer;
+                std::memcpy(&buffer, &header, sizeof(header));
+                std::memcpy(&buffer[sizeof(header)], &request, sizeof(request));
+                sendToServer(buffer);
                 std::cout << "Disconnected from the server." << std::endl;
                 _uuid.clear();
             }
 
             static void signalHandler(int signum) {
                 if (signum == SIGINT && clientInstance) {
-                    clientInstance->disconnect();
+                    if (!clientInstance->_uuid.empty())
+                        clientInstance->disconnect();
                 }
                 std::exit(EXIT_SUCCESS);
             }
@@ -286,7 +323,8 @@ namespace net
             asio::ip::udp::endpoint _endpoint;
             asio::ip::udp::socket _socket;
             std::string _uuid;
-            std::thread _network;
+            std::vector<std::thread> _threadPool;
+            std::array<std::uint8_t, 1024> _buffer;
             static Client* clientInstance;
     };
 
