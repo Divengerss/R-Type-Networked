@@ -1,3 +1,6 @@
 [submodule "vcpkg"]
 	path = vcpkg
 	url = git@github.com:microsoft/vcpkg.git
+[submodule "R-Type-documentations"]
+	path = R-Type-documentations
+	url = git@github.com:Divengerss/R-Type-documentations.git
