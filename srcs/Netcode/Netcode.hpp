@@ -113,12 +113,25 @@ namespace net
             }
 
             template<typename T>
-            void sendResponse(const packet::packetTypes &type, T &packet)
+            void sendResponse(const packet::packetTypes &type, T &packet, const std::string cliUuid = "")
             {
                 packet::packetHeader header(type, sizeof(packet));
                 std::array<std::uint8_t, sizeof(header) + sizeof(packet)> buffer;
-                setPacket(buffer, header, packet);
-                _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
+                std::memcpy(&buffer, &header, sizeof(header));
+                std::memcpy(&buffer[sizeof(header)], &packet, header.dataSize);
+                if (cliUuid.empty())
+                    _logs.logTo(INFO, "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
+                for (const auto &[uuid, client] : _clients) {
+                    if (!cliUuid.empty()) {
+                        if (cliUuid == uuid) {
+                            _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client);
+                            _logs.logTo(INFO, "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
+                        }
+                    } else {
+                        _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client);
+                        _logs.logTo(INFO, "    Sent to [" + uuid + "]");
+                    }
+                }
             }
 
             void handleRequestStatus()
@@ -247,6 +260,7 @@ namespace net
                     setClientInstance(this);
                     _timer.async_wait([&](const asio::error_code &error) {
                         if (!error) {
+                            std::cout << "test" << std::endl;
                             _socket.cancel();
                             if (!std::strncmp(_uuid.data(), std::string(UUID_SIZE, 0).data(), UUID_SIZE)) {
                                 std::cerr << "Connection timeout. Could not connect to server." << std::endl;

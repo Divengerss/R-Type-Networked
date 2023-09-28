@@ -27,7 +27,12 @@ namespace rtype
             const net::Server &getServerContext() const noexcept {return _server;}
 
             void runGame() {
+                //packet::packetHeader header(packet::PLACEHOLDER, 0);
                 while (true) { // TO CHANGE
+                    if (_server.getClients().size()) {
+                        //std::this_thread::sleep_for(std::chrono::seconds(2));
+                        //_server.sendResponse(packet::PLACEHOLDER, header);
+                    }
                 }
             };
 
