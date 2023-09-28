@@ -11,10 +11,12 @@
 #include "Logs.hpp"
 #include "Uuid.hpp"
 
-// Used to initialize the server, host and port are set from the CFG config file.
-// If the parsing fails, these values will be used
-#define DEFAULT_HOST    "127.0.0.1"
-#define DEFAULT_PORT    12345
+// Default values used if parsing fails or invalid values are set.
+#define DEFAULT_HOST        "127.0.0.1"
+#define DEFAULT_PORT        12345
+#define DEFAULT_TIMEOUT     5
+
+#define PACKET_SIZE     1024
 
 #ifdef _WIN32
     #define SERVER_CONFIG_FILE_PATH     "\\server.cfg"
@@ -98,9 +100,16 @@ namespace net
             static void setServerInstance(Server* instance) {serverInstance = instance;}
 
             template<typename T>
+            void setPacket(T &packet, packet::packetHeader &header, T&data)
+            {
+                std::memcpy(&packet, &header, sizeof(header));
+                std::memcpy(&packet[sizeof(header)], &data, header.dataSize);
+            }
+
+            template<typename T>
             void fillBufferFromRequest(T &packet, std::size_t size)
             {
-                std::memcpy(&packet, _buffer.data(), size);
+                std::memcpy(&packet, _packet.data(), size);
             }
 
             template<typename T>
@@ -108,14 +117,13 @@ namespace net
             {
                 packet::packetHeader header(type, sizeof(packet));
                 std::array<std::uint8_t, sizeof(header) + sizeof(packet)> buffer;
-                std::memcpy(&buffer, &header, sizeof(header));
-                std::memcpy(&buffer[sizeof(header)], &packet, header.dataSize);
+                setPacket(buffer, header, packet);
                 _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
             }
 
             void handleRequestStatus()
             {
-                packet::packetHeader header = *reinterpret_cast<packet::packetHeader *>(_buffer.data());
+                packet::packetHeader header = *reinterpret_cast<packet::packetHeader *>(_packet.data());
                 if (header.type == packet::CONNECTION_REQUEST) {
                     std::string cliUuid = addClient();
                     packet::connectionRequest response(ACCEPTED, cliUuid);
@@ -125,14 +133,13 @@ namespace net
                     std::memcpy(&buffer, &header, sizeof(header));
                     std::memcpy(&buffer[sizeof(header)], &response, sizeof(response));
                     _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
-
                     packet::packetHeader header2;
                     packet::connectionRequest req;
                     std::memmove(&header2, &buffer, sizeof(header));
                     std::memmove(&req, &buffer[sizeof(header)], sizeof(req));
                 } else if (header.type == packet::DISCONNECTION_REQUEST) {
                     packet::disconnectionRequest request(ACCEPTED);
-                    std::memcpy(&request, &_buffer[sizeof(header)], sizeof(request));
+                    std::memcpy(&request, &_packet[sizeof(header)], sizeof(request));
                     std::string cliUuid(UUID_SIZE, 0);
                     std::memcpy(cliUuid.data(), &request.uuid, UUID_SIZE);
                     _clients.erase(cliUuid.data());
@@ -156,7 +163,7 @@ namespace net
             void receive()
             {
                 _socket.async_receive_from(
-                    asio::buffer(_buffer, _buffer.size()),
+                    asio::buffer(_packet, _packet.size()),
                     _serverEndpoint,
                     std::bind(&Server::handleReceiveFrom, this, std::placeholders::_1, std::placeholders::_2)
                 );
@@ -199,7 +206,7 @@ namespace net
             asio::ip::udp::socket _socket;
             asio::error_code _errCode;
             std::vector<std::thread> _threadPool;
-            std::array<std::uint8_t, 1024> _buffer;
+            std::array<std::uint8_t, PACKET_SIZE> _packet;
             Log _logs;
             std::unordered_map<std::string, asio::ip::udp::endpoint> _clients;
             static Server* serverInstance;
@@ -214,9 +221,22 @@ namespace net
             Client() = delete;
             Client(asio::io_context &ioContext, const std::string &host, const std::string &port) :
                 _errCode(asio::error_code()), _resolver(ioContext), _endpoint(*_resolver.resolve(asio::ip::udp::v4(), host, port).begin()),
-                _socket(asio::ip::udp::socket(ioContext)), _uuid(UUID_SIZE, 0)
+                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(UUID_SIZE, 0)
             {
                 try {
+                    utils::ParseCFG config(utils::getCurrDir() + CLIENT_CONFIG_FILE_PATH);
+                    std::uint8_t timeout;
+                    try {
+                        timeout = std::stoi(config.getData<std::string>("timeout"));
+                        if (timeout < 1) {
+                            std::cout << "Warning: Timeout value should not be lower than 1 second. " << DEFAULT_TIMEOUT << " seconds will be used instead." << std::endl;
+                            timeout = DEFAULT_TIMEOUT;
+                        }
+                    } catch (const Error &e) {
+                        std::cerr << e.what() << std::endl;
+                        timeout = DEFAULT_TIMEOUT;
+                    }
+                    _timer.expires_after(std::chrono::seconds(timeout));
                     _socket.open(asio::ip::udp::v4());
                 } catch (const asio::system_error &sysErr) {
                     std::cerr << "Error opening socket: " << sysErr.what() << std::endl;
@@ -225,6 +245,15 @@ namespace net
                 _threadPool.emplace_back([&] () {
                     std::signal(SIGINT, signalHandler);
                     setClientInstance(this);
+                    _timer.async_wait([&](const asio::error_code &error) {
+                        if (!error) {
+                            _socket.cancel();
+                            if (!std::strncmp(_uuid.data(), std::string(UUID_SIZE, 0).data(), UUID_SIZE)) {
+                                std::cerr << "Connection timeout. Could not connect to server." << std::endl;
+                                std::exit(0);
+                            }
+                        }
+                    });
                     listenServer();
                     connect();
                     ioContext.run();
@@ -262,7 +291,7 @@ namespace net
             {
                 try {
                     _socket.async_receive_from(
-                        asio::buffer(&_buffer, sizeof(_buffer)),
+                        asio::buffer(&_packet, sizeof(_packet)),
                         _endpoint,
                         std::bind(&Client::handleReceive, this, std::placeholders::_1));
                 } catch (const asio::system_error &e) {
@@ -274,16 +303,17 @@ namespace net
             {
                 if (!errCode) {
                     packet::packetHeader header;
-                    std::memcpy(&header, &_buffer, sizeof(header));
+                    std::memcpy(&header, &_packet, sizeof(header));
                     if (header.type == packet::PLACEHOLDER) {
                         std::cout << "Received a placeholder packet from server" << std::endl;
                     } else if (header.type == packet::CONNECTION_REQUEST) {
                         packet::connectionRequest request;
-                        std::memcpy(&request, &_buffer[sizeof(header)], header.dataSize);
+                        std::memcpy(&request, &_packet[sizeof(header)], header.dataSize);
                         std::memcpy(_uuid.data(), &request.uuid, UUID_SIZE);
                         std::cout << "Got uuid = " << _uuid << std::endl;
                     }
                 }
+                _timer.cancel();
                 listenServer();
             }
 
@@ -322,9 +352,10 @@ namespace net
             asio::ip::udp::resolver _resolver;
             asio::ip::udp::endpoint _endpoint;
             asio::ip::udp::socket _socket;
+            asio::steady_timer _timer;
             std::string _uuid;
             std::vector<std::thread> _threadPool;
-            std::array<std::uint8_t, 1024> _buffer;
+            std::array<std::uint8_t, PACKET_SIZE> _packet;
             static Client* clientInstance;
     };
 

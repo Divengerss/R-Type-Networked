@@ -1,6 +1,5 @@
 #include "Client.hpp"
 #include "Netcode.hpp"
-#include "CFGParser.hpp"
 
 int main() {
     utils::ParseCFG config(utils::getCurrDir() + CLIENT_CONFIG_FILE_PATH);
