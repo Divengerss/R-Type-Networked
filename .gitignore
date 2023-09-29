@@ -4,9 +4,15 @@ Build/
 *.o
 .idea/
 .vscode/
+.vs/
 
 cmake_install.cmake
 CMakeCache.txt
 Makefile
 CMakeFiles/
 cmake-build-debug/
+*.log
+*.exe
+*.ilk
+*.pdb
+vgcore.*

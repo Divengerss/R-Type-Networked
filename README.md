@@ -39,11 +39,7 @@ Both programs use **C++**
 
 ## Documentation
 
-Documentation can be found under the [docs](https://github.com/EpitechPromo2026/B-CPP-500-PAR-5-1-rtype-julian.emery/tree/main/docs) directory.
-
-- [Server binary protocol](https://github.com/EpitechPromo2026/B-CPP-500-PAR-5-1-rtype-julian.emery/blob/main/docs/SERVER.md)
-- [Graphical implementation](https://github.com/EpitechPromo2026/B-CPP-500-PAR-5-1-rtype-julian.emery/blob/main/docs/CLIENT.md)
-
+Documentations can be found [here](https://divengerss.github.io/R-Type-documentations/)
 
 ## License
 
