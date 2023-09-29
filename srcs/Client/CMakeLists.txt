@@ -7,6 +7,17 @@ add_executable(${PROJECT_NAME}
         src/Background.cpp
         )
 
-include_directories(include)
+include_directories(
+    include
+    ${CMAKE_SOURCE_DIR}/srcs/Netcode
+    ${CMAKE_SOURCE_DIR}/includes
+)
+
+if(MSVC)
+  target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
+else()
+  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 find_package(SFML REQUIRED COMPONENTS graphics window system)
 target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics sfml-window sfml-system)
