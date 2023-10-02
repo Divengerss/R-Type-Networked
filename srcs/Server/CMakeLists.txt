@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.5)
 project(r-type_server)
 
-add_executable(${PROJECT_NAME} src/Main.cpp)
+add_executable(${PROJECT_NAME} src/Server/Main.cpp)
 
 include_directories(
     include
     ${PATH_ASIO}
     ${CMAKE_SOURCE_DIR}/srcs/Netcode
+    include/Server
+    include/ECS
     ${CMAKE_SOURCE_DIR}/includes
+
 )
 
 if(MSVC)
