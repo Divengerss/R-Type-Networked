@@ -1,6 +1,10 @@
 #ifndef R_TYPE_SERVER_HPP
 #define R_TYPE_SERVER_HPP
 
+#ifdef _WIN32
+    #define _WIN32_WINNT 0x0601
+#endif /* !_WIN32 */
+
 #include "Netcode.hpp"
 
 #include <thread>
