@@ -47,7 +47,7 @@ namespace net
                 utils::ParseCFG config(utils::getCurrDir() + SERVER_CONFIG_FILE_PATH);
                 try {
                     _host = config.getData<std::string>("host");
-                    _port = std::stoi(config.getData<std::string>("port"));
+                    _port = static_cast<std::uint16_t>(std::stoi(config.getData<std::string>("port")));
                     _logs.logTo(INFO, "Retrieved configs successfully");
                 } catch (const Error &e) {
                     std::string err = e.what();
@@ -141,7 +141,8 @@ namespace net
                     std::string cliUuid = addClient();
                     packet::connectionRequest response(ACCEPTED, cliUuid);
                     _logs.logTo(INFO, "New connection received: UUID [" + cliUuid + "]");
-                    packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(response));
+                    header.type = packet::CONNECTION_REQUEST;
+                    header.dataSize = sizeof(response);
                     std::array<std::uint8_t, sizeof(header) + sizeof(response)> buffer;
                     std::memcpy(&buffer, &header, sizeof(header));
                     std::memcpy(&buffer[sizeof(header)], &response, sizeof(response));
@@ -234,13 +235,13 @@ namespace net
             Client() = delete;
             Client(asio::io_context &ioContext, const std::string &host, const std::string &port) :
                 _errCode(asio::error_code()), _resolver(ioContext), _endpoint(*_resolver.resolve(asio::ip::udp::v4(), host, port).begin()),
-                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(UUID_SIZE, 0)
+                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(UUID_SIZE, 0), _packet({})
             {
                 try {
                     utils::ParseCFG config(utils::getCurrDir() + CLIENT_CONFIG_FILE_PATH);
                     std::uint8_t timeout;
                     try {
-                        timeout = std::stoi(config.getData<std::string>("timeout"));
+                        timeout = static_cast<std::uint8_t>(std::stoi(config.getData<std::string>("timeout")));
                         if (timeout < 1) {
                             std::cout << "Warning: Timeout value should not be lower than 1 second. " << DEFAULT_TIMEOUT << " seconds will be used instead." << std::endl;
                             timeout = DEFAULT_TIMEOUT;

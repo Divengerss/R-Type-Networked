@@ -58,16 +58,18 @@ namespace utils
             };
 
             template<typename T>
-            const T getData(const std::string &key)
+            T getData(const std::string &key)
             {
                 if (_cfgKeys.empty())
                     throw Error("No data available to retrieve.");
                 try {
-                    return (std::any_cast<T>(_cfgKeys[key]));
-                } catch (const std::out_of_range &e) {
-                    throw Error("Failed to obtain " + key);
-                } catch (const std::bad_any_cast &e) {
-                    throw Error("Failed to convert to asked type");
+                    return std::any_cast<T>(_cfgKeys.at(key));
+                }
+                catch (const std::out_of_range &) {
+                    throw Error("Key not found: " + key);
+                }
+                catch (const std::bad_any_cast &) {
+                    throw Error("Type mismatch for key " + key);
                 }
             }
 
