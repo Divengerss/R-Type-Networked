@@ -102,14 +102,14 @@ namespace net
             template<typename T>
             void setPacket(T &packet, packet::packetHeader &header, T&data)
             {
-                std::memcpy(&packet, &header, sizeof(header));
-                std::memcpy(&packet[sizeof(header)], &data, header.dataSize);
+                std::memmove(&packet, &header, sizeof(header));
+                std::memmove(&packet[sizeof(header)], &data, header.dataSize);
             }
 
             template<typename T>
             void fillBufferFromRequest(T &packet, std::size_t size)
             {
-                std::memcpy(&packet, _packet.data(), size);
+                std::memmove(&packet, _packet.data(), size);
             }
 
             template<typename T>
@@ -117,8 +117,8 @@ namespace net
             {
                 packet::packetHeader header(type, sizeof(packet));
                 std::array<std::uint8_t, sizeof(header) + sizeof(packet)> buffer;
-                std::memcpy(&buffer, &header, sizeof(header));
-                std::memcpy(&buffer[sizeof(header)], &packet, header.dataSize);
+                std::memmove(&buffer, &header, sizeof(header));
+                std::memmove(&buffer[sizeof(header)], &packet, header.dataSize);
                 if (cliUuid.empty() && !_clients.empty())
                     _logs.logTo(INFO, "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
                 for (const auto &[uuid, client] : _clients) {
@@ -143,14 +143,14 @@ namespace net
                     _logs.logTo(INFO, "New connection received: UUID [" + cliUuid + "]");
                     packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(response));
                     std::array<std::uint8_t, sizeof(header) + sizeof(response)> buffer;
-                    std::memcpy(&buffer, &header, sizeof(header));
-                    std::memcpy(&buffer[sizeof(header)], &response, sizeof(response));
+                    std::memmove(&buffer, &header, sizeof(header));
+                    std::memmove(&buffer[sizeof(header)], &response, sizeof(response));
                     _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
                     packet::clientStatus cliStatus(cliUuid, NEW_CLIENT);
                     sendResponse(packet::CLIENT_STATUS, cliStatus);
                 } else if (header.type == packet::DISCONNECTION_REQUEST) {
                     packet::disconnectionRequest request(ACCEPTED);
-                    std::memcpy(&request, &_packet[sizeof(header)], sizeof(request));
+                    std::memmove(&request, &_packet[sizeof(header)], sizeof(request));
                     std::string cliUuid(UUID_SIZE, 0);
                     std::memmove(cliUuid.data(), &request.uuid, UUID_SIZE);
                     _clients.erase(cliUuid.data());
@@ -321,12 +321,12 @@ namespace net
                         std::cout << "Received a placeholder packet from server" << std::endl;
                     } else if (header.type == packet::CONNECTION_REQUEST) {
                         packet::connectionRequest request;
-                        std::memcpy(&request, &_packet[sizeof(header)], header.dataSize);
-                        std::memcpy(_uuid.data(), &request.uuid, UUID_SIZE);
+                        std::memmove(&request, &_packet[sizeof(header)], header.dataSize);
+                        std::memmove(_uuid.data(), &request.uuid, UUID_SIZE);
                         std::cout << "Got uuid = " << _uuid << std::endl;
                     } else if (header.type == packet::CLIENT_STATUS) {
                         packet::clientStatus cliStatus;
-                        std::memcpy(&cliStatus, &_packet[sizeof(header)], sizeof(cliStatus));
+                        std::memmove(&cliStatus, &_packet[sizeof(header)], sizeof(cliStatus));
                         std::string cliUuid(reinterpret_cast<char *>(cliStatus.uuid.data()));
                         if (cliStatus.status == LOSE_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
                             std::cout << "Client " << cliUuid << " disconnected." << std::endl;
@@ -354,8 +354,8 @@ namespace net
                 packet::disconnectionRequest request(_uuid.data());
                 packet::packetHeader header(packet::DISCONNECTION_REQUEST, sizeof(request));
                 std::array<std::uint8_t, sizeof(header) + sizeof(request)> buffer;
-                std::memcpy(&buffer, &header, sizeof(header));
-                std::memcpy(&buffer[sizeof(header)], &request, sizeof(request));
+                std::memmove(&buffer, &header, sizeof(header));
+                std::memmove(&buffer[sizeof(header)], &request, sizeof(request));
                 sendToServer(buffer);
                 std::cout << "Disconnected from the server." << std::endl;
                 _uuid.clear();

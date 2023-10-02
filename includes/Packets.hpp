@@ -47,7 +47,7 @@ namespace packet
         }
         connectionRequest(uint8_t status, const std::string &cliUuid) : status(status)
         {
-            std::memcpy(&uuid, cliUuid.data(), UUID_SIZE);
+            std::memmove(&uuid, cliUuid.data(), UUID_SIZE);
         }
     };
 
@@ -58,7 +58,7 @@ namespace packet
 
         disconnectionRequest(const std::string &cliUuid) : status(REQUEST)
         {
-            std::memcpy(&uuid, cliUuid.data(), UUID_SIZE);
+            std::memmove(&uuid, cliUuid.data(), UUID_SIZE);
         }
         disconnectionRequest(uint8_t status) : status(status) {}
     };
@@ -71,11 +71,11 @@ namespace packet
         clientStatus() : status(LOSE_CLIENT) {}
         clientStatus(const std::string &cliUuid) : status(LOSE_CLIENT)
         {
-            std::memcpy(&uuid, cliUuid.data(), UUID_SIZE);
+            std::memmove(&uuid, cliUuid.data(), UUID_SIZE);
         }
         clientStatus(const std::string &cliUuid, std::uint8_t status) : status(status)
         {
-            std::memcpy(&uuid, cliUuid.data(), UUID_SIZE);
+            std::memmove(&uuid, cliUuid.data(), UUID_SIZE);
         }
     };
 };
