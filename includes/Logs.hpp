@@ -28,14 +28,34 @@ namespace net
                 std::time_t now = std::time(nullptr);
                 std::string mbstr;
                 char tm[100];
-                std::strftime(tm, sizeof(tm), "%D %X", std::localtime(&now));
+
+#ifdef _WIN32
+                struct tm localTime;
+                if (localtime_s(&localTime, &now) != 0)
+                {
+                    std::cerr << "Error getting local time." << std::endl;
+                    return;
+                }
+                if (std::strftime(tm, sizeof(tm), "%D %X", &localTime) == 0)
+                {
+                    std::cerr << "Error formatting time." << std::endl;
+                    return;
+                }
+#else
+                if (std::strftime(tm, sizeof(tm), "%D %X", std::localtime(&now)) == 0)
+                {
+                    std::cerr << "Error formatting time." << std::endl;
+                    return;
+                }
+#endif
+
                 _logdate = tm;
                 if (status == INFO)
                     std::cout << _logdate << " | " << status << " | " << msg << std::endl;
                 else
                     std::cerr << _logdate << " | " << status << " | " << msg << std::endl;
                 _logfile << _logdate << " | " << status << " | " << msg << std::endl;
-            };
+            }
 
         private:
             std::string _logdate;

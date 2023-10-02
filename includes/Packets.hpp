@@ -54,7 +54,9 @@ namespace packet
         {
             std::memcpy(&uuid, cliUuid.data(), UUID_SIZE);
         }
-        disconnectionRequest(uint8_t status) : status(status) {}
+        disconnectionRequest(uint8_t status) : status(status), uuid({})
+        {
+        }
     };
 };
 
