@@ -119,7 +119,7 @@ namespace net
                 std::array<std::uint8_t, sizeof(header) + sizeof(packet)> buffer;
                 std::memcpy(&buffer, &header, sizeof(header));
                 std::memcpy(&buffer[sizeof(header)], &packet, header.dataSize);
-                if (cliUuid.empty())
+                if (cliUuid.empty() && !_clients.empty())
                     _logs.logTo(INFO, "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
                 for (const auto &[uuid, client] : _clients) {
                     if (!cliUuid.empty()) {
@@ -146,18 +146,17 @@ namespace net
                     std::memcpy(&buffer, &header, sizeof(header));
                     std::memcpy(&buffer[sizeof(header)], &response, sizeof(response));
                     _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
-                    packet::packetHeader header2;
-                    packet::connectionRequest req;
-                    std::memmove(&header2, &buffer, sizeof(header));
-                    std::memmove(&req, &buffer[sizeof(header)], sizeof(req));
+                    packet::clientStatus cliStatus(cliUuid, NEW_CLIENT);
+                    sendResponse(packet::CLIENT_STATUS, cliStatus);
                 } else if (header.type == packet::DISCONNECTION_REQUEST) {
                     packet::disconnectionRequest request(ACCEPTED);
                     std::memcpy(&request, &_packet[sizeof(header)], sizeof(request));
                     std::string cliUuid(UUID_SIZE, 0);
-                    std::memcpy(cliUuid.data(), &request.uuid, UUID_SIZE);
+                    std::memmove(cliUuid.data(), &request.uuid, UUID_SIZE);
                     _clients.erase(cliUuid.data());
                     _logs.logTo(INFO, "Disconnection received from [" + cliUuid + "]");
-                    packet::disconnectionRequest response(ACCEPTED);
+                    packet::clientStatus cliStatus(cliUuid, LOSE_CLIENT);
+                    sendResponse(packet::CLIENT_STATUS, cliStatus);
                 }
             }
 
@@ -325,6 +324,15 @@ namespace net
                         std::memcpy(&request, &_packet[sizeof(header)], header.dataSize);
                         std::memcpy(_uuid.data(), &request.uuid, UUID_SIZE);
                         std::cout << "Got uuid = " << _uuid << std::endl;
+                    } else if (header.type == packet::CLIENT_STATUS) {
+                        packet::clientStatus cliStatus;
+                        std::memcpy(&cliStatus, &_packet[sizeof(header)], sizeof(cliStatus));
+                        std::string cliUuid(reinterpret_cast<char *>(cliStatus.uuid.data()));
+                        if (cliStatus.status == LOSE_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
+                            std::cout << "Client " << cliUuid << " disconnected." << std::endl;
+                        } else if (cliStatus.status == NEW_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
+                            std::cout << "Client " << cliUuid << " connected." << std::endl;
+                        }
                     }
                 }
                 _timer.cancel();
