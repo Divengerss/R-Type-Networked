@@ -2,13 +2,18 @@
 #define PACKETS_HPP
 
 #include <cstdint>
+#include <array>
+#include <string>
+#include <cstring>
 
-#define ACCEPTED  0x01
-#define REJECTED  0x02
+#define ACCEPTED    0x01U
+#define REJECTED    0x02U
+#define NEW_CLIENT  0x03U
+#define LOSE_CLIENT 0x04U
 
-#define REQUEST   0x00
+#define REQUEST     0x00U
 
-#define UUID_SIZE  0x24UL
+#define UUID_SIZE   0x24UL
 
 #pragma pack(push, 1)
 
@@ -19,6 +24,7 @@ namespace packet
         PLACEHOLDER,
         CONNECTION_REQUEST,
         DISCONNECTION_REQUEST,
+        CLIENT_STATUS,
     };
 
     struct packetHeader
@@ -41,21 +47,37 @@ namespace packet
         }
         connectionRequest(uint8_t status, const std::string &cliUuid) : status(status)
         {
-            std::memcpy(&uuid, cliUuid.data(), UUID_SIZE);
+            std::memmove(&uuid, cliUuid.data(), UUID_SIZE);
         }
     };
 
     struct disconnectionRequest
     {
         std::uint8_t status;
-        std::array<packetTypes, UUID_SIZE> uuid;
+        std::array<std::uint8_t, UUID_SIZE> uuid;
 
         disconnectionRequest(const std::string &cliUuid) : status(REQUEST)
         {
-            std::memcpy(&uuid, cliUuid.data(), UUID_SIZE);
+            std::memmove(&uuid, cliUuid.data(), UUID_SIZE);
         }
         disconnectionRequest(uint8_t status) : status(status), uuid({})
         {
+        }
+    };
+
+    struct clientStatus
+    {
+        std::uint8_t status;
+        std::array<std::uint8_t, UUID_SIZE> uuid;
+
+        clientStatus() : status(LOSE_CLIENT) {}
+        clientStatus(const std::string &cliUuid) : status(LOSE_CLIENT)
+        {
+            std::memmove(&uuid, cliUuid.data(), UUID_SIZE);
+        }
+        clientStatus(const std::string &cliUuid, std::uint8_t status) : status(status)
+        {
+            std::memmove(&uuid, cliUuid.data(), UUID_SIZE);
         }
     };
 };
