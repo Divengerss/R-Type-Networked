@@ -316,7 +316,7 @@ namespace net
             {
                 if (!errCode) {
                     packet::packetHeader header;
-                    std::memcpy(&header, &_packet, sizeof(header));
+                    std::memmove(&header, _packet.data(), sizeof(header));
                     if (header.type == packet::PLACEHOLDER) {
                         std::cout << "Received a placeholder packet from server" << std::endl;
                     } else if (header.type == packet::CONNECTION_REQUEST) {
