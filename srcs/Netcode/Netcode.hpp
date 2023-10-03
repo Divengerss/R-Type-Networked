@@ -260,7 +260,6 @@ namespace net
                     setClientInstance(this);
                     _timer.async_wait([&](const asio::error_code &error) {
                         if (!error) {
-                            std::cout << "test" << std::endl;
                             _socket.cancel();
                             if (!std::strncmp(_uuid.data(), std::string(UUID_SIZE, 0).data(), UUID_SIZE)) {
                                 std::cerr << "Connection timeout. Could not connect to server." << std::endl;
