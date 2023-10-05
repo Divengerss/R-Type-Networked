@@ -1,12 +1,10 @@
-# This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
-# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
 name: Compilation CMake multi-platform
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "main", "dev" ]
   pull_request:
-    branches: [ "dev" ]
+    branches: [ "main", "dev" ]
 
 jobs:
   build:
@@ -73,12 +71,6 @@ jobs:
         vcpkg install asio sfml
         cd ..
       if: matrix.os == 'windows-latest'
-
-    - name: Debug
-      run: |
-        ls -R
-        pwd
-      if: matrix.os == 'macOS-latest'
 
     - name: Configure and build
       run: |
