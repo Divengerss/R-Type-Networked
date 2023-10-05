@@ -1,6 +1,7 @@
 r-type_client
 r-type_server
 Build/
+build/
 *.o
 .idea/
 .vscode/
