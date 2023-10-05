@@ -22,18 +22,18 @@ jobs:
 
     - name: Install CMake
       run: |
-        mkdir cmake
-        cd cmake
-        curl -L https://github.com/Kitware/CMake/releases/download/v${{ matrix.cmake_version }}/cmake-${{ matrix.cmake_version }}-$(uname -s)-$(uname -m).tar.gz | tar --strip-components=1 -xz
-        export PATH="$PWD/bin:$PATH"
+        if [[ "$RUNNER_OS" == "Linux" ]]; then
+          mkdir cmake
+          cd cmake
+          curl -L https://github.com/Kitware/CMake/releases/download/v${{ matrix.cmake_version }}/cmake-${{ matrix.cmake_version }}-$(uname -s)-$(uname -m).tar.gz | tar --strip-components=1 -xz
+          export PATH="$PWD/bin:$PATH"
+        elif [[ "$RUNNER_OS" == "macOS" ]]; then
+          brew install cmake
+        elif [[ "$RUNNER_OS" == "Windows" ]]; then
+          choco install cmake --version ${{ matrix.cmake_version }} --install-arguments 'ADD_CMAKE_TO_PATH=System'
+        fi
         cmake --version
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
-
-    - name: Install CMake (Windows)
-      run: |
-        choco install cmake --version ${{ matrix.cmake_version }} --install-arguments 'ADD_CMAKE_TO_PATH=System'
-        cmake --version
-      if: matrix.os == 'windows-latest'
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest' || matrix.os == 'windows-latest'
 
     - name: Configure and build
       run: |
