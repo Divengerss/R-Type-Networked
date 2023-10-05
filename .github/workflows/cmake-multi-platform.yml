@@ -38,14 +38,10 @@ jobs:
         sudo apt-get -y update
         sudo apt-get -y install autoconf automake libtool pkg-config
 
-    - name: Check Autotools
+    - name: Install system X libraries and OpenGL
       run: |
-        autoconf --version
-        autoheader --version
-        aclocal --version
-        automake --version
-        libtoolize --version
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+        sudo apt-get -y update
+        sudo apt-get -y libudev libx11 libxrandr libxcursor opengl
 
     - name: Install Asio and SFML using vcpkg
       run: |
