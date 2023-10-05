@@ -56,14 +56,14 @@ jobs:
         sudo apt-get -y install libudev-dev libx11-dev libxrandr-dev libxcursor-dev libgl1-mesa-dev
       if: matrix.os == 'ubuntu-latest'
 
-    - name: Install Asio and SFML using vcpkg
+    - name: Install Asio and SFML using vcpkg (Ubuntu & macOS)
       run: |
         cd vcpkg
         ./bootstrap-vcpkg.sh
         ./vcpkg integrate install
         ./vcpkg install asio sfml
         cd ..
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest' || matrix.os == 'windows-latest'
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
 
     - name: Install Asio and SFML using vcpkg (Windows)
       run: |
