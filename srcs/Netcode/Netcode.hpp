@@ -12,20 +12,19 @@
 #include "Uuid.hpp"
 
 // Default values used if parsing fails or invalid values are set.
-#define DEFAULT_HOST        "127.0.0.1"
-#define DEFAULT_PORT        12345
-#define DEFAULT_TIMEOUT     5
-
-#define PACKET_SIZE     1024
+static constexpr std::string defaultHost = "127.0.0.1";
+static constexpr std::uint16_t defaultPort = 12345U;
+static constexpr std::uint8_t defaultTimeout = 5U;
+static constexpr std::uint32_t packetSize = 1024U;
 
 #ifdef _WIN32
-    #define SERVER_CONFIG_FILE_PATH     "\\server.cfg"
-    #define CLIENT_CONFIG_FILE_PATH     "\\client.cfg"
-    #define SERVER_LOG_FILE             "\\server.log"
+    static constexpr std::string serverConfigFilePath = "\\server.cfg";
+    static constexpr std::string clientConfigFilePath = "\\client.cfg";
+    static constexpr std::string serverLogFile = "\\server.log";
 #else
-    #define SERVER_CONFIG_FILE_PATH     "/server.cfg"
-    #define CLIENT_CONFIG_FILE_PATH     "/client.cfg"
-    #define SERVER_LOG_FILE             "/server.log"
+    static constexpr std::string serverConfigFilePath = "/server.cfg";
+    static constexpr std::string clientConfigFilePath = "/client.cfg";
+    static constexpr std::string serverLogFile = "/server.log";
 #endif /* !_WIN32 */
 
 namespace net
@@ -37,23 +36,23 @@ namespace net
             Server(asio::io_context &ioContext, asio::io_context &ioService) :
                 _ioContext(ioContext),
                 _ioService(ioService),
-                _host(DEFAULT_HOST),
-                _port(DEFAULT_PORT),
-                _socket(_ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), DEFAULT_PORT)),
-                _logs(Log(utils::getCurrDir() + SERVER_LOG_FILE)),
+                _host(defaultHost),
+                _port(defaultPort),
+                _socket(_ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), defaultPort)),
+                _logs(Log(utils::getCurrDir() + serverLogFile)),
                 _clients({})
             {
-                _logs.logTo(INFO, "Starting up R-Type server...");
-                utils::ParseCFG config(utils::getCurrDir() + SERVER_CONFIG_FILE_PATH);
+                _logs.logTo(logInfo, "Starting up R-Type server...");
+                utils::ParseCFG config(utils::getCurrDir() + serverConfigFilePath);
                 try {
                     _host = config.getData<std::string>("host");
                     _port = static_cast<std::uint16_t>(std::stoi(config.getData<std::string>("port")));
-                    _logs.logTo(INFO, "Retrieved configs successfully");
+                    _logs.logTo(logInfo, "Retrieved configs successfully");
                 } catch (const Error &e) {
                     std::string err = e.what();
-                    setConnection(DEFAULT_HOST, DEFAULT_PORT);
-                    _logs.logTo(ERR, "Failed to retrieve configs: " + err);
-                    _logs.logTo(WARN, "Default host and ports applied");
+                    setConnection(defaultHost, defaultPort);
+                    _logs.logTo(logErr, "Failed to retrieve configs: " + err);
+                    _logs.logTo(logWarn, "Default host and ports applied");
                 }
                 asio::ip::udp::socket::reuse_address option(true);
                 _socket.set_option(option);
@@ -61,15 +60,15 @@ namespace net
                     _socket = asio::ip::udp::socket(_ioContext, asio::ip::udp::endpoint(asio::ip::make_address(_host), _port));
                 } catch (const std::exception &e) {
                     std::string err = e.what();
-                    _logs.logTo(ERR, "Failed to start the server: " + err);
+                    _logs.logTo(logErr, "Failed to start the server: " + err);
                     throw std::runtime_error("bind");
                 }
                 _threadPool.emplace_back([&]() {
-                    _logs.logTo(INFO, "Starting network execution context");
+                    _logs.logTo(logInfo, "Starting network execution context");
                     _ioContext.run();
                 });
                 _threadPool.emplace_back([&]() {
-                    _logs.logTo(INFO, "Starting network execution service");
+                    _logs.logTo(logInfo, "Starting network execution service");
                     _ioService.run();
                 });
                 std::signal(SIGINT, signalHandler);
@@ -120,16 +119,16 @@ namespace net
                 std::memmove(&buffer, &header, sizeof(header));
                 std::memmove(&buffer[sizeof(header)], &packet, header.dataSize);
                 if (cliUuid.empty() && !_clients.empty())
-                    _logs.logTo(INFO, "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
+                    _logs.logTo(logInfo, "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
                 for (const auto &[uuid, client] : _clients) {
                     if (!cliUuid.empty()) {
                         if (cliUuid == uuid) {
                             _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client);
-                            _logs.logTo(INFO, "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
+                            _logs.logTo(logInfo, "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
                         }
                     } else {
                         _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client);
-                        _logs.logTo(INFO, "    Sent to [" + uuid + "]");
+                        _logs.logTo(logInfo, "    Sent to [" + uuid + "]");
                     }
                 }
             }
@@ -139,24 +138,24 @@ namespace net
                 packet::packetHeader header = *reinterpret_cast<packet::packetHeader *>(_packet.data());
                 if (header.type == packet::CONNECTION_REQUEST) {
                     std::string cliUuid = addClient();
-                    packet::connectionRequest response(ACCEPTED, cliUuid);
-                    _logs.logTo(INFO, "New connection received: UUID [" + cliUuid + "]");
+                    packet::connectionRequest response(packet::ACCEPTED, cliUuid);
+                    _logs.logTo(logInfo, "New connection received: UUID [" + cliUuid + "]");
                     header.type = packet::CONNECTION_REQUEST;
                     header.dataSize = sizeof(response);
                     std::array<std::uint8_t, sizeof(header) + sizeof(response)> buffer;
                     std::memmove(&buffer, &header, sizeof(header));
                     std::memmove(&buffer[sizeof(header)], &response, sizeof(response));
                     _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
-                    packet::clientStatus cliStatus(cliUuid, NEW_CLIENT);
+                    packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT);
                     sendResponse(packet::CLIENT_STATUS, cliStatus);
                 } else if (header.type == packet::DISCONNECTION_REQUEST) {
-                    packet::disconnectionRequest request(ACCEPTED);
+                    packet::disconnectionRequest request(packet::ACCEPTED);
                     std::memmove(&request, &_packet[sizeof(header)], sizeof(request));
-                    std::string cliUuid(UUID_SIZE, 0);
-                    std::memmove(cliUuid.data(), &request.uuid, UUID_SIZE);
+                    std::string cliUuid(uuidSize, 0);
+                    std::memmove(cliUuid.data(), &request.uuid, uuidSize);
                     _clients.erase(cliUuid.data());
-                    _logs.logTo(INFO, "Disconnection received from [" + cliUuid + "]");
-                    packet::clientStatus cliStatus(cliUuid, LOSE_CLIENT);
+                    _logs.logTo(logInfo, "Disconnection received from [" + cliUuid + "]");
+                    packet::clientStatus cliStatus(cliUuid, packet::LOSE_CLIENT);
                     sendResponse(packet::CLIENT_STATUS, cliStatus);
                 }
             }
@@ -165,10 +164,10 @@ namespace net
             {
                 if (!errCode) {
                     handleRequestStatus();
-                } else if (bytesReceived == 0) {
-                    _logs.logTo(INFO, "The received packet was empty. " + errCode.message());
+                } else if (bytesReceived == 0UL) {
+                    _logs.logTo(logInfo, "The received packet was empty. " + errCode.message());
                 } else {
-                    _logs.logTo(ERR, "Error receiving packet: " + errCode.message());
+                    _logs.logTo(logErr, "Error receiving packet: " + errCode.message());
                 }
                 receive();
             }
@@ -184,14 +183,14 @@ namespace net
 
             void startServer() {
                 setServerInstance(this);
-                _logs.logTo(INFO, "Server initialized successfully");
-                _logs.logTo(INFO, "Listening at " + _host + " on port " + std::to_string(_port));
+                _logs.logTo(logInfo, "Server initialized successfully");
+                _logs.logTo(logInfo, "Listening at " + _host + " on port " + std::to_string(_port));
                 receive();
             }
 
             static void signalHandler(int signum) {
                 if (signum == SIGINT && serverInstance) {
-                    serverInstance->_logs.logTo(INFO, "Received SIGINT (CTRL-C). Shutting down gracefully...");
+                    serverInstance->_logs.logTo(logInfo, "Received SIGINT (CTRL-C). Shutting down gracefully...");
                     serverInstance->_ioContext.stop();
                     serverInstance->_ioService.stop();
                     for (auto &thread : serverInstance->_threadPool) {
@@ -219,7 +218,7 @@ namespace net
             asio::ip::udp::socket _socket;
             asio::error_code _errCode;
             std::vector<std::thread> _threadPool;
-            std::array<std::uint8_t, PACKET_SIZE> _packet;
+            std::array<std::uint8_t, packetSize> _packet;
             Log _logs;
             std::unordered_map<std::string, asio::ip::udp::endpoint> _clients;
             static Server* serverInstance;
@@ -234,20 +233,20 @@ namespace net
             Client() = delete;
             Client(asio::io_context &ioContext, const std::string &host, const std::string &port) :
                 _errCode(asio::error_code()), _resolver(ioContext), _endpoint(*_resolver.resolve(asio::ip::udp::v4(), host, port).begin()),
-                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(UUID_SIZE, 0), _packet({})
+                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(uuidSize, 0), _packet({})
             {
                 try {
-                    utils::ParseCFG config(utils::getCurrDir() + CLIENT_CONFIG_FILE_PATH);
+                    utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath);
                     std::uint8_t timeout;
                     try {
                         timeout = static_cast<std::uint8_t>(std::stoi(config.getData<std::string>("timeout")));
-                        if (timeout < 1) {
-                            std::cout << "Warning: Timeout value should not be lower than 1 second. " << DEFAULT_TIMEOUT << " seconds will be used instead." << std::endl;
-                            timeout = DEFAULT_TIMEOUT;
+                        if (timeout < 1U) {
+                            std::cout << "Warning: Timeout value should not be lower than 1 second. " << defaultTimeout << " seconds will be used instead." << std::endl;
+                            timeout = defaultTimeout;
                         }
                     } catch (const Error &e) {
                         std::cerr << e.what() << std::endl;
-                        timeout = DEFAULT_TIMEOUT;
+                        timeout = defaultTimeout;
                     }
                     _timer.expires_after(std::chrono::seconds(timeout));
                     _socket.open(asio::ip::udp::v4());
@@ -261,9 +260,9 @@ namespace net
                     _timer.async_wait([&](const asio::error_code &error) {
                         if (!error) {
                             _socket.cancel();
-                            if (!std::strncmp(_uuid.data(), std::string(UUID_SIZE, 0).data(), UUID_SIZE)) {
+                            if (!std::strncmp(_uuid.data(), std::string(uuidSize, 0).data(), uuidSize)) {
                                 std::cerr << "Connection timeout. Could not connect to server." << std::endl;
-                                std::exit(0);
+                                std::exit(EXIT_SUCCESS);
                             }
                         }
                     });
@@ -322,15 +321,15 @@ namespace net
                     } else if (header.type == packet::CONNECTION_REQUEST) {
                         packet::connectionRequest request;
                         std::memmove(&request, &_packet[sizeof(header)], header.dataSize);
-                        std::memmove(_uuid.data(), &request.uuid, UUID_SIZE);
+                        std::memmove(_uuid.data(), &request.uuid, uuidSize);
                         std::cout << "Got uuid = " << _uuid << std::endl;
                     } else if (header.type == packet::CLIENT_STATUS) {
                         packet::clientStatus cliStatus;
                         std::memmove(&cliStatus, &_packet[sizeof(header)], sizeof(cliStatus));
                         std::string cliUuid(reinterpret_cast<char *>(cliStatus.uuid.data()));
-                        if (cliStatus.status == LOSE_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
+                        if (cliStatus.status == packet::LOSE_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
                             std::cout << "Client " << cliUuid << " disconnected." << std::endl;
-                        } else if (cliStatus.status == NEW_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
+                        } else if (cliStatus.status == packet::NEW_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
                             std::cout << "Client " << cliUuid << " connected." << std::endl;
                         }
                     }
@@ -377,7 +376,7 @@ namespace net
             asio::steady_timer _timer;
             std::string _uuid;
             std::vector<std::thread> _threadPool;
-            std::array<std::uint8_t, PACKET_SIZE> _packet;
+            std::array<std::uint8_t, packetSize> _packet;
             static Client* clientInstance;
     };
 

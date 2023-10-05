@@ -2,7 +2,7 @@
 #include "Netcode.hpp"
 
 int main() {
-    utils::ParseCFG config(utils::getCurrDir() + CLIENT_CONFIG_FILE_PATH);
+    utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath);
     asio::io_context ioContext;
     rtype::Game game;
     try {
