@@ -41,7 +41,7 @@ jobs:
     - name: Install system X libraries and OpenGL
       run: |
         sudo apt-get -y update
-        sudo apt-get -y install libudev libx11 libxrandr libxcursor opengl
+        sudo apt-get -y install libudev-dev libx11-dev libxrandr-dev libxcursor-dev libgl1-mesa-dev
 
     - name: Install Asio and SFML using vcpkg
       run: |
