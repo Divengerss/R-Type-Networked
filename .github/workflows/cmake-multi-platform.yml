@@ -36,7 +36,7 @@ jobs:
     - name: Install Autotools
       run: |
         sudo apt-get -y update
-        sudo apt-get -y install autoconf automake libtool
+        sudo apt-get -y install autoconf automake libtool pkg-config
 
     - name: Check Autotools
       run: |
