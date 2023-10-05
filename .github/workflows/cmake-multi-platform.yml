@@ -33,6 +33,15 @@ jobs:
         sudo apt-get -y install cmake
         cmake --version
 
+    - name: Check installed tools
+      run: |
+        autoconf --version
+        autoheader --version
+        aclocal --version
+        automake --version
+        libtoolize --version
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+
     - name: Install Asio and SFML using vcpkg
       run: |
         cd vcpkg
