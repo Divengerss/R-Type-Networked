@@ -20,20 +20,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Install CMake
-      run: |
-        if [[ "$RUNNER_OS" == "Linux" ]]; then
-          mkdir cmake
-          cd cmake
-          curl -L https://github.com/Kitware/CMake/releases/download/v${{ matrix.cmake_version }}/cmake-${{ matrix.cmake_version }}-$(uname -s)-$(uname -m).tar.gz | tar --strip-components=1 -xz
-          export PATH="$PWD/bin:$PATH"
-        elif [[ "$RUNNER_OS" == "macOS" ]]; then
-          brew install cmake
-        elif [[ "$RUNNER_OS" == "Windows" ]]; then
-          choco install cmake --version ${{ matrix.cmake_version }} --install-arguments 'ADD_CMAKE_TO_PATH=System'
-        fi
-        cmake --version
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest' || matrix.os == 'windows-latest'
+    - name: Setup CMake
+      if: matrix.os == 'ubuntu-latest'
+      uses: cmake/setup-cmake@v1
+      with:
+        cmake-version: ${{ matrix.cmake_version }}
+        path-to-cmake: /usr/local/bin/cmake  # Adjust the path as needed
+
+    - name: Install CMake (macOS)
+      if: matrix.os == 'macOS-latest'
+      run: brew install cmake
+
+    - name: Install CMake (Windows)
+      if: matrix.os == 'windows-latest'
+      run: choco install cmake --version ${{ matrix.cmake_version }} --install-arguments 'ADD_CMAKE_TO_PATH=System'
 
     - name: Configure and build
       run: |
