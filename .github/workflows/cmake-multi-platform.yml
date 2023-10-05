@@ -17,8 +17,14 @@ jobs:
         cmake_version: [3.21.2]
 
     steps:
-    - name: Checkout code
+    - name: Checkout code with submodules
       uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+
+    - name: Initialize and update vcpkg submodule
+      run: git submodule update --init --recursive
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
 
     - name: Install CMake (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
@@ -26,13 +32,6 @@ jobs:
         sudo apt-get -y update
         sudo apt-get -y install cmake
         cmake --version
-
-    - name: Debug
-      run: |
-        ls -R
-        pwd
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
-
 
     - name: Configure and build
       run: |
