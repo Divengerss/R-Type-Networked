@@ -33,6 +33,15 @@ jobs:
         sudo apt-get -y install cmake
         cmake --version
 
+    - name: Install Asio and SFML using vcpkg
+      run: |
+        cd vcpkg
+        ./bootstrap-vcpkg.sh
+        ./vcpkg integrate install
+        ./vcpkg install asio sfml
+        cd ..
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest' || matrix.os == 'windows-latest'
+
     - name: Configure and build
       run: |
         mkdir -p build
