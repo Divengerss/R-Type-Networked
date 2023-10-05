@@ -12,19 +12,19 @@
 #include "Uuid.hpp"
 
 // Default values used if parsing fails or invalid values are set.
-static constexpr std::string defaultHost = "127.0.0.1";
+static constexpr std::string_view defaultHost = "127.0.0.1";
 static constexpr std::uint16_t defaultPort = 12345U;
 static constexpr std::uint8_t defaultTimeout = 5U;
 static constexpr std::uint32_t packetSize = 1024U;
 
 #ifdef _WIN32
-    static constexpr std::string serverConfigFilePath = "\\server.cfg";
-    static constexpr std::string clientConfigFilePath = "\\client.cfg";
-    static constexpr std::string serverLogFile = "\\server.log";
+    static constexpr std::string_view serverConfigFilePath = "\\server.cfg";
+    static constexpr std::string_view clientConfigFilePath = "\\client.cfg";
+    static constexpr std::string_view serverLogFile = "\\server.log";
 #else
-    static constexpr std::string serverConfigFilePath = "/server.cfg";
-    static constexpr std::string clientConfigFilePath = "/client.cfg";
-    static constexpr std::string serverLogFile = "/server.log";
+    static constexpr std::string_view serverConfigFilePath = "/server.cfg";
+    static constexpr std::string_view clientConfigFilePath = "/client.cfg";
+    static constexpr std::string_view serverLogFile = "/server.log";
 #endif /* !_WIN32 */
 
 namespace net
@@ -39,20 +39,20 @@ namespace net
                 _host(defaultHost),
                 _port(defaultPort),
                 _socket(_ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), defaultPort)),
-                _logs(Log(utils::getCurrDir() + serverLogFile)),
+                _logs(Log(utils::getCurrDir() + serverLogFile.data())),
                 _clients({})
             {
-                _logs.logTo(logInfo, "Starting up R-Type server...");
-                utils::ParseCFG config(utils::getCurrDir() + serverConfigFilePath);
+                _logs.logTo(logInfo.data(), "Starting up R-Type server...");
+                utils::ParseCFG config(utils::getCurrDir() + serverConfigFilePath.data());
                 try {
                     _host = config.getData<std::string>("host");
                     _port = static_cast<std::uint16_t>(std::stoi(config.getData<std::string>("port")));
-                    _logs.logTo(logInfo, "Retrieved configs successfully");
+                    _logs.logTo(logInfo.data(), "Retrieved configs successfully");
                 } catch (const Error &e) {
                     std::string err = e.what();
-                    setConnection(defaultHost, defaultPort);
-                    _logs.logTo(logErr, "Failed to retrieve configs: " + err);
-                    _logs.logTo(logWarn, "Default host and ports applied");
+                    setConnection(defaultHost.data(), defaultPort);
+                    _logs.logTo(logErr.data(), "Failed to retrieve configs: " + err);
+                    _logs.logTo(logWarn.data(), "Default host and ports applied");
                 }
                 asio::ip::udp::socket::reuse_address option(true);
                 _socket.set_option(option);
@@ -60,15 +60,15 @@ namespace net
                     _socket = asio::ip::udp::socket(_ioContext, asio::ip::udp::endpoint(asio::ip::make_address(_host), _port));
                 } catch (const std::exception &e) {
                     std::string err = e.what();
-                    _logs.logTo(logErr, "Failed to start the server: " + err);
+                    _logs.logTo(logErr.data(), "Failed to start the server: " + err);
                     throw std::runtime_error("bind");
                 }
                 _threadPool.emplace_back([&]() {
-                    _logs.logTo(logInfo, "Starting network execution context");
+                    _logs.logTo(logInfo.data(), "Starting network execution context");
                     _ioContext.run();
                 });
                 _threadPool.emplace_back([&]() {
-                    _logs.logTo(logInfo, "Starting network execution service");
+                    _logs.logTo(logInfo.data(), "Starting network execution service");
                     _ioService.run();
                 });
                 std::signal(SIGINT, signalHandler);
@@ -119,16 +119,16 @@ namespace net
                 std::memmove(&buffer, &header, sizeof(header));
                 std::memmove(&buffer[sizeof(header)], &packet, header.dataSize);
                 if (cliUuid.empty() && !_clients.empty())
-                    _logs.logTo(logInfo, "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
+                    _logs.logTo(logInfo.data(), "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
                 for (const auto &[uuid, client] : _clients) {
                     if (!cliUuid.empty()) {
                         if (cliUuid == uuid) {
                             _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client);
-                            _logs.logTo(logInfo, "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
+                            _logs.logTo(logInfo.data(), "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
                         }
                     } else {
                         _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client);
-                        _logs.logTo(logInfo, "    Sent to [" + uuid + "]");
+                        _logs.logTo(logInfo.data(), "    Sent to [" + uuid + "]");
                     }
                 }
             }
@@ -139,7 +139,7 @@ namespace net
                 if (header.type == packet::CONNECTION_REQUEST) {
                     std::string cliUuid = addClient();
                     packet::connectionRequest response(packet::ACCEPTED, cliUuid);
-                    _logs.logTo(logInfo, "New connection received: UUID [" + cliUuid + "]");
+                    _logs.logTo(logInfo.data(), "New connection received: UUID [" + cliUuid + "]");
                     header.type = packet::CONNECTION_REQUEST;
                     header.dataSize = sizeof(response);
                     std::array<std::uint8_t, sizeof(header) + sizeof(response)> buffer;
@@ -154,7 +154,7 @@ namespace net
                     std::string cliUuid(uuidSize, 0);
                     std::memmove(cliUuid.data(), &request.uuid, uuidSize);
                     _clients.erase(cliUuid.data());
-                    _logs.logTo(logInfo, "Disconnection received from [" + cliUuid + "]");
+                    _logs.logTo(logInfo.data(), "Disconnection received from [" + cliUuid + "]");
                     packet::clientStatus cliStatus(cliUuid, packet::LOSE_CLIENT);
                     sendResponse(packet::CLIENT_STATUS, cliStatus);
                 }
@@ -165,9 +165,9 @@ namespace net
                 if (!errCode) {
                     handleRequestStatus();
                 } else if (bytesReceived == 0UL) {
-                    _logs.logTo(logInfo, "The received packet was empty. " + errCode.message());
+                    _logs.logTo(logInfo.data(), "The received packet was empty. " + errCode.message());
                 } else {
-                    _logs.logTo(logErr, "Error receiving packet: " + errCode.message());
+                    _logs.logTo(logErr.data(), "Error receiving packet: " + errCode.message());
                 }
                 receive();
             }
@@ -183,14 +183,14 @@ namespace net
 
             void startServer() {
                 setServerInstance(this);
-                _logs.logTo(logInfo, "Server initialized successfully");
-                _logs.logTo(logInfo, "Listening at " + _host + " on port " + std::to_string(_port));
+                _logs.logTo(logInfo.data(), "Server initialized successfully");
+                _logs.logTo(logInfo.data(), "Listening at " + _host + " on port " + std::to_string(_port));
                 receive();
             }
 
             static void signalHandler(int signum) {
                 if (signum == SIGINT && serverInstance) {
-                    serverInstance->_logs.logTo(logInfo, "Received SIGINT (CTRL-C). Shutting down gracefully...");
+                    serverInstance->_logs.logTo(logInfo.data(), "Received SIGINT (CTRL-C). Shutting down gracefully...");
                     serverInstance->_ioContext.stop();
                     serverInstance->_ioService.stop();
                     for (auto &thread : serverInstance->_threadPool) {
@@ -236,7 +236,7 @@ namespace net
                 _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(uuidSize, 0), _packet({})
             {
                 try {
-                    utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath);
+                    utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
                     std::uint8_t timeout;
                     try {
                         timeout = static_cast<std::uint8_t>(std::stoi(config.getData<std::string>("timeout")));

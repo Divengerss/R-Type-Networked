@@ -6,9 +6,9 @@
 #include <iostream>
 #include <ctime>
 
-static constexpr std::string logInfo = "I";
-static constexpr std::string logWarn = "W";
-static constexpr std::string logErr = "E";
+static constexpr std::string_view logInfo = "I";
+static constexpr std::string_view logWarn = "W";
+static constexpr std::string_view logErr = "E";
 
 namespace net
 {
