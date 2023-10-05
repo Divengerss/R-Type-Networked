@@ -25,7 +25,7 @@ jobs:
       uses: cmake/setup-cmake@v1
       with:
         cmake-version: ${{ matrix.cmake_version }}
-        path-to-cmake: /usr/local/bin/cmake  # Adjust the path as needed
+        path-to-cmake: /usr/local/bin/cmake
 
     - name: Install CMake (macOS)
       if: matrix.os == 'macOS-latest'
