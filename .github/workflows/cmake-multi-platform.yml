@@ -36,7 +36,7 @@ jobs:
     - name: Install Autotools
       run: |
         sudo apt-get -y update
-        sudo apt-get -y install autoconf autoheader aclocal automake libtool
+        sudo apt-get -y install autoconf automake libtool
 
     - name: Check Autotools
       run: |
