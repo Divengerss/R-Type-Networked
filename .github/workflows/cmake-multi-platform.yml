@@ -74,6 +74,12 @@ jobs:
         cd ..
       if: matrix.os == 'windows-latest'
 
+    - name: Debug
+      run: |
+        ls -R
+        pwd
+      if: matrix.os == 'macOS-latest'
+
     - name: Configure and build
       run: |
         mkdir -p build
