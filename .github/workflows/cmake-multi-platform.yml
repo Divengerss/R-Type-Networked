@@ -27,6 +27,13 @@ jobs:
         sudo apt-get -y install cmake
         cmake --version
 
+    - name: Debug
+      run: |
+        ls -R
+        pwd
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+
+
     - name: Configure and build
       run: |
         mkdir -p build
