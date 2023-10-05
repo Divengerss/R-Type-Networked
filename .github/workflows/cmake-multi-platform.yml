@@ -33,6 +33,9 @@ jobs:
         sudo apt-get -y install cmake
         cmake --version
 
+    - name: Install Autoconf
+      run: sudo apt-get -y update && sudo apt-get -y install autoconf
+
     - name: Check installed tools
       run: |
         autoconf --version
