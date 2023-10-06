@@ -1,5 +1,5 @@
 #include "Client.hpp"
-#include "Netcode.hpp"
+#include "Network.hpp"
 
 int main() {
     utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
