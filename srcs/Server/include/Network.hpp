@@ -26,6 +26,21 @@ static constexpr std::uint32_t packetSize = 1024U;
 
 namespace net
 {
+    class Client
+    {
+        public:
+            Client() = delete;
+            Client(const std::string &uuid, asio::ip::udp::endpoint &endpoint) : _uuid(uuid), _endpoint(endpoint) {}
+            ~Client() = default;
+
+            const std::string &getUuid() const noexcept { return _uuid; };
+            asio::ip::udp::endpoint &getEndpoint() noexcept { return _endpoint; };
+
+        private:
+            std::string _uuid;
+            asio::ip::udp::endpoint _endpoint;
+    };
+
     class Server
     {
         public:
@@ -88,7 +103,7 @@ namespace net
             const asio::ip::udp::endpoint &getServerEndpoint() const noexcept {return _serverEndpoint;}
             const asio::ip::udp::socket &getSocket() const noexcept {return _socket;}
             const asio::error_code &getAsioErrorCode() const noexcept {return _errCode;}
-            const std::unordered_map<std::string, asio::ip::udp::endpoint> &getClients() const noexcept {return _clients;}
+            const std::vector<Client> &getClients() const noexcept {return _clients;}
 
             void setHost(const std::string &host) {_host = host;}
             void setPort(std::uint16_t port) {_port = port;}
@@ -117,15 +132,15 @@ namespace net
                 std::memmove(&buffer[sizeof(header)], &packet, header.dataSize);
                 if (cliUuid.empty() && !_clients.empty())
                     _logs.logTo(logInfo.data(), "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
-                for (const auto &[uuid, client] : _clients) {
+                for (Client &client : _clients) {
                     if (!cliUuid.empty()) {
-                        if (cliUuid == uuid) {
-                            _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client);
+                        if (cliUuid == client.getUuid()) {
+                            _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client.getEndpoint());
                             _logs.logTo(logInfo.data(), "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
                         }
                     } else {
-                        _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client);
-                        _logs.logTo(logInfo.data(), "    Sent to [" + uuid + "]");
+                        _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client.getEndpoint());
+                        _logs.logTo(logInfo.data(), "    Sent to [" + client.getUuid() + "]");
                     }
                 }
             }
@@ -150,7 +165,7 @@ namespace net
                     std::memmove(&request, &_packet[sizeof(header)], sizeof(request));
                     std::string cliUuid(uuidSize, 0);
                     std::memmove(cliUuid.data(), &request.uuid, uuidSize);
-                    _clients.erase(cliUuid.data());
+                    removeClient(cliUuid);
                     _logs.logTo(logInfo.data(), "Disconnection received from [" + cliUuid + "]");
                     packet::clientStatus cliStatus(cliUuid, packet::LOSE_CLIENT);
                     sendResponse(packet::CLIENT_STATUS, cliStatus);
@@ -202,8 +217,21 @@ namespace net
             std::string addClient()
             {
                 std::string cliUuid = uuid::generateUUID();
-                _clients[cliUuid] = _serverEndpoint;
+                _clients.push_back(Client(cliUuid, _serverEndpoint));
                 return cliUuid;
+            }
+
+            void removeClient(const std::string &uuid)
+            {
+                std::vector<Client>::iterator it = std::remove_if(_clients.begin(), _clients.end(),
+                    [&](const Client &client) {
+                        return client.getUuid() == uuid.data();
+                    }
+                );
+
+                if (it != _clients.end()) {
+                    _clients.erase(it, _clients.end());
+                }
             }
 
         private:
@@ -217,7 +245,7 @@ namespace net
             std::vector<std::thread> _threadPool;
             std::array<std::uint8_t, packetSize> _packet;
             Log _logs;
-            std::unordered_map<std::string, asio::ip::udp::endpoint> _clients;
+            std::vector<Client> _clients;
             static Server* serverInstance;
     };
 
