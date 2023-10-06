@@ -16,6 +16,8 @@
 #include <typeindex>
 #include <list>
 
+#include <iostream>
+
 using std::unordered_map;
 
 class Registry
@@ -30,7 +32,7 @@ public:
         _erase_functions[type_index] = [this](Registry &registry, Entity const &entity)
         {
             sparse_array<Component> components = registry.get_components<Component>();
-            components.erase(entity);
+            components.erase(entity());
         };
         _add_functions[type_index] = [this](Registry &registry)
         {
@@ -74,21 +76,31 @@ public:
             return entity;
         }
     };
-    Entity entity_from_index(std ::size_t idx);
+    Entity entity_from_index(std::size_t idx);
     void kill_entity(Entity const &e)
     {
         for (auto it : _erase_functions)
             it.second(*this, e);
-        _empty_entities.push_back(e);
+        _empty_entities.push_back(e());
         _empty_entities.sort();
     };
 
     template <typename Component>
-    typename sparse_array<Component>::reference_type add_component(Entity const &to, Component &&c)
+    typename sparse_array<Component>::reference_type add_component(Entity const &to, const Component &c)
     {
+        // sparse_array<Component> &array = get_components<Component>();
+        // array.insert_at(to, c);
+        // return array[to];
         sparse_array<Component> &array = get_components<Component>();
-        array.insert_at(to, c);
-        return array[to];
+        std::cout << "sjf " << std::endl;
+        array.insert_at(to(), c);
+        std::cout << "sjf " << std::endl;
+        if (to() < array.size()) {
+            return array[to()];
+        } else {
+            std::cout << "yoyo" << std::endl;
+            return array[to()];
+        }
     };
 
     template <typename Component, typename... Params>

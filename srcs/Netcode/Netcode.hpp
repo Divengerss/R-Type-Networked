@@ -6,6 +6,7 @@
 #include <asio.hpp>
 #include <iostream>
 #include <csignal>
+#include <functional>
 #include "CFGParser.hpp"
 #include "Packets.hpp"
 #include "Logs.hpp"

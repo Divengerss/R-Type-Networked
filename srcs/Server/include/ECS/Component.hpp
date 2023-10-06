@@ -12,6 +12,8 @@
 #include <vector>
 #include <any>
 
+#include <iostream>
+
 template <class Component> // You can also mirror the definition of std :: vector ,that takes an additional allocator.
 class sparse_array
 {
@@ -94,10 +96,20 @@ public:
         return _data.size();
     };
 
-    reference_type insert_at(size_type pos, Component const &value)
+    reference_type insert_at(size_type const &pos, Component const &value)
     {
-        _data.erase(_data.begin() + pos);
-        return _data.insert(_data.begin() + pos, value);
+        if (pos >= _data.size()) {
+            // std::cout << "ok" << std::endl;
+            std::cout << "pos: " << pos << std::endl;
+            std::cout << "_data.size(): " << _data.size() << std::endl;
+        }
+        if (_data.size())
+            _data.erase(_data.begin() + pos);
+        std::cout << "oui0 " << std::endl;
+        return *_data.insert(_data.begin() + pos, value);
+        // auto it = _data.erase(_data.begin() + pos);
+        // it = _data.insert(it, value);
+        //return *std::next(_data.begin(), pos);
     };
     reference_type insert_at(size_type pos, Component &&value)
     {

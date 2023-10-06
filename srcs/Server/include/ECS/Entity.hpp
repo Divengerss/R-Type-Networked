@@ -11,8 +11,8 @@
 
 class Entity {
     public:
-        explicit Entity(size_t size) {};
-        operator size_t() const {
+        explicit Entity(size_t size) : _size(size) {};
+        std::size_t operator() () const {
             return _size;
         };
     protected:

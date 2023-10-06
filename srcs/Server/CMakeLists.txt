@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(r-type_server)
 
-add_executable(${PROJECT_NAME} src/Server/Main.cpp)
+add_executable(${PROJECT_NAME} src/ECS/Registry.cpp)
 
 include_directories(
     include
