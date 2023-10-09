@@ -10,11 +10,11 @@
 
 class Destroyable {
     public:
-        Destroyable(bool destroyable) {
-            _destroyable = destroyable;
+        Destroyable(bool hp) {
+            _hp = hp;
         };
 
-        bool _destroyable;
+        int _hp;
 
     protected:
     private:

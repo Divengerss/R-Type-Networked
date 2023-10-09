@@ -6,13 +6,16 @@
 */
 
 #include "Registry.hpp"
+#include "Position.hpp"
+#include "Velocity.hpp"
 
 int main() {
     Registry reg;
     reg.register_component<Position>();
+    reg.register_component<Velocity>();
     Entity entity = reg.spawn_entity();
-    const Position pos = Position();
-    std::cout << entity() << std::endl;
-    reg.add_component<Position>(entity, pos);
-    reg.get_components<Position>();
+    auto positions = reg.get_components<Position>();
+    auto velocities = reg.get_components<Velocity>();
+    std::cout << positions.size() << " " << velocities.size() << std::endl;
+
 }

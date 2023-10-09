@@ -10,10 +10,10 @@
 
 class Damaging {
     public:
-        Damaging(bool damaging) {
-            _damaging = damaging;
+        Damaging(bool damages) {
+            _damages = damages;
         };
-        bool _damaging;
+        int _damages;
 
     protected:
     private:

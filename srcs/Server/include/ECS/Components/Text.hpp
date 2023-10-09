@@ -13,14 +13,12 @@
 
 class Text {
     public:
-        Text(std::string text, int size = 1, sf::Color color = sf::Color::White) {
+        Text(std::string text, int size = 1) {
             _text = text;
             _size = size;
-            _color = color;
         };
         std::string _text;
         int _size;
-        sf::Color _color;
 
     protected:
     private:

@@ -98,18 +98,14 @@ public:
 
     reference_type insert_at(size_type const &pos, Component const &value)
     {
-        if (pos >= _data.size()) {
-            // std::cout << "ok" << std::endl;
-            std::cout << "pos: " << pos << std::endl;
-            std::cout << "_data.size(): " << _data.size() << std::endl;
+        if(_data.size() != 0) {
+            auto it = _data.erase(_data.begin() + pos);
+            it = _data.insert(it, value);
+        } else {
+            auto it = _data.begin();
+            it = _data.insert(it, value);
         }
-        if (_data.size())
-            _data.erase(_data.begin() + pos);
-        std::cout << "oui0 " << std::endl;
-        return *_data.insert(_data.begin() + pos, value);
-        // auto it = _data.erase(_data.begin() + pos);
-        // it = _data.insert(it, value);
-        //return *std::next(_data.begin(), pos);
+        return *std::next(_data.begin(), pos);
     };
     reference_type insert_at(size_type pos, Component &&value)
     {
@@ -121,7 +117,7 @@ public:
     {
         _data.erase(_data.begin() + pos);
         return _data.emplace(_data.begin() + pos, data...);
-    };
+    }
     reference_type push_back(std::optional<Component> &&value) {
         _data.push_back(value);
         return (_data.back());

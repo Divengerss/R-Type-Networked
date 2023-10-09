@@ -1,29 +1,27 @@
 /*
 ** EPITECH PROJECT, 2023
-** r-type
+** Sans titre(Espace de travail)
 ** File description:
-** System
+** BonusSystem
 */
 
-#ifndef SYSTEM_HPP_
-#define SYSTEM_HPP_
+#ifndef BONUSSYSTEM_HPP_
+#define BONUSSYSTEM_HPP_
+
+#include "Registry.hpp"
 #include "Hitbox.hpp"
 #include "Position.hpp"
-#include "Destroyable.hpp"
-#include "Damaging.hpp"
 #include "Pickup.hpp"
+#include "Destroyable.hpp"
 #include "ActiveBonus.hpp"
-#include "Velocity.hpp"
-#include "MovementPattern.hpp"
-#include "Registry.hpp"
 
-class System
+class BonusSystem
 {
 public:
-    System();
-    ~System();
+    BonusSystem();
+    ~BonusSystem();
 
-    bool checkBonus(Registry &r)
+    void bonusSystem(Registry &r)
     {
         auto const hitboxes = r.get_components<Hitbox>();
         auto const positions = r.get_components<Position>();
@@ -90,4 +88,4 @@ protected:
 private:
 };
 
-#endif /* !SYSTEM_HPP_ */
+#endif /* !BONUSSYSTEM_HPP_ */

@@ -8,18 +8,20 @@
 #ifndef MOVEMENTPATTERN_HPP_
 #define MOVEMENTPATTERN_HPP_
 
-enum MovementPattern{
+enum MovementPatterns{
     STRAIGHT,
     SINUS,
     CIRCLE,
-    ZIGZAG,
 };
 
 class MovementPattern {
     public:
-        MovementPattern(MovementPattern) {
+        MovementPattern(MovementPatterns movementPattern) {
+            _movementPattern = movementPattern;
         };
 
+        MovementPatterns _movementPattern;
+        int _baseHeight;
     protected:
     private:
 };

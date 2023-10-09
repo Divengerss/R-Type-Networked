@@ -28,9 +28,14 @@ enum ForceBoost{
 
 class ActiveBonus {
     public:
-        ActiveBonus(ShootStyle, SpeedBoost, ForceBoost) {
+        ActiveBonus(int ss = ShootStyle::ONEBULLET, int sb = SpeedBoost::SPEEDNORMAL, int fb = ForceBoost::FORCENORMAL) {
+            _ss = ss;
+            _fb = fb;
+            _sb = sb;
         };
-
+    int _ss;
+    int _sb;
+    int _fb;
     protected:
     private:
 };

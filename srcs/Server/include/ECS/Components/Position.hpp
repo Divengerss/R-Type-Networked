@@ -10,10 +10,10 @@
 
 class Position {
     public:
-        Position(int x = 0, int y = 0) {_x=x; _y=y;};
+        Position(float x = 0, float y = 0) {_x=x; _y=y;};
 
-        int _x;
-        int _y;
+        float _x;
+        float _y;
     protected:
     private:
 };

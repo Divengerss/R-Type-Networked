@@ -9,6 +9,8 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/srcs/Netcode
     include/Server
     include/ECS
+    include/ECS/Components
+    include/ECS/Systems
     ${CMAKE_SOURCE_DIR}/includes
 
 )
