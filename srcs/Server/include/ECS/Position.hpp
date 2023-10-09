@@ -12,10 +12,10 @@ class Position {
     public:
         Position(int x = 0, int y = 0) {_x=x; _y=y;};
 
-    protected:
-    private:
         int _x;
         int _y;
+    protected:
+    private:
 };
 
 #endif /* !POSITION_HPP_ */
