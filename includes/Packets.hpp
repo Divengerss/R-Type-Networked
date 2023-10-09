@@ -18,6 +18,7 @@ namespace packet
         CONNECTION_REQUEST,
         DISCONNECTION_REQUEST,
         CLIENT_STATUS,
+        FORCE_DISCONNECT
     };
 
     enum packetStatus : std::uint8_t
