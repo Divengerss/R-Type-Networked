@@ -1,4 +1,0 @@
-#ifndef R_TYPE_SERVER_HPP
-#define R_TYPE_SERVER_HPP
-
-#endif //R_TYPE_SERVER_HPP
