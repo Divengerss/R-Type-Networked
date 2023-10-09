@@ -77,6 +77,11 @@ namespace net
                 _socket.close();
             };
 
+            bool isSocketOpen() const noexcept
+            {
+                return _socket.is_open();
+            }
+
             static void setClientInstance(Client* instance) {clientInstance = instance;}
 
             template<typename T>
@@ -125,6 +130,7 @@ namespace net
 
             void handleForceDisconnectPacket() {
                 _ioContext.stop();
+                _socket.close();
                 std::cout << "Disconnection received from server." << std::endl;
             }
 
