@@ -30,8 +30,7 @@ public:
         _components_arrays.insert(std::pair<std::type_index, std::any>(type_index, sparse_array<Component>()));
         _erase_functions[type_index] = [this](Registry &registry, Entity const &entity)
         {
-            sparse_array<Component> components = registry.get_components<Component>();
-            components.erase(entity());
+            registry.get_components<Component>().erase(entity());
         };
         _add_functions[type_index] = [this](Registry &registry)
         {
