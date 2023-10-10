@@ -12,6 +12,7 @@
 #include "Position.hpp"
 #include "Velocity.hpp"
 #include "MovementPattern.hpp"
+#include "Controllable.hpp"
 #include <cmath>
 
 class PositionSystem {
@@ -24,24 +25,31 @@ class PositionSystem {
         auto positions = r.get_components<Position>();
         auto const velocities = r.get_components<Velocity>();
         auto const patterns = r.get_components<MovementPattern>();
+        auto const controllables = r.get_components<Controllable>();
 
         for (size_t i = 0; i < positions.size(); ++i)
         {
             auto &pos = positions[i];
             auto const &vel = velocities[i];
             auto const &pat = patterns[i];
+            auto const &cont = controllables[i];
 
             if (pos && vel && pat)
             {
-                pos.value()._x = pos.value()._x + vel.value()._velocity;
-                switch (pat.value()._movementPattern)
+                if (cont)
                 {
-                case (MovementPatterns::STRAIGHT):
-                    pos.value()._y = pos.value()._y;
-                case (MovementPatterns::SINUS):
-                    pos.value()._y = sin(pos.value()._x) + pat.value()._baseHeight;
-                case (MovementPatterns::CIRCLE):
-                    pos.value()._y = 0;
+                    //PLAYER MOVEMENT
+                } else {
+                    pos.value()._x = pos.value()._x - vel.value()._velocity;
+                    switch (pat.value()._movementPattern)
+                    {
+                    case (MovementPatterns::STRAIGHT):
+                        pos.value()._y = pos.value()._y;
+                    case (MovementPatterns::SINUS):
+                        pos.value()._y = sin(pos.value()._x) + pat.value()._baseHeight;
+                    case (MovementPatterns::CIRCLE):
+                        pos.value()._y = 0;
+                    }
                 }
             }
         }
