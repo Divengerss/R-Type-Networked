@@ -13,7 +13,7 @@ int main() {
     Registry reg;
     reg.register_component<Position>();
     reg.register_component<Velocity>();
-    Entity entity = reg.spawn_entity();
+    reg.spawn_entity();
     auto positions = reg.get_components<Position>();
     auto velocities = reg.get_components<Velocity>();
     std::cout << positions.size() << " " << velocities.size() << std::endl;
