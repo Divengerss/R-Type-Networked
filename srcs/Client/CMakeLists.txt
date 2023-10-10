@@ -1,6 +1,18 @@
 cmake_minimum_required(VERSION 3.5)
 project(r-type_client)
 
+if(WIN32)
+  set(CPACK_GENERATOR "ZIP")
+else()
+  set(CPACK_GENERATOR "TGZ")
+endif()
+
+set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_SOURCE_IGNORE_FILES .git/ .github/ .vscode/ .mypy_cache/ _CPack_Packages/ ${CMAKE_BINARY_DIR}/ ${PROJECT_BINARY_DIR}/)
+
+include(CPack)
+
 add_executable(${PROJECT_NAME}
         src/Main.cpp
         src/Player.cpp
