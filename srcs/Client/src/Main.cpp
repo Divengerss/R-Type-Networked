@@ -5,7 +5,6 @@
 int main() {
     utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
     asio::io_context ioContext;
-    rtype::Game game();
     Screen Screen;
     try {
         std::string host = config.getData<std::string>("host");
