@@ -8,9 +8,17 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag r-type-server-image:$(date +%s)
+    - name: Build the Docker image (Ubuntu)
+      run: docker build . --file ubuntu.dockerfile --tag r-type-server-image:$(date +%s)
+      if: matrix.os == 'ubuntu-latest'
+
+    - name: Build the Docker image (Windows)
+      run: docker build . --file windows.dockerfile --tag r-type-server-image:$(date +%s)
+      if: matrix.os == 'windows-latest'
