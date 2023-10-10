@@ -7,10 +7,5 @@ class Screen {
         Screen();
         ~Screen() = default;
     private:
-        sf::RenderWindow window;
-        sf::Event event;
-        sf::Texture texture;
-        sf::Sprite sprite;
-        sf::Font font;
 };
 

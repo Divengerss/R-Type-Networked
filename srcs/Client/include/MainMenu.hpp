@@ -7,18 +7,19 @@
 class mainMenu
 {
     public:
-    mainMenu(float width, float height);
+        mainMenu(int width, int height);
 
-    void draw(sf::RenderWindow &window);
-    void MoveUp();
-    void MoveDown();
+        void draw(sf::RenderWindow &window);
+        void MoveUp();
+        void MoveDown();
 
-    int mainMenuPressed() {
-        return mainMenuselected;
+        int mainMenuPressed() {
+            return mainMenuselected;
         }
-    ~mainMenu();
+        ~mainMenu();
+
     private:
-    int mainMenuselected;
-    sf::Font font;
-    sf::Text Main_Menu[Max_Main_Menu];
+        int mainMenuselected;
+        sf::Font font;
+        sf::Text Main_Menu[Max_Main_Menu];
 };
