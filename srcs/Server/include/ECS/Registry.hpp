@@ -77,7 +77,7 @@ public:
     {
         for (auto it : _erase_functions)
             it.second(*this, e);
-        _empty_entities.push_back(e());
+        _empty_entities.push_back(static_cast<int>(e()));
         _empty_entities.sort();
     }
 
