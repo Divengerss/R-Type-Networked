@@ -6,25 +6,28 @@
 #include <string>
 #include <cstring>
 
-#define ACCEPTED    0x01U
-#define REJECTED    0x02U
-#define NEW_CLIENT  0x03U
-#define LOSE_CLIENT 0x04U
-
-#define REQUEST     0x00U
-
-#define UUID_SIZE   0x24UL
+static constexpr std::size_t uuidSize = 0x24UL;
 
 #pragma pack(push, 1)
 
 namespace packet
 {
-    enum packetTypes
+    enum packetTypes : std::uint8_t
     {
         PLACEHOLDER,
         CONNECTION_REQUEST,
         DISCONNECTION_REQUEST,
         CLIENT_STATUS,
+        FORCE_DISCONNECT
+    };
+
+    enum packetStatus : std::uint8_t
+    {
+        REQUEST,
+        ACCEPTED,
+        REJECTED,
+        NEW_CLIENT,
+        LOSE_CLIENT,
     };
 
     struct packetHeader
@@ -32,33 +35,33 @@ namespace packet
         packetTypes type;
         std::uint16_t dataSize;
 
-        packetHeader() : type(PLACEHOLDER), dataSize(0) {}
+        packetHeader() : type(PLACEHOLDER), dataSize(0U) {}
         packetHeader(packetTypes type, std::uint16_t dataSize) : type(type), dataSize(dataSize) {}
     };
 
     struct connectionRequest
     {
         std::uint8_t status;
-        std::array<std::uint8_t, UUID_SIZE> uuid;
+        std::array<std::uint8_t, uuidSize> uuid;
 
         connectionRequest() : status(REQUEST)
         {
-            std::memset(&uuid, 0, UUID_SIZE);
+            std::memset(&uuid, 0, uuidSize);
         }
         connectionRequest(uint8_t status, const std::string &cliUuid) : status(status)
         {
-            std::memmove(&uuid, cliUuid.data(), UUID_SIZE);
+            std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
     };
 
     struct disconnectionRequest
     {
         std::uint8_t status;
-        std::array<std::uint8_t, UUID_SIZE> uuid;
+        std::array<std::uint8_t, uuidSize> uuid;
 
         disconnectionRequest(const std::string &cliUuid) : status(REQUEST)
         {
-            std::memmove(&uuid, cliUuid.data(), UUID_SIZE);
+            std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
         disconnectionRequest(uint8_t status) : status(status), uuid({})
         {
@@ -68,16 +71,16 @@ namespace packet
     struct clientStatus
     {
         std::uint8_t status;
-        std::array<std::uint8_t, UUID_SIZE> uuid;
+        std::array<std::uint8_t, uuidSize> uuid;
 
         clientStatus() : status(LOSE_CLIENT) {}
         clientStatus(const std::string &cliUuid) : status(LOSE_CLIENT)
         {
-            std::memmove(&uuid, cliUuid.data(), UUID_SIZE);
+            std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
         clientStatus(const std::string &cliUuid, std::uint8_t status) : status(status)
         {
-            std::memmove(&uuid, cliUuid.data(), UUID_SIZE);
+            std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
     };
 };

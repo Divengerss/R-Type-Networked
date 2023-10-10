@@ -9,7 +9,6 @@ add_executable(${PROJECT_NAME}
 
 include_directories(
     include
-    ${CMAKE_SOURCE_DIR}/srcs/Netcode
     ${CMAKE_SOURCE_DIR}/includes
 )
 
