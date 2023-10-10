@@ -102,7 +102,7 @@ public:
     void remove_component(Entity const &from)
     {
         sparse_array<Component> &array = get_components<Component>();
-        array.erase(from);
+        array.erase(from());
     }
 
 private:
