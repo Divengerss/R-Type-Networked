@@ -23,7 +23,7 @@ class Background {
         sf::Texture _textureSpace;
         sf::Sprite _Space;
         sf::IntRect _SpaceToDisplay;
-        float _spaceScrollSpeed = 1.0f;
+        int _spaceScrollSpeed = 1;
 };
 
 #endif /* !BACKGROUND_HPP_ */

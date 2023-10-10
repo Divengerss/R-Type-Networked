@@ -16,4 +16,5 @@ cmake-build-debug/
 *.exe
 *.ilk
 *.pdb
+*.dll
 vgcore.*
