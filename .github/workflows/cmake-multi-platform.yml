@@ -38,10 +38,12 @@ jobs:
     - name: Clean up potential directory (Ubuntu, macOS)
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
       run: rm -rf build
+      continue-on-error: true
 
     - name: Clean up potential directory (Windows)
       run: Remove-Item -Path "build" -Recurse -Force
       if: matrix.os == 'windows-latest'
+      continue-on-error: true
 
     - name: Update to latest packages
       run: sudo apt-get update -y
