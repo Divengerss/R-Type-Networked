@@ -33,6 +33,7 @@ jobs:
 
     - name: Debug Vcpkg Packages
       run: echo "::group::Vcpkg Packages" && ls -R vcpkg/packages && echo "::endgroup::"
+      continue-on-error: true
 
     - name: Update to latest packages
       run: sudo apt-get update -y
