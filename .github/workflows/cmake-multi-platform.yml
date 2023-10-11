@@ -60,16 +60,12 @@ jobs:
       run: git submodule update --init --recursive
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
 
-    - name: Check CMake installation
-      run: cmake --version
-      continue-on-error: true
-
     - name: Install CMake if not installed
       run: |
-        if [ $? -ne 0 ]; then
+        if ! cmake --version; then
+          echo "CMake is not installed. Installing..."
           sudo apt-get -y update
           sudo apt-get -y install cmake
-          echo "CMake installed"
         fi
 
     - name: Install CMake (macOS)
