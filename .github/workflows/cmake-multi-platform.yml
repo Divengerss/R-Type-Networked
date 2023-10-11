@@ -31,10 +31,6 @@ jobs:
         key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg/vcpkg.json') }}
         restore-keys: ${{ runner.os }}-vcpkg-
 
-    - name: Debug Cache
-      run: echo "::group::Cache Contents" && ls -R $RUNNER_TOOL_CACHE && echo "::endgroup::"
-        
-
     - name: Update to latest packages
       run: sudo apt-get update -y
       if: matrix.os == 'ubuntu-latest'
