@@ -22,7 +22,7 @@ jobs:
 
     - name: Restore Vcpkg cache
       id: vcpkg-cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           vcpkg/packages
@@ -115,5 +115,10 @@ jobs:
         cd ..
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest' || matrix.os == 'windows-latest'
 
-    - name: Clean installation
+    - name: Clean installation (Ubuntu, macOS)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
       run: rm -rf build
+
+    - name: Clean installation (Windows)
+      run: Remove-Item -Path "build" -Recurse -Force
+      if: matrix.os == 'windows-latest'
