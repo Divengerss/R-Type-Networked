@@ -35,6 +35,14 @@ jobs:
       run: echo "::group::Vcpkg Packages" && ls -R vcpkg/packages && echo "::endgroup::"
       continue-on-error: true
 
+    - name: Clean up potential directory (Ubuntu, macOS)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+      run: rm -rf build
+
+    - name: Clean up potential directory (Windows)
+      run: Remove-Item -Path "build" -Recurse -Force
+      if: matrix.os == 'windows-latest'
+
     - name: Update to latest packages
       run: sudo apt-get update -y
       if: matrix.os == 'ubuntu-latest'
