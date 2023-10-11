@@ -56,33 +56,24 @@ jobs:
         key: dependencies-${{ runner.os }}
         restore-keys: dependencies-
 
+    - name: Update to latest packages
+      run: sudo apt-get update -y
+
     - name: Initialize and update vcpkg submodule
       run: git submodule update --init --recursive
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
 
     - name: Install CMake if not installed
       run: |
-        if ! cmake --version; then
-          echo "CMake is not installed. Installing..."
-          sudo apt-get -y update
-          sudo apt-get -y install cmake
-        fi
+        sudo apt-get -y install cmake
 
     - name: Install CMake (macOS)
       if: matrix.os == 'macOS-latest'
-      run: |
-        if [ $? -ne 0 ]; then
-          brew install cmake
-          echo "CMake installed"
-        fi
+      run: brew install cmake
 
     - name: Install CMake (Windows)
       if: matrix.os == 'windows-latest'
-      run: |
-        if [ $? -ne 0 ]; then
-          choco install cmake --version ${{ matrix.cmake_version }} --install-arguments 'ADD_CMAKE_TO_PATH=System'
-          echo "CMake installed"
-        fi
+      run: choco install cmake --version ${{ matrix.cmake_version }} --install-arguments 'ADD_CMAKE_TO_PATH=System'
 
     - name: Install Libtools (Ubuntu)
       run: sudo apt-get -y install autoconf automake libtool pkg-config
