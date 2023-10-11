@@ -58,14 +58,15 @@ jobs:
 
     - name: Update to latest packages
       run: sudo apt-get update -y
+      if: matrix.os == 'ubuntu-latest'
 
     - name: Initialize and update vcpkg submodule
       run: git submodule update --init --recursive
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
 
-    - name: Install CMake if not installed
-      run: |
-        sudo apt-get -y install cmake
+    - name: Install CMake (Ubuntu)
+      run: sudo apt-get -y install cmake
+      if: matrix.os == 'ubuntu-latest'
 
     - name: Install CMake (macOS)
       if: matrix.os == 'macOS-latest'
