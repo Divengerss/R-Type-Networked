@@ -69,6 +69,7 @@ jobs:
         if [ $? -ne 0 ]; then
           sudo apt-get -y update
           sudo apt-get -y install cmake
+          echo "CMake installed"
         fi
 
     - name: Install CMake (macOS)
@@ -76,6 +77,7 @@ jobs:
       run: |
         if [ $? -ne 0 ]; then
           brew install cmake
+          echo "CMake installed"
         fi
 
     - name: Install CMake (Windows)
@@ -83,6 +85,7 @@ jobs:
       run: |
         if [ $? -ne 0 ]; then
           choco install cmake --version ${{ matrix.cmake_version }} --install-arguments 'ADD_CMAKE_TO_PATH=System'
+          echo "CMake installed"
         fi
 
     - name: Check if libtool is installed
@@ -93,6 +96,7 @@ jobs:
       run: |
         if [ $? -ne 0 ]; then
           sudo apt-get -y install autoconf automake libtool pkg-config
+          echo "Libtools installed"
         fi
       if: matrix.os == 'ubuntu-latest'
 
@@ -100,6 +104,7 @@ jobs:
       run: |
         if [ $? -ne 0 ]; then
           brew install autoconf automake libtool pkg-config
+          echo "Libtools installed"
         fi
       if: matrix.os == 'macOS-latest'
 
@@ -112,6 +117,7 @@ jobs:
         if [ $? -ne 0 ]; then
           sudo apt-get -y update
           sudo apt-get -y install libudev-dev libx11-dev libxrandr-dev libxcursor-dev libgl1-mesa-dev
+          echo "Xlibs & OpenGL installed"
         fi
       if: matrix.os == 'ubuntu-latest'
 
