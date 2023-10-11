@@ -20,41 +20,16 @@ jobs:
       with:
         submodules: 'recursive'
 
-    - name: Restore Vcpkg cache (Windows)
-      if: matrix.os == 'windows-latest'
-      uses: actions/cache@v2
-      with:
-        path: vcpkg/packages
-        key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg/vcpkg.json') }}
-        restore-keys: vcpkg-${{ runner.os }}-
-
-    - name: Restore Vcpkg cache (Linux and macOS)
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
-      uses: actions/cache@v2
-      with:
-        path: vcpkg/packages
-        key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg/vcpkg.json') }}
-        restore-keys: vcpkg-${{ runner.os }}-
-
-    - name: Restore CMake and libtool cache (Windows)
-      if: matrix.os == 'windows-latest'
+    - name: Restore Vcpkg cache
+      id: vcpkg-cache
       uses: actions/cache@v2
       with:
         path: |
-          CMake/
-          libtool/
-        key: dependencies-${{ runner.os }}
-        restore-keys: dependencies-
-
-    - name: Restore CMake and libtool cache (Linux and macOS)
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
-      uses: actions/cache@v2
-      with:
-        path: |
-          CMake/
-          libtool/
-        key: dependencies-${{ runner.os }}
-        restore-keys: dependencies-
+          vcpkg/packages
+          CMake
+          libtool
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg/vcpkg.json') }}
+        restore-keys: ${{ runner.os }}-vcpkg-
 
     - name: Update to latest packages
       run: sudo apt-get update -y
@@ -107,12 +82,12 @@ jobs:
       run: |
         if exist vcpkg\.vcpkg_integrated (
           echo Vcpkg is already integrated.
-          ) else (
-            cd vcpkg
-            .\bootstrap-vcpkg.bat
-            .\vcpkg integrate install
-            cd ..
-            )
+        ) else (
+          cd vcpkg
+          .\bootstrap-vcpkg.bat
+          .\vcpkg integrate install
+          cd ..
+        )
       if: matrix.os == 'windows-latest'
 
     - name: Install Asio and SFML using Vcpkg (Ubuntu & macOS)
@@ -139,6 +114,6 @@ jobs:
         cmake --build .
         cd ..
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest' || matrix.os == 'windows-latest'
-    
+
     - name: Clean installation
       run: rm -rf build
