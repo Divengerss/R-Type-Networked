@@ -84,37 +84,18 @@ jobs:
           echo "CMake installed"
         fi
 
-    - name: Check if libtool is installed
-      run: libtool --version
-      continue-on-error: true
-
     - name: Install Libtools (Ubuntu)
-      run: |
-        if [ $? -ne 0 ]; then
-          sudo apt-get -y install autoconf automake libtool pkg-config
-          echo "Libtools installed"
-        fi
+      run: sudo apt-get -y install autoconf automake libtool pkg-config
       if: matrix.os == 'ubuntu-latest'
 
     - name: Install Libtools (macOS)
-      run: |
-        if [ $? -ne 0 ]; then
-          brew install autoconf automake libtool pkg-config
-          echo "Libtools installed"
-        fi
+      run: brew install autoconf automake libtool pkg-config
       if: matrix.os == 'macOS-latest'
-
-    - name: Check X libraries & OpenGL installation
-      run: dpkg -l | grep libudev-dev && dpkg -l | grep libx11-dev && dpkg -l | grep libxrandr-dev && dpkg -l | grep libxcursor-dev && dpkg -l | grep libgl1-mesa-dev
-      continue-on-error: true
 
     - name: Install system X libraries and OpenGL (Ubuntu)
       run: |
-        if [ $? -ne 0 ]; then
-          sudo apt-get -y update
-          sudo apt-get -y install libudev-dev libx11-dev libxrandr-dev libxcursor-dev libgl1-mesa-dev
-          echo "Xlibs & OpenGL installed"
-        fi
+        sudo apt-get -y update
+        sudo apt-get -y install libudev-dev libx11-dev libxrandr-dev libxcursor-dev libgl1-mesa-dev
       if: matrix.os == 'ubuntu-latest'
 
     - name: Check if Vcpkg is integrated (Ubuntu)
