@@ -20,7 +20,7 @@ namespace rtype
         public:
             Game() = delete;
             Game(asio::io_context &ioContext, asio::io_context &ioService) :
-                _server(ioContext, ioService)
+                _server(ioContext, ioService), _reg(Registry())
             {
             };
 
@@ -32,17 +32,16 @@ namespace rtype
             }
 
             const net::Server &getServerContext() const noexcept {return _server;}
+            const Registry &getRegistry() const noexcept {return _reg;}
 
             void runGame() {
-                Registry reg;
+                _reg.register_component<Position>();
+                _reg.register_component<Velocity>();
+                _reg.spawn_entity();
+                auto positions = _reg.get_components<Position>();
+                auto velocities = _reg.get_components<Velocity>();
 
-                reg.register_component<Position>();
-                reg.register_component<Velocity>();
-                reg.spawn_entity();
-                auto positions = reg.get_components<Position>();
-                auto velocities = reg.get_components<Velocity>();
-
-                while (true) {
+                while (_server.isSocketOpen()) {
                     if (_server.getClients().size()) {
                         std::cout << positions.size() << " " << velocities.size() << std::endl;
                     }
@@ -51,6 +50,7 @@ namespace rtype
 
         private:
             net::Server _server;
+            Registry _reg;
     };
 }
 

@@ -8,7 +8,7 @@
 #ifndef POSITIONSYSTEM_HPP_
 #define POSITIONSYSTEM_HPP_
 
-#include <Registry.hpp>
+#include "Registry.hpp"
 #include "Position.hpp"
 #include "Velocity.hpp"
 #include "MovementPattern.hpp"
