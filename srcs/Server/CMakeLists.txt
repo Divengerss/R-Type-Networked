@@ -8,10 +8,10 @@ include_directories(
     ${PATH_ASIO}
     ${CMAKE_SOURCE_DIR}/srcs/Netcode
     include/Server
-    include/ECS
-    include/ECS/Components
-    include/ECS/Systems
     ${CMAKE_SOURCE_DIR}/includes
+    ${CMAKE_SOURCE_DIR}/ECS
+    ${CMAKE_SOURCE_DIR}/ECS/Components
+    ${CMAKE_SOURCE_DIR}/ECS/Systems
 
 )
 

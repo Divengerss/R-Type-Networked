@@ -8,6 +8,7 @@
 #include <csignal>
 #include "CFGParser.hpp"
 #include "Packets.hpp"
+#include <functional>
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";

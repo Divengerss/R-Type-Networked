@@ -10,6 +10,9 @@ add_executable(${PROJECT_NAME}
 include_directories(
     include
     ${CMAKE_SOURCE_DIR}/includes
+    ${CMAKE_SOURCE_DIR}/ECS
+    ${CMAKE_SOURCE_DIR}/ECS/Components
+    ${CMAKE_SOURCE_DIR}/ECS/Systems
 )
 
 if(MSVC)
