@@ -26,14 +26,11 @@ jobs:
       with:
         path: |
           ./vcpkg/packages/
+          ./vcpkg/installed/
           CMake
           libtool
         key: ${{ runner.os }}-vcpkg-${{ hashFiles('./vcpkg/vcpkg.json') }}
         restore-keys: ${{ runner.os }}-vcpkg-
-
-    - name: Debug Vcpkg Packages
-      run: echo "::group::Vcpkg Packages" && ls -R vcpkg/packages && echo "::endgroup::"
-      continue-on-error: true
 
     - name: Clean up potential directory (Ubuntu, macOS)
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
