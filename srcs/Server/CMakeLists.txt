@@ -9,11 +9,30 @@ endif()
 
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
 set(CPACK_PACKAGE_VERSION "1.0.0")
-set(CPACK_SOURCE_IGNORE_FILES .git/ .github/ .vscode/ .mypy_cache/ _CPack_Packages/ ${CMAKE_BINARY_DIR}/ ${PROJECT_BINARY_DIR}/)
-
-include(CPack)
+set(CPACK_SOURCE_IGNORE_FILES*
+    .git/
+    .github/
+    .vscode/
+    .mypy_cache/
+    _CPack_Packages/
+    .idea/
+    R-Type-documentations/
+    mkdocs-material/
+    build/
+    .logo.png
+    ${CMAKE_BINARY_DIR}/
+    ${PROJECT_BINARY_DIR}/
+)
+set(CPACK_COMPONENTS_ALL ON)
 
 add_executable(${PROJECT_NAME} src/Main.cpp)
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
+install(FILES
+    ${CMAKE_SOURCE_DIR}/Release/server.cfg
+    DESTINATION .)
+
+include(CPack)
 
 if (WIN32)
     set(PATH_ASIO ${CMAKE_SOURCE_DIR}/vcpkg/packages/asio_x64-windows/include)
