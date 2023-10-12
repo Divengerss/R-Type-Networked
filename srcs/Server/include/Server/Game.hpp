@@ -37,13 +37,23 @@ namespace rtype
             void runGame() {
                 _reg.register_component<Position>();
                 _reg.register_component<Velocity>();
+                _reg.register_component<Velocity>();
                 _reg.spawn_entity();
                 auto positions = _reg.get_components<Position>();
                 auto velocities = _reg.get_components<Velocity>();
 
+                velocities[0] = 345;
+                velocities[1] = 642;
+
+                std::cout << sizeof(velocities[0]) << std::endl;
+                std::cout << velocities[0].value()._velocity << std::endl;
+
                 while (_server.isSocketOpen()) {
+                    std::this_thread::sleep_for(std::chrono::seconds(3));
                     if (_server.getClients().size()) {
                         std::cout << positions.size() << " " << velocities.size() << std::endl;
+                        _server.sendResponse(packet::TEST_ECS, velocities[0]);
+                        _server.sendResponse(packet::TEST_ECS, velocities[1]);
                     }
                 }
             };

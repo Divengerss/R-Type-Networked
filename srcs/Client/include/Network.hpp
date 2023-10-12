@@ -134,6 +134,12 @@ namespace net
                 std::cout << "Disconnection received from server." << std::endl;
             }
 
+            void handleTestECS(packet::packetHeader &header) {
+                std::optional test = 0;
+                std::memmove(&test, &_packet[sizeof(header)], header.dataSize);
+                std::cout << test.value() << std::endl;
+            }
+
             void handleReceive(const asio::error_code &errCode) {
                 packet::packetHeader header;
 
@@ -152,6 +158,7 @@ namespace net
                             handleClientStatusPacket(cliStatus);
                         }},
                         {packet::FORCE_DISCONNECT, [&]{ handleForceDisconnectPacket(); }},
+                        {packet::TEST_ECS, [&]{ handleTestECS(header); }}
                     };
 
                     auto handlerIt = packetHandlers.find(header.type);
