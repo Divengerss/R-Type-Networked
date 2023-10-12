@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(r-type_server)
 
+
 if(WIN32)
   set(CPACK_GENERATOR "ZIP")
 else()
@@ -25,7 +26,7 @@ set(CPACK_SOURCE_IGNORE_FILES*
 )
 set(CPACK_COMPONENTS_ALL ON)
 
-add_executable(${PROJECT_NAME} src/Main.cpp)
+add_executable(${PROJECT_NAME} src/ECS/Registry.cpp)
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
 install(FILES
@@ -47,7 +48,13 @@ endif (APPLE)
 include_directories(
     include
     ${PATH_ASIO}
+    ${CMAKE_SOURCE_DIR}/srcs/Netcode
+    include/Server
+    include/ECS
+    include/ECS/Components
+    include/ECS/Systems
     ${CMAKE_SOURCE_DIR}/includes
+
 )
 
 if(MSVC)
