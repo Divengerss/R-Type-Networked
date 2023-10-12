@@ -5,6 +5,7 @@
 #include "Texture.hpp"
 #include "Game.hpp"
 #include "Scale.hpp"
+#include "MovementPattern.hpp"
 
 int main()
 {
@@ -28,6 +29,8 @@ int main()
     reg.register_component<Velocity>();
     reg.register_component<Texture>();
     reg.register_component<Scale>();
+    reg.register_component<MovementPattern>();
+    reg.register_component<Controllable>();
     Entity Space_background = reg.spawn_entity();
     // Entity e = reg.spawn_entity();
 
@@ -36,7 +39,10 @@ int main()
     // reg.add_component<Scale>(e, {3, 3});
     reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png"});
     reg.add_component<Position>(Space_background, {0, 0});
-    reg.add_component<Scale>(Space_background, {4, 4});
+    reg.add_component<Scale>(Space_background, {5, 5});
+    reg.add_component<Velocity>(Space_background, {2});
+    reg.add_component<MovementPattern>(Space_background, {STRAIGHT});
+    reg.add_component<Controllable>(Space_background, {false});
 
     Game g;
     while (window.isOpen())

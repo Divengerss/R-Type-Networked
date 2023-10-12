@@ -13,6 +13,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include "Scale.hpp"
+#include "PositionSystem.hpp"
 
 struct MyRect
 {
@@ -34,11 +35,12 @@ public:
         auto textures = t.get_components<Texture>();
         auto scales = t.get_components<Scale>();
 
-        for (int i = 0; i < textures.size(); ++i)
+        for (std::size_t i = 0; i < textures.size(); ++i)
         {
             auto texture = textures[i];
             auto pos = positions[i];
             auto scale = scales[i];
+            PositionSystem p;
             if (texture && pos)
             {
                 MyRect myRect;
@@ -52,23 +54,21 @@ public:
                 sprite.setPosition(pos->_x, pos->_y);
                 sprite.setTextureRect(sf::IntRect(myRect.left, myRect.top, myRect.width, myRect.height));
                 sprite.setScale(scale->_scaleX, scale->_scaleY);
-                BackgroundScrolling(pos);
+                // BackgroundScrolling(myRect);
+                p.positionSystem(t);
                 window.draw(sprite);
             }
         }
     };
     void drawSprite(Registry &t);
 
-    void BackgroundScrolling(auto pos)
-    {
-        std::cout << pos->_x << std::endl;
-        pos->_x -= 1;
-        std::cout << pos->_x << std::endl;
-        // myRect.left += _spaceScrollSpeed;
-        // if (_SpaceToDisplay.left >= 950)
-        //     _SpaceToDisplay.left = 0;
-        // _Space.setTextureRect(_SpaceToDisplay);
-    };
+    // void BackgroundScrolling(auto &pos)
+    // {
+    //     myRect.left += 1;
+    //     // if (_SpaceToDisplay.left >= 950)
+    //     //     _SpaceToDisplay.left = 0;
+    //     // _Space.setTextureRect(_SpaceToDisplay);
+    // };
 
 protected:
 private:
