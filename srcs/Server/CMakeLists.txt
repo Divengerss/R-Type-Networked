@@ -26,7 +26,7 @@ set(CPACK_SOURCE_IGNORE_FILES*
 )
 set(CPACK_COMPONENTS_ALL ON)
 
-add_executable(${PROJECT_NAME} src/ECS/Registry.cpp)
+add_executable(${PROJECT_NAME} src/Server/Main.cpp)
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
 install(FILES

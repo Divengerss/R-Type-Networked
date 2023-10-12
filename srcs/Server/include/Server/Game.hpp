@@ -6,6 +6,9 @@
 #endif /* !_WIN32 */
 
 #include "Network.hpp"
+#include "Registry.hpp"
+#include "Position.hpp"
+#include "Velocity.hpp"
 
 #include <thread>
 #include <chrono>
@@ -31,11 +34,17 @@ namespace rtype
             const net::Server &getServerContext() const noexcept {return _server;}
 
             void runGame() {
-                //packet::packetHeader header(packet::PLACEHOLDER, 0);
-                while (true) { // TO CHANGE
+                Registry reg;
+
+                reg.register_component<Position>();
+                reg.register_component<Velocity>();
+                reg.spawn_entity();
+                auto positions = reg.get_components<Position>();
+                auto velocities = reg.get_components<Velocity>();
+
+                while (true) {
                     if (_server.getClients().size()) {
-                        //std::this_thread::sleep_for(std::chrono::seconds(2));
-                        //_server.sendResponse(packet::PLACEHOLDER, header);
+                        std::cout << positions.size() << " " << velocities.size() << std::endl;
                     }
                 }
             };
