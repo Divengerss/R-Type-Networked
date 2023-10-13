@@ -42,26 +42,33 @@ int main()
     reg.add_component<Controllable>(Space_background, {false});
 
     Entity e = reg.spawn_entity();
-    reg.add_component<Texture>(e, {"./Release/assets/sprites/r-typesheet42.gif", 0, 0, 33, 17});
+    reg.add_component<Texture>(e, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
     reg.add_component<Position>(e, {10, 10});
     reg.add_component<Scale>(e, {3, 3});
     reg.add_component<Velocity>(e, {1});
     reg.add_component<MovementPattern>(e, {NONE});
     reg.add_component<Controllable>(e, {true});
 
-
     Game g;
+    sf::Clock clock;
+    float updateInterval = 0.01f;
     while (window.isOpen())
     {
+         sf::Time elapsedTime = clock.getElapsedTime();
+
         sf::Event event;
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
                 window.close();
         }
-        window.clear();
-        g.updateSprite(reg, window);
-        window.display();
+        if (elapsedTime.asSeconds() >= updateInterval)
+        {
+            window.clear();
+            g.updateSprite(reg, window);
+            window.display();
+            clock.restart();
+        }
     }
     // auto positions = reg.get_components<Position>();
     // auto velocities = reg.get_components<Velocity>();
