@@ -6,6 +6,9 @@
 #endif /* !_WIN32 */
 
 #include "Network.hpp"
+#include "Registry.hpp"
+#include "Position.hpp"
+#include "Velocity.hpp"
 
 #include <thread>
 #include <chrono>
@@ -17,7 +20,7 @@ namespace rtype
         public:
             Game() = delete;
             Game(asio::io_context &ioContext, asio::io_context &ioService) :
-                _server(ioContext, ioService)
+                _server(ioContext, ioService), _reg(Registry())
             {
             };
 
@@ -29,19 +32,25 @@ namespace rtype
             }
 
             const net::Server &getServerContext() const noexcept {return _server;}
+            const Registry &getRegistry() const noexcept {return _reg;}
 
             void runGame() {
-                //packet::packetHeader header(packet::PLACEHOLDER, 0);
-                while (true) { // TO CHANGE
+                _reg.register_component<Position>();
+                _reg.register_component<Velocity>();
+                _reg.spawn_entity();
+                auto positions = _reg.get_components<Position>();
+                auto velocities = _reg.get_components<Velocity>();
+
+                while (_server.isSocketOpen()) {
                     if (_server.getClients().size()) {
-                        //std::this_thread::sleep_for(std::chrono::seconds(2));
-                        //_server.sendResponse(packet::PLACEHOLDER, header);
+                        std::cout << positions.size() << " " << velocities.size() << std::endl;
                     }
                 }
             };
 
         private:
             net::Server _server;
+            Registry _reg;
     };
 }
 

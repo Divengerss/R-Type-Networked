@@ -45,7 +45,7 @@ namespace net
     {
         public:
             Server() = delete;
-            Server(asio::io_context &ioContext, asio::io_context &ioService) :
+            Server(asio::io_context &ioContext, asio::io_service &ioService) :
                 _ioContext(ioContext), _ioService(ioService),
                 _host(defaultHost), _port(defaultPort),
                 _socket(_ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), defaultPort)),
@@ -68,6 +68,10 @@ namespace net
                 _socket.set_option(option);
                 try {
                     _socket = asio::ip::udp::socket(_ioContext, asio::ip::udp::endpoint(asio::ip::make_address(_host), _port));
+                } catch (const std::system_error &e) {
+                    std::string err = e.what();
+                    _logs.logTo(logErr.data(), "Failed to start the server: " + err);
+                    throw std::runtime_error("socket");
                 } catch (const std::exception &e) {
                     std::string err = e.what();
                     _logs.logTo(logErr.data(), "Failed to start the server: " + err);
@@ -92,6 +96,7 @@ namespace net
                         thread.join();
                     }
                 }
+                _logs.logTo(logInfo.data(), "Server has been shut down successfully.");
             };
 
             asio::io_context &getIoContext() const noexcept {return _ioContext;}
@@ -107,6 +112,8 @@ namespace net
             void setPort(std::uint16_t port) {_port = port;}
             void setConnection(const std::string &host, std::uint16_t port) {_host = host; _port = port;}
             static void setServerInstance(Server* instance) {serverInstance = instance;}
+
+            bool isSocketOpen() const noexcept { return _socket.is_open(); }
 
             template<typename T>
             void setPacket(T &packet, packet::packetHeader &header, T &data)
@@ -150,13 +157,24 @@ namespace net
                 packet::connectionRequest response(packet::ACCEPTED, cliUuid);
                 _logs.logTo(logInfo.data(), "New connection received: UUID [" + cliUuid + "]");
                 packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(response));
-                //sendResponse(packet::CONNECTION_REQUEST, response);
                 std::array<std::uint8_t, sizeof(header) + sizeof(response)> buffer;
                 std::memmove(&buffer, &header, sizeof(header));
                 std::memmove(&buffer[sizeof(header)], &response, sizeof(response));
-                _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
+                try {
+                    _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
+                } catch (const std::system_error &e) {
+                    std::string err = e.what();
+                    _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
+                    _logs.logTo(logWarn.data(), "    " + err);
+                }
                 packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT);
-                sendResponse(packet::CLIENT_STATUS, cliStatus);
+                try {
+                    sendResponse(packet::CLIENT_STATUS, cliStatus);
+                } catch (const std::system_error &e) {
+                    std::string err = e.what();
+                    _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
+                    _logs.logTo(logWarn.data(), "    " + err);
+                }
             }
 
             void handleDisconnectionRequest(packet::packetHeader &header) {
@@ -167,7 +185,13 @@ namespace net
                 removeClient(cliUuid);
                 _logs.logTo(logInfo.data(), "Disconnection received from [" + cliUuid + "]");
                 packet::clientStatus cliStatus(cliUuid, packet::LOSE_CLIENT);
-                sendResponse(packet::CLIENT_STATUS, cliStatus);
+                try {
+                    sendResponse(packet::CLIENT_STATUS, cliStatus);
+                } catch (const std::system_error &e) {
+                    std::string err = e.what();
+                    _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
+                    _logs.logTo(logWarn.data(), "    " + err);
+                }
             }
 
             void handleRequestStatus() {
@@ -186,7 +210,7 @@ namespace net
                 }
             }
 
-            void handleReceiveFrom(const asio::error_code &errCode, std::size_t bytesReceived)
+            void receiveCallback(const asio::error_code &errCode, std::size_t bytesReceived)
             {
                 if (!errCode) {
                     handleRequestStatus();
@@ -203,15 +227,29 @@ namespace net
                 _socket.async_receive_from(
                     asio::buffer(_packet, _packet.size()),
                     _serverEndpoint,
-                    std::bind(&Server::handleReceiveFrom, this, std::placeholders::_1, std::placeholders::_2)
+                    std::bind(&Server::receiveCallback, this, std::placeholders::_1, std::placeholders::_2)
                 );
             }
 
-            void startServer() {
+            void startServer()
+            {
                 setServerInstance(this);
                 _logs.logTo(logInfo.data(), "Server initialized successfully");
                 _logs.logTo(logInfo.data(), "Listening at " + _host + " on port " + std::to_string(_port));
                 receive();
+            }
+
+            void stopServer()
+            {
+                try {
+                    _socket.close();
+                } catch (const std::system_error &e) {
+                    std::string err = e.what();
+                    _logs.logTo(logWarn.data(), "Failed to close the socket:");
+                    _logs.logTo(logWarn.data(), "    " + err);
+                }
+                _ioContext.stop();
+                _ioService.stop();
             }
 
             static void signalHandler(int signum) {
