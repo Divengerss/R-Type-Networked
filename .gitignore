@@ -18,3 +18,4 @@ cmake-build-debug/
 *.pdb
 *.dll
 vgcore.*
+_CPack*

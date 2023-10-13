@@ -20,16 +20,39 @@ jobs:
       with:
         submodules: 'recursive'
 
+    - name: Restore Vcpkg cache
+      id: vcpkg-cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ./vcpkg/packages/
+          ./vcpkg/installed/
+          CMake
+          libtool
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('./vcpkg/vcpkg.json') }}
+        restore-keys: ${{ runner.os }}-vcpkg-
+
+    - name: Clean up potential directory (Ubuntu, macOS)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+      run: rm -rf build
+      continue-on-error: true
+
+    - name: Clean up potential directory (Windows)
+      run: Remove-Item -Path "build" -Recurse -Force
+      if: matrix.os == 'windows-latest'
+      continue-on-error: true
+
+    - name: Update to latest packages
+      run: sudo apt-get update -y
+      if: matrix.os == 'ubuntu-latest'
+
     - name: Initialize and update vcpkg submodule
       run: git submodule update --init --recursive
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
 
     - name: Install CMake (Ubuntu)
+      run: sudo apt-get -y install cmake
       if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get -y update
-        sudo apt-get -y install cmake
-        cmake --version
 
     - name: Install CMake (macOS)
       if: matrix.os == 'macOS-latest'
@@ -39,26 +62,46 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: choco install cmake --version ${{ matrix.cmake_version }} --install-arguments 'ADD_CMAKE_TO_PATH=System'
 
-    - name: Install Autotools (Ubuntu)
-      run: |
-        sudo apt-get -y install autoconf automake libtool pkg-config
+    - name: Install Libtools (Ubuntu)
+      run: sudo apt-get -y install autoconf automake libtool pkg-config
       if: matrix.os == 'ubuntu-latest'
 
-    - name: Install Autotools (macOS)
-      run: |
-        brew install autoconf automake libtool pkg-config
+    - name: Install Libtools (macOS)
+      run: brew install autoconf automake libtool pkg-config
       if: matrix.os == 'macOS-latest'
 
     - name: Install system X libraries and OpenGL (Ubuntu)
-      run: |
-        sudo apt-get -y install libudev-dev libx11-dev libxrandr-dev libxcursor-dev libgl1-mesa-dev
+      run: sudo apt-get -y install libudev-dev libx11-dev libxrandr-dev libxcursor-dev libgl1-mesa-dev
       if: matrix.os == 'ubuntu-latest'
 
-    - name: Install Asio and SFML using vcpkg (Ubuntu & macOS)
+    - name: Check if Vcpkg is integrated (Ubuntu)
+      run: |
+        if [ -f "vcpkg/.vcpkg_integrated" ]; then
+          echo "Vcpkg is already integrated."
+        else
+          cd vcpkg
+          ./bootstrap-vcpkg.sh
+          ./vcpkg integrate install
+          cd ..
+        fi
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+
+    - name: Check if Vcpkg is integrated (Windows)
+      shell: cmd
+      run: |
+        if exist vcpkg\.vcpkg_integrated (
+          echo Vcpkg is already integrated.
+        ) else (
+          cd vcpkg
+          .\bootstrap-vcpkg.bat
+          .\vcpkg integrate install
+          cd ..
+        )
+      if: matrix.os == 'windows-latest'
+
+    - name: Install Asio and SFML using Vcpkg (Ubuntu & macOS)
       run: |
         cd vcpkg
-        ./bootstrap-vcpkg.sh
-        ./vcpkg integrate install
         ./vcpkg install asio sfml
         cd ..
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
@@ -78,4 +121,13 @@ jobs:
         cd build
         cmake -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake ..
         cmake --build .
+        cd ..
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest' || matrix.os == 'windows-latest'
+
+    - name: Clean installation (Ubuntu, macOS)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+      run: rm -rf build
+
+    - name: Clean installation (Windows)
+      run: Remove-Item -Path "build" -Recurse -Force
+      if: matrix.os == 'windows-latest'
