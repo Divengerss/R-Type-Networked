@@ -10,6 +10,7 @@
 #include "Packets.hpp"
 #include "Logs.hpp"
 #include "Uuid.hpp"
+#include "SparseArray.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -138,6 +139,49 @@ namespace net
                 if (toServerEndpoint)
                     _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
                 else if (cliUuid.empty() && !_clients.empty())
+                    _logs.logTo(logInfo.data(), "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
+                for (Client &client : _clients) {
+                    if (!cliUuid.empty()) {
+                        if (cliUuid == client.getUuid()) {
+                            _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client.getEndpoint());
+                            _logs.logTo(logInfo.data(), "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
+                        }
+                    } else {
+                        _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client.getEndpoint());
+                        _logs.logTo(logInfo.data(), "    Sent to [" + client.getUuid() + "]");
+                    }
+                }
+            }
+
+            template<class T>
+            void sendSparseArray(const packet::packetTypes &type, sparse_array<T> &sparseArray, const std::string cliUuid = "")
+            {
+                std::size_t componentsSize = (sizeof(bool) + sizeof(T)) * sparseArray.size();
+                packet::packetHeader header(type, componentsSize);
+                std::array<std::uint8_t, sizeof(header) + sizeof(sparseArray)> buffer;
+                std::cout << "Sparse Array size = " << sparseArray.size() << std::endl;
+                std::memmove(&buffer, &header, sizeof(header));
+                std::size_t offset = 0UL;
+                for (auto &component : sparseArray) {
+                    if (component.has_value()) {
+                        std::cout << "loop = " << component.value()._velocity << " memory padding = " << offset << std::endl;
+                        std::uint8_t isNullOpt = 0U;
+                        std::memmove(&buffer[sizeof(header) + offset], &isNullOpt, sizeof(bool));
+                        offset += sizeof(bool);
+                        std::memmove(&buffer[sizeof(header) + offset], &component.value(), sizeof(component.value()));
+                        offset += sizeof(component.value());
+                    } else {
+                        std::cout << "loop = nullopt" << " memory padding = " << offset << std::endl;
+                        std::uint8_t isNullOpt = 1U;
+                        std::memmove(&buffer[sizeof(header) + offset], &isNullOpt, sizeof(bool));
+                        offset += sizeof(bool);
+                        std::memmove(&buffer[sizeof(header) + offset], &std::nullopt, sizeof(std::nullopt));
+                        offset += sizeof(std::nullopt);
+                    }
+                }
+                // std::cout << sparseArray[0].value()._velocity << std::endl;
+                std::cout << sizeof(T) << std::endl;
+                if (cliUuid.empty() && !_clients.empty())
                     _logs.logTo(logInfo.data(), "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
                 for (Client &client : _clients) {
                     if (!cliUuid.empty()) {

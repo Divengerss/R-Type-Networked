@@ -8,6 +8,8 @@
 #include <csignal>
 #include "CFGParser.hpp"
 #include "Packets.hpp"
+#include "SparseArray.hpp"
+#include "Velocity.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -134,10 +136,35 @@ namespace net
                 std::cout << "Disconnection received from server." << std::endl;
             }
 
-            void handleTestECS(packet::packetHeader &header) {
-                std::optional test = 0;
-                std::memmove(&test, &_packet[sizeof(header)], header.dataSize);
-                std::cout << test.value() << std::endl;
+            void handleEcsVelocity(packet::packetHeader &header) {
+                // Temporary, will target the client's ECS when its implemented.
+                sparse_array<Velocity> tmp;
+                Velocity v(0);
+                //
+
+                std::size_t componentSize = sizeof(Velocity);
+
+                std::uint8_t isNullOpt = 0U;
+                for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize; componentIdx += sizeof(Velocity)) {
+                    std::memmove(&isNullOpt, &_packet[sizeof(header) + componentIdx], sizeof(std::uint8_t));
+                    componentIdx += sizeof(std::uint8_t);
+                    if (isNullOpt) {
+                        // Do nothing ?
+                        //
+                        // std::memmove(&v, &_packet[sizeof(header) + componentIdx], sizeof(std::nullopt));
+                        // tmp.push_back(v);
+                    } else {
+                        std::memmove(&v, &_packet[sizeof(header) + componentIdx], componentSize);
+                        tmp.push_back(v);
+                    }
+                }
+
+                for (auto &component: tmp) {
+                    if (component.has_value())
+                        std::cout << component.value()._velocity << std::endl;
+                    else
+                        std::cout << "nullopt" << std::endl;
+                }
             }
 
             void handleReceive(const asio::error_code &errCode) {
@@ -158,7 +185,7 @@ namespace net
                             handleClientStatusPacket(cliStatus);
                         }},
                         {packet::FORCE_DISCONNECT, [&]{ handleForceDisconnectPacket(); }},
-                        {packet::TEST_ECS, [&]{ handleTestECS(header); }}
+                        {packet::ECS_VELOCITY, [&]{ handleEcsVelocity(header); }}
                     };
 
                     auto handlerIt = packetHandlers.find(header.type);

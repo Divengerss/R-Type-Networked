@@ -44,6 +44,9 @@ include(CPack)
 include_directories(
     include
     ${CMAKE_SOURCE_DIR}/includes
+    ${CMAKE_SOURCE_DIR}/srcs/Server/include/ECS
+    ${CMAKE_SOURCE_DIR}/srcs/Server/include/ECS/Components
+    ${CMAKE_SOURCE_DIR}/srcs/Server/include/ECS/Systems
 )
 
 if(MSVC)

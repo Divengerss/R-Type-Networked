@@ -37,23 +37,27 @@ namespace rtype
             void runGame() {
                 _reg.register_component<Position>();
                 _reg.register_component<Velocity>();
-                _reg.register_component<Velocity>();
+                Velocity c(642);
+                Entity entity(0);
+                _reg.add_component<Velocity>(entity, c);
                 _reg.spawn_entity();
-                auto positions = _reg.get_components<Position>();
-                auto velocities = _reg.get_components<Velocity>();
+                Velocity c2(444);
+                Entity entity2(1);
+                _reg.add_component<Velocity>(entity2, c2);
+                _reg.spawn_entity();
+                auto &positions = _reg.get_components<Position>();
+                auto &velocities = _reg.get_components<Velocity>();
 
-                velocities[0] = 345;
-                velocities[1] = 642;
-
-                std::cout << sizeof(velocities[0]) << std::endl;
-                std::cout << velocities[0].value()._velocity << std::endl;
+                for (auto &entityId : velocities)
+                    if (entityId.has_value())
+                        std::cout << entityId.value()._velocity << std::endl;
 
                 while (_server.isSocketOpen()) {
                     std::this_thread::sleep_for(std::chrono::seconds(3));
                     if (_server.getClients().size()) {
                         std::cout << positions.size() << " " << velocities.size() << std::endl;
-                        _server.sendResponse(packet::TEST_ECS, velocities[0]);
-                        _server.sendResponse(packet::TEST_ECS, velocities[1]);
+                        //_server.sendResponse(packet::ECS_VELOCITY, velocities);
+                        _server.sendSparseArray<Velocity>(packet::ECS_VELOCITY, velocities);
                     }
                 }
             };
