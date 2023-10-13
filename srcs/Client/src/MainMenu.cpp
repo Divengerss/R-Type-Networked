@@ -8,22 +8,22 @@ mainMenu::mainMenu(int width, int height)
     Main_Menu[0].setFont(font);
     Main_Menu[0].setFillColor(sf::Color::Red);
     Main_Menu[0].setString("Play");
-    Main_Menu[0].setPosition(sf::Vector2f(width / 2, static_cast < float >(height / (Max_Main_Menu + 1) * 1)));
+    Main_Menu[0].setPosition(sf::Vector2f(static_cast < float > (width / 2), static_cast < float >(height / (Max_Main_Menu + 1) * 1)));
 
     Main_Menu[1].setFont(font);
     Main_Menu[1].setFillColor(sf::Color::White);
     Main_Menu[1].setString("Options");
-    Main_Menu[1].setPosition(sf::Vector2f(width / 2, static_cast < float >(height / (Max_Main_Menu + 1) * 2)));
+    Main_Menu[1].setPosition(sf::Vector2f(static_cast < float > (width / 2), static_cast < float >(height / (Max_Main_Menu + 1) * 2)));
 
     Main_Menu[2].setFont(font);
     Main_Menu[2].setFillColor(sf::Color::White);
     Main_Menu[2].setString("Credits");
-    Main_Menu[2].setPosition(sf::Vector2f(width / 2, static_cast < float >(height / (Max_Main_Menu + 1) * 3)));
+    Main_Menu[2].setPosition(sf::Vector2f(static_cast < float > (width / 2), static_cast < float >(height / (Max_Main_Menu + 1) * 3)));
 
     Main_Menu[3].setFont(font);
     Main_Menu[3].setFillColor(sf::Color::White);
     Main_Menu[3].setString("Exit");
-    Main_Menu[3].setPosition(sf::Vector2f(width / 2, static_cast < float >(height / (Max_Main_Menu + 1) * 4)));
+    Main_Menu[3].setPosition(sf::Vector2f(static_cast < float > (width / 2), static_cast < float >(height / (Max_Main_Menu + 1) * 4)));
 
     mainMenuselected = 0;
 }
