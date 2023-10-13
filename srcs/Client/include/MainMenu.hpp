@@ -3,6 +3,7 @@
 #include <SFML/Audio.hpp>
 #include <iostream>
 
+#define Max_Main_Menu 4
 class mainMenu
 {
     public:
@@ -20,5 +21,5 @@ class mainMenu
     private:
         int mainMenuselected;
         sf::Font font;
-        sf::Text Main_Menu[4];
+        sf::Text Main_Menu[Max_Main_Menu];
 };
