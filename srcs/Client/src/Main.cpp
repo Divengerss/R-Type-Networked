@@ -24,6 +24,7 @@ int main()
     // }
     // return 0;
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "SFML window");
+
     Registry reg;
     reg.register_component<Position>();
     reg.register_component<Velocity>();
@@ -31,18 +32,23 @@ int main()
     reg.register_component<Scale>();
     reg.register_component<MovementPattern>();
     reg.register_component<Controllable>();
-    Entity Space_background = reg.spawn_entity();
-    // Entity e = reg.spawn_entity();
 
-    // reg.add_component<Texture>(e, {"./Release/assets/sprites/r-typesheet1.gif"});
-    // reg.add_component<Position>(e, {10, 10});
-    // reg.add_component<Scale>(e, {3, 3});
-    reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png"});
+    Entity Space_background = reg.spawn_entity();
+    reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png", 0, 0, 950, 200});
     reg.add_component<Position>(Space_background, {0, 0});
     reg.add_component<Scale>(Space_background, {5, 5});
     reg.add_component<Velocity>(Space_background, {2});
-    reg.add_component<MovementPattern>(Space_background, {STRAIGHT});
+    reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
     reg.add_component<Controllable>(Space_background, {false});
+
+    Entity e = reg.spawn_entity();
+    reg.add_component<Texture>(e, {"./Release/assets/sprites/r-typesheet42.gif", 0, 0, 33, 17});
+    reg.add_component<Position>(e, {10, 10});
+    reg.add_component<Scale>(e, {3, 3});
+    reg.add_component<Velocity>(e, {1});
+    reg.add_component<MovementPattern>(e, {NONE});
+    reg.add_component<Controllable>(e, {true});
+
 
     Game g;
     while (window.isOpen())

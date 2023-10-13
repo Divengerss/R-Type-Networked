@@ -17,38 +17,55 @@
 
 class PositionSystem {
     public:
-        PositionSystem();
-        ~PositionSystem();
-
+        PositionSystem() = default;
+        ~PositionSystem() = default;
     void positionSystem(Registry &r)
     {
-        auto positions = r.get_components<Position>();
-        auto const velocities = r.get_components<Velocity>();
-        auto const patterns = r.get_components<MovementPattern>();
-        auto const controllables = r.get_components<Controllable>();
-
+        auto &positions = r.get_components<Position>();
+        auto &velocities = r.get_components<Velocity>();
+        auto &patterns = r.get_components<MovementPattern>();
+        auto &controllables = r.get_components<Controllable>();
         for (size_t i = 0; i < positions.size(); ++i)
         {
-            auto &pos = positions[i];
+            //auto &pos = positions[i];
             auto const &vel = velocities[i];
             auto const &pat = patterns[i];
             auto const &cont = controllables[i];
-
-            if (pos && vel && pat)
+            std::cout << i << std::endl;
+            if (positions[i].has_value() && vel && pat)
             {
-                if (cont)
+                if (cont->_playable == true)
                 {
+                    std::cout << "cont" << std::endl;
+                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
+                        positions[i].value()._x -= vel.value()._velocity;
+                    }
+                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+                        positions[i].value()._x += vel.value()._velocity;
+                    }
+                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
+                        positions[i].value()._y -= vel.value()._velocity;
+                    }
+                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+                        positions[i].value()._y += vel.value()._velocity;
+                    }
                     //PLAYER MOVEMENT
                 } else {
-                    pos.value()._x = pos.value()._x - vel.value()._velocity;
+                    std::cout << "not cont" << std::endl;
                     switch (pat.value()._movementPattern)
                     {
-                    case (MovementPatterns::STRAIGHT):
-                        pos.value()._y = pos.value()._y;
+                    case (MovementPatterns::STRAIGHTLEFT):
+                        positions[i].value()._y = positions[i].value()._y;
+                        positions[i].value()._x -= vel.value()._velocity;
+                        // if (positions[i].value()._x <= -1920)
+                        //     positions[i].value()._x = 1920;
+                        break;
                     case (MovementPatterns::SINUS):
-                        pos.value()._y = sin(pos.value()._x) + pat.value()._baseHeight;
+                        positions[i].value()._y = sin(positions[i].value()._x) + pat.value()._baseHeight;
+                        break;
                     case (MovementPatterns::CIRCLE):
-                        pos.value()._y = 0;
+                        positions[i].value()._y = 0;
+                        break;
                     }
                 }
             }

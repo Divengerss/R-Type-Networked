@@ -37,24 +37,23 @@ public:
 
         for (std::size_t i = 0; i < textures.size(); ++i)
         {
-            auto texture = textures[i];
+            auto &texture = textures[i];
             auto pos = positions[i];
             auto scale = scales[i];
             PositionSystem p;
+            std::cout << texture->_path << " " << texture->_left << " " << texture->_height << std::endl;
             if (texture && pos)
             {
-                MyRect myRect;
-                myRect.left = 0;
-                myRect.top = 0;
-                myRect.width = 950;
-                myRect.height = 200;
-                // std::cout << texture->_path << std::endl;
-                // std::cout << pos->_x << " " << pos->_y << std::endl;
+                // MyRect myRect;
+                // myRect.left = 0;
+                // myRect.top = 0;
+                // myRect.width = 950;
+                // myRect.height = 200;
+                //////////////////////
                 sf::Sprite sprite(texture->_texture);
                 sprite.setPosition(pos->_x, pos->_y);
-                sprite.setTextureRect(sf::IntRect(myRect.left, myRect.top, myRect.width, myRect.height));
+                sprite.setTextureRect(sf::IntRect(texture->_left, texture->_top, texture->_width, texture->_height));
                 sprite.setScale(scale->_scaleX, scale->_scaleY);
-                // BackgroundScrolling(myRect);
                 p.positionSystem(t);
                 window.draw(sprite);
             }
@@ -62,17 +61,8 @@ public:
     };
     void drawSprite(Registry &t);
 
-    // void BackgroundScrolling(auto &pos)
-    // {
-    //     myRect.left += 1;
-    //     // if (_SpaceToDisplay.left >= 950)
-    //     //     _SpaceToDisplay.left = 0;
-    //     // _Space.setTextureRect(_SpaceToDisplay);
-    // };
-
 protected:
 private:
-    // std::vecctor<
 };
 
 #endif /* !GAME_HPP_ */
