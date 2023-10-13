@@ -159,19 +159,16 @@ namespace net
                 std::size_t componentsSize = (sizeof(bool) + sizeof(T)) * sparseArray.size();
                 packet::packetHeader header(type, componentsSize);
                 std::array<std::uint8_t, sizeof(header) + sizeof(sparseArray)> buffer;
-                std::cout << "Sparse Array size = " << sparseArray.size() << std::endl;
                 std::memmove(&buffer, &header, sizeof(header));
                 std::size_t offset = 0UL;
                 for (auto &component : sparseArray) {
                     if (component.has_value()) {
-                        std::cout << "loop = " << component.value()._velocity << " memory padding = " << offset << std::endl;
-                        std::uint8_t isNullOpt = 0U;
+                        bool isNullOpt = false;
                         std::memmove(&buffer[sizeof(header) + offset], &isNullOpt, sizeof(bool));
                         offset += sizeof(bool);
                         std::memmove(&buffer[sizeof(header) + offset], &component.value(), sizeof(component.value()));
                         offset += sizeof(component.value());
                     } else {
-                        std::cout << "loop = nullopt" << " memory padding = " << offset << std::endl;
                         std::uint8_t isNullOpt = 1U;
                         std::memmove(&buffer[sizeof(header) + offset], &isNullOpt, sizeof(bool));
                         offset += sizeof(bool);
@@ -179,8 +176,6 @@ namespace net
                         offset += sizeof(std::nullopt);
                     }
                 }
-                // std::cout << sparseArray[0].value()._velocity << std::endl;
-                std::cout << sizeof(T) << std::endl;
                 if (cliUuid.empty() && !_clients.empty())
                     _logs.logTo(logInfo.data(), "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
                 for (Client &client : _clients) {

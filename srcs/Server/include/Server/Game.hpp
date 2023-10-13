@@ -55,8 +55,6 @@ namespace rtype
                 while (_server.isSocketOpen()) {
                     std::this_thread::sleep_for(std::chrono::seconds(3));
                     if (_server.getClients().size()) {
-                        std::cout << positions.size() << " " << velocities.size() << std::endl;
-                        //_server.sendResponse(packet::ECS_VELOCITY, velocities);
                         _server.sendSparseArray<Velocity>(packet::ECS_VELOCITY, velocities);
                     }
                 }

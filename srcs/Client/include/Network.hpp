@@ -144,10 +144,10 @@ namespace net
 
                 std::size_t componentSize = sizeof(Velocity);
 
-                std::uint8_t isNullOpt = 0U;
+                bool isNullOpt = false;
                 for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize; componentIdx += sizeof(Velocity)) {
-                    std::memmove(&isNullOpt, &_packet[sizeof(header) + componentIdx], sizeof(std::uint8_t));
-                    componentIdx += sizeof(std::uint8_t);
+                    std::memmove(&isNullOpt, &_packet[sizeof(header) + componentIdx], sizeof(bool));
+                    componentIdx += sizeof(bool);
                     if (isNullOpt) {
                         // Do nothing ?
                         //
@@ -159,12 +159,14 @@ namespace net
                     }
                 }
 
+                // Debug output
                 for (auto &component: tmp) {
                     if (component.has_value())
                         std::cout << component.value()._velocity << std::endl;
                     else
                         std::cout << "nullopt" << std::endl;
                 }
+                //
             }
 
             void handleReceive(const asio::error_code &errCode) {
