@@ -27,6 +27,9 @@ set(CPACK_COMPONENTS_ALL ON)
 
 add_executable(${PROJECT_NAME}
     src/Main.cpp
+
+    src/MainMenu.cpp
+    src/Screen.cpp
     src/Player.cpp
     src/Background.cpp
 )
