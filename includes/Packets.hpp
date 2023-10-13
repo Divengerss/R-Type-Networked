@@ -19,7 +19,8 @@ namespace packet
         DISCONNECTION_REQUEST,
         CLIENT_STATUS,
         FORCE_DISCONNECT,
-        ECS_VELOCITY
+        ECS_VELOCITY,
+        ECS_POSITION
     };
 
     enum packetStatus : std::uint8_t

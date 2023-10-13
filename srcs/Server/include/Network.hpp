@@ -162,6 +162,7 @@ namespace net
                 std::memmove(&buffer, &header, sizeof(header));
                 std::size_t offset = 0UL;
                 for (auto &component : sparseArray) {
+                    std::cout << std::boolalpha << component.has_value() << std::endl;
                     if (component.has_value()) {
                         bool isNullOpt = false;
                         std::memmove(&buffer[sizeof(header) + offset], &isNullOpt, sizeof(bool));
@@ -169,7 +170,7 @@ namespace net
                         std::memmove(&buffer[sizeof(header) + offset], &component.value(), sizeof(component.value()));
                         offset += sizeof(component.value());
                     } else {
-                        std::uint8_t isNullOpt = 1U;
+                        bool isNullOpt = true;
                         std::memmove(&buffer[sizeof(header) + offset], &isNullOpt, sizeof(bool));
                         offset += sizeof(bool);
                         std::memmove(&buffer[sizeof(header) + offset], &std::nullopt, sizeof(std::nullopt));
