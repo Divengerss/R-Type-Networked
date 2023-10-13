@@ -49,6 +49,14 @@ int main()
     reg.add_component<MovementPattern>(e, {NONE});
     reg.add_component<Controllable>(e, {true});
 
+    Entity monster = reg.spawn_entity();
+    reg.add_component<Texture>(monster, {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
+    reg.add_component<Position>(monster, {1920, 500});
+    reg.add_component<Scale>(monster, {3, 3});
+    reg.add_component<Velocity>(monster, {1});
+    reg.add_component<MovementPattern>(monster, {STRAIGHTLEFT});
+    reg.add_component<Controllable>(monster, {false});
+
     Game g;
     sf::Clock clock;
     float updateInterval = 0.01f;
