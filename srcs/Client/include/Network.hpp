@@ -146,27 +146,27 @@ namespace net
                 std::size_t componentSize = sizeof(Velocity);
 
                 bool isNullOpt = false;
-                for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize; componentIdx += sizeof(Velocity)) {
+                for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;) {
                     std::memmove(&isNullOpt, &_packet[sizeof(header) + componentIdx], sizeof(bool));
                     componentIdx += sizeof(bool);
                     if (isNullOpt) {
-                        // Do nothing ?
-                        //
-                        // std::memmove(&v, &_packet[sizeof(header) + componentIdx], sizeof(std::nullopt));
-                        // tmp.push_back(v);
+                        tmp.push_back(std::nullopt);
                     } else {
                         std::memmove(&v, &_packet[sizeof(header) + componentIdx], componentSize);
                         tmp.push_back(v);
                     }
+                    componentIdx += sizeof(Velocity);
                 }
 
                 // Debug output
+                std::cout << "=== Velocity ===" << std::endl;
                 for (auto &component: tmp) {
                     if (component.has_value())
                         std::cout << component.value()._velocity << std::endl;
                     else
                         std::cout << "nullopt" << std::endl;
                 }
+                std::cout << "================" << std::endl;
                 //
             }
 
@@ -179,27 +179,27 @@ namespace net
                 std::size_t componentSize = sizeof(Position);
 
                 bool isNullOpt = false;
-                for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize; componentIdx += sizeof(Position)) {
+                for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;) {
                     std::memmove(&isNullOpt, &_packet[sizeof(header) + componentIdx], sizeof(bool));
                     componentIdx += sizeof(bool);
                     if (isNullOpt) {
-                        // Do nothing ?
-                        //
-                        // std::memmove(&v, &_packet[sizeof(header) + componentIdx], sizeof(std::nullopt));
-                        // tmp.push_back(v);
+                        tmp.push_back(std::nullopt);
                     } else {
                         std::memmove(&v, &_packet[sizeof(header) + componentIdx], componentSize);
                         tmp.push_back(v);
                     }
+                    componentIdx += componentSize;
                 }
 
                 // Debug output
+                std::cout << "=== Position ===" << std::endl;
                 for (auto &component: tmp) {
                     if (component.has_value())
                         std::cout << component.value()._x << " " << component.value()._y << std::endl;
                     else
                         std::cout << "nullopt" << std::endl;
                 }
+                std::cout << "================" << std::endl;
                 //
             }
 
@@ -283,6 +283,6 @@ namespace net
     };
 
     Client* Client::clientInstance = nullptr;
-}; // namespace net
+} // namespace net
 
 #endif /* !NETWORK_HPP_ */

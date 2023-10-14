@@ -37,20 +37,17 @@ namespace rtype
             void runGame() {
                 _reg.register_component<Position>();
                 _reg.register_component<Velocity>();
-                Velocity c(642);
-                Position position1(4.5f, 7.9f);
-                Entity entity(0);
-                _reg.add_component<Velocity>(entity, c);
-                _reg.add_component<Position>(entity, position1);
-                _reg.spawn_entity();
-                Velocity c2(444);
-                Entity entity2(1);
-                _reg.add_component<Velocity>(entity2, c2);
-                _reg.spawn_entity();
-                Velocity c3(12345);
-                Entity entity3(2);
-                _reg.add_component<Velocity>(entity3, c3);
-                _reg.spawn_entity();
+
+                Entity entity = _reg.spawn_entity();
+
+                Position position2(4.44f, 89.567f);
+                Entity entity2 = _reg.spawn_entity();
+                _reg.add_component<Position>(entity2, position2);
+
+                Velocity v1(456);
+                Entity entity3 = _reg.spawn_entity();
+                _reg.add_component<Velocity>(entity3, v1);
+
                 auto &positions = _reg.get_components<Position>();
                 auto &velocities = _reg.get_components<Velocity>();
 
@@ -64,7 +61,7 @@ namespace rtype
                 while (_server.isSocketOpen()) {
                     std::this_thread::sleep_for(std::chrono::seconds(3));
                     if (_server.getClients().size()) {
-                        //_server.sendSparseArray<Velocity>(packet::ECS_VELOCITY, velocities);
+                        _server.sendSparseArray<Velocity>(packet::ECS_VELOCITY, velocities);
                         _server.sendSparseArray<Position>(packet::ECS_POSITION, positions);
                     }
                 }

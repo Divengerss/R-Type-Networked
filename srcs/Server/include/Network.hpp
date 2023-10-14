@@ -156,26 +156,27 @@ namespace net
             template<class T>
             void sendSparseArray(const packet::packetTypes &type, sparse_array<T> &sparseArray, const std::string cliUuid = "")
             {
-                std::size_t componentsSize = (sizeof(bool) + sizeof(T)) * sparseArray.size();
+                const std::size_t componentSize = sizeof(T);
+                std::cout << sizeof(bool) << " + " << componentSize << " + " << sparseArray.size() << std::endl;
+                const std::size_t componentsSize = (sizeof(bool) + componentSize) * sparseArray.size();
                 packet::packetHeader header(type, componentsSize);
-                std::array<std::uint8_t, sizeof(header) + sizeof(sparseArray)> buffer;
-                std::memmove(&buffer, &header, sizeof(header));
+                const std::size_t headerSize = sizeof(header);
+                std::array<std::uint8_t, headerSize + sizeof(sparseArray)> buffer;
                 std::size_t offset = 0UL;
+
+                std::memmove(&buffer, &header, headerSize);
                 for (auto &component : sparseArray) {
-                    std::cout << std::boolalpha << component.has_value() << std::endl;
                     if (component.has_value()) {
                         bool isNullOpt = false;
-                        std::memmove(&buffer[sizeof(header) + offset], &isNullOpt, sizeof(bool));
+                        std::memmove(&buffer[headerSize + offset], &isNullOpt, sizeof(bool));
                         offset += sizeof(bool);
-                        std::memmove(&buffer[sizeof(header) + offset], &component.value(), sizeof(component.value()));
-                        offset += sizeof(component.value());
+                        std::memmove(&buffer[headerSize + offset], &component.value(), componentSize);
                     } else {
                         bool isNullOpt = true;
-                        std::memmove(&buffer[sizeof(header) + offset], &isNullOpt, sizeof(bool));
+                        std::memmove(&buffer[headerSize + offset], &isNullOpt, sizeof(bool));
                         offset += sizeof(bool);
-                        std::memmove(&buffer[sizeof(header) + offset], &std::nullopt, sizeof(std::nullopt));
-                        offset += sizeof(std::nullopt);
                     }
+                    offset += componentSize;
                 }
                 if (cliUuid.empty() && !_clients.empty())
                     _logs.logTo(logInfo.data(), "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
@@ -345,6 +346,6 @@ namespace net
     };
 
     Server* Server::serverInstance = nullptr;
-};
+}
 
 #endif /* !NETWORK_HPP_ */

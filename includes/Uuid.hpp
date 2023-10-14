@@ -27,6 +27,6 @@ namespace uuid
         }
         return ss.str();
     }
-};
+}
 
 #endif /* !UUID_HPP_ */

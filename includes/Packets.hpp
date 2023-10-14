@@ -85,7 +85,7 @@ namespace packet
             std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
     };
-};
+}
 
 #pragma pack(pop)
 #endif //PACKETS_HPP
