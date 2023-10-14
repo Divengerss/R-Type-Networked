@@ -47,7 +47,7 @@ class PositionSystem {
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
                         positions[i].value()._y += vel.value()._velocity;
                     }
-                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+                    if (_spacePressed <= 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
                         std::cout << "ok" << std::endl;
                         Entity bullet = r.spawn_entity();
                         r.add_component<Texture>(bullet, {"./Release/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
@@ -56,7 +56,9 @@ class PositionSystem {
                         r.add_component<Velocity>(bullet, {1});
                         r.add_component<MovementPattern>(bullet, {STRAIGHTRIGHT});
                         r.add_component<Controllable>(bullet, {false});
+                        _spacePressed = 300;
                     }
+                    _spacePressed--;
                     //PLAYER MOVEMENT
                 } else {
                     switch (pat.value()._movementPattern)
@@ -80,7 +82,7 @@ class PositionSystem {
             }
         }
     }
-
+    int _spacePressed = 300;
     protected:
     private:
 };

@@ -40,10 +40,8 @@ public:
             auto &texture = textures[i];
             auto pos = positions[i];
             auto scale = scales[i];
-            PositionSystem p;
             if (texture && pos)
             {
-                std:: cout << texture->_path << std::endl;
                 sf::Sprite sprite(texture->_texture);
                 sprite.setPosition(pos->_x, pos->_y);
                 sprite.setTextureRect(sf::IntRect(texture->_left, texture->_top, texture->_width, texture->_height));
@@ -58,6 +56,7 @@ public:
 protected:
 private:
     sf::Clock Clock;
+    PositionSystem p;
     float updateInterval = 1.0f;
 };
 
