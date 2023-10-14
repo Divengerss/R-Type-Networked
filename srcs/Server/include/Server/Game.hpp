@@ -9,6 +9,7 @@
 #include "Registry.hpp"
 #include "Position.hpp"
 #include "Velocity.hpp"
+#include "Hitbox.hpp"
 
 #include <thread>
 #include <chrono>
@@ -37,8 +38,11 @@ namespace rtype
             void runGame() {
                 _reg.register_component<Position>();
                 _reg.register_component<Velocity>();
+                _reg.register_component<Hitbox>();
 
+                Hitbox hb(20, 40);
                 Entity entity = _reg.spawn_entity();
+                _reg.add_component<Hitbox>(entity, hb);
 
                 Position position2(4.44f, 89.567f);
                 Entity entity2 = _reg.spawn_entity();

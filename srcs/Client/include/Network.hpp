@@ -137,70 +137,23 @@ namespace net
                 std::cout << "Disconnection received from server." << std::endl;
             }
 
-            void handleComponentVelocity(packet::packetHeader &header) {
-                // Temporary, will target the client's ECS when its implemented.
-                sparse_array<Velocity> tmp;
-                Velocity v(0);
-                //
-
-                std::size_t componentSize = sizeof(Velocity);
+            template<class T>
+            void handleECSComponent(packet::packetHeader &header, sparse_array<T> &arr) {
+                T component(0);
+                std::size_t componentSize = sizeof(T);
 
                 bool isNullOpt = false;
                 for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;) {
                     std::memmove(&isNullOpt, &_packet[sizeof(header) + componentIdx], sizeof(bool));
                     componentIdx += sizeof(bool);
                     if (isNullOpt) {
-                        tmp.push_back(std::nullopt);
+                        arr.push_back(std::nullopt);
                     } else {
-                        std::memmove(&v, &_packet[sizeof(header) + componentIdx], componentSize);
-                        tmp.push_back(v);
-                    }
-                    componentIdx += sizeof(Velocity);
-                }
-
-                // Debug output
-                std::cout << "=== Velocity ===" << std::endl;
-                for (auto &component: tmp) {
-                    if (component.has_value())
-                        std::cout << component.value()._velocity << std::endl;
-                    else
-                        std::cout << "nullopt" << std::endl;
-                }
-                std::cout << "================" << std::endl;
-                //
-            }
-
-            void handleComponentPosition(packet::packetHeader &header) {
-                // Temporary, will target the client's ECS when its implemented.
-                sparse_array<Position> tmp;
-                Position v(0);
-                //
-
-                std::size_t componentSize = sizeof(Position);
-
-                bool isNullOpt = false;
-                for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;) {
-                    std::memmove(&isNullOpt, &_packet[sizeof(header) + componentIdx], sizeof(bool));
-                    componentIdx += sizeof(bool);
-                    if (isNullOpt) {
-                        tmp.push_back(std::nullopt);
-                    } else {
-                        std::memmove(&v, &_packet[sizeof(header) + componentIdx], componentSize);
-                        tmp.push_back(v);
+                        std::memmove(&component, &_packet[sizeof(header) + componentIdx], componentSize);
+                        arr.push_back(component);
                     }
                     componentIdx += componentSize;
                 }
-
-                // Debug output
-                std::cout << "=== Position ===" << std::endl;
-                for (auto &component: tmp) {
-                    if (component.has_value())
-                        std::cout << component.value()._x << " " << component.value()._y << std::endl;
-                    else
-                        std::cout << "nullopt" << std::endl;
-                }
-                std::cout << "================" << std::endl;
-                //
             }
 
             void handleReceive(const asio::error_code &errCode) {
@@ -221,8 +174,34 @@ namespace net
                             handleClientStatusPacket(cliStatus);
                         }},
                         {packet::FORCE_DISCONNECT, [&]{ handleForceDisconnectPacket(); }},
-                        {packet::ECS_VELOCITY, [&]{ handleComponentVelocity(header); }},
-                        {packet::ECS_POSITION, [&]{ handleComponentPosition(header); }}
+                        {packet::ECS_VELOCITY, [&]{
+                            sparse_array<Velocity> tmp;
+                            handleECSComponent<Velocity>(header, tmp);
+                            // Debug output
+                            std::cout << "=== Velocity ===" << std::endl;
+                            for (auto &component: tmp) {
+                                if (component.has_value())
+                                    std::cout << component.value()._velocity << std::endl;
+                                else
+                                    std::cout << "nullopt" << std::endl;
+                            }
+                            std::cout << "================" << std::endl;
+                            //
+                        }},
+                        {packet::ECS_POSITION, [&]{
+                            sparse_array<Position> tmp;
+                            handleECSComponent<Position>(header, tmp);
+                            // Debug output
+                            std::cout << "=== Position ===" << std::endl;
+                            for (auto &component: tmp) {
+                                if (component.has_value())
+                                    std::cout << component.value()._x << " " << component.value()._y << std::endl;
+                                else
+                                    std::cout << "nullopt" << std::endl;
+                            }
+                            std::cout << "================" << std::endl;
+                            //
+                        }}
                     };
 
                     auto handlerIt = packetHandlers.find(header.type);

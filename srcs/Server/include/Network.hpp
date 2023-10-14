@@ -157,7 +157,6 @@ namespace net
             void sendSparseArray(const packet::packetTypes &type, sparse_array<T> &sparseArray, const std::string cliUuid = "")
             {
                 const std::size_t componentSize = sizeof(T);
-                std::cout << sizeof(bool) << " + " << componentSize << " + " << sparseArray.size() << std::endl;
                 const std::size_t componentsSize = (sizeof(bool) + componentSize) * sparseArray.size();
                 packet::packetHeader header(type, componentsSize);
                 const std::size_t headerSize = sizeof(header);
