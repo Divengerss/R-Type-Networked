@@ -11,6 +11,7 @@
 #include "SparseArray.hpp"
 #include "Velocity.hpp"
 #include "Position.hpp"
+#include "Hitbox.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -137,9 +138,8 @@ namespace net
                 std::cout << "Disconnection received from server." << std::endl;
             }
 
-            template<class T>
-            void handleECSComponent(packet::packetHeader &header, sparse_array<T> &arr) {
-                T component(0);
+            template<class T, typename U>
+            void handleECSComponent(packet::packetHeader &header, sparse_array<T> &arr, U &component) {
                 std::size_t componentSize = sizeof(T);
 
                 bool isNullOpt = false;
@@ -175,32 +175,19 @@ namespace net
                         }},
                         {packet::FORCE_DISCONNECT, [&]{ handleForceDisconnectPacket(); }},
                         {packet::ECS_VELOCITY, [&]{
-                            sparse_array<Velocity> tmp;
-                            handleECSComponent<Velocity>(header, tmp);
-                            // Debug output
-                            std::cout << "=== Velocity ===" << std::endl;
-                            for (auto &component: tmp) {
-                                if (component.has_value())
-                                    std::cout << component.value()._velocity << std::endl;
-                                else
-                                    std::cout << "nullopt" << std::endl;
-                            }
-                            std::cout << "================" << std::endl;
-                            //
+                            sparse_array<Velocity> tmp; // Temporary, use the client's ECS when done.
+                            Velocity component(0);
+                            handleECSComponent<Velocity>(header, tmp, component);
                         }},
                         {packet::ECS_POSITION, [&]{
-                            sparse_array<Position> tmp;
-                            handleECSComponent<Position>(header, tmp);
-                            // Debug output
-                            std::cout << "=== Position ===" << std::endl;
-                            for (auto &component: tmp) {
-                                if (component.has_value())
-                                    std::cout << component.value()._x << " " << component.value()._y << std::endl;
-                                else
-                                    std::cout << "nullopt" << std::endl;
-                            }
-                            std::cout << "================" << std::endl;
-                            //
+                            sparse_array<Position> tmp; // Temporary, use the client's ECS when done.
+                            Position component(0.0f, 0.0f);
+                            handleECSComponent<Position>(header, tmp, component);
+                        }},
+                        {packet::ECS_HITBOX, [&]{
+                            sparse_array<Hitbox> tmp; // Temporary, use the client's ECS when done.
+                            Hitbox component(0, 0);
+                            handleECSComponent<Hitbox>(header, tmp, component);
                         }}
                     };
 

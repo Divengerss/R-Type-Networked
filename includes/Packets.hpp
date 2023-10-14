@@ -20,7 +20,8 @@ namespace packet
         CLIENT_STATUS,
         FORCE_DISCONNECT,
         ECS_VELOCITY,
-        ECS_POSITION
+        ECS_POSITION,
+        ECS_HITBOX
     };
 
     enum packetStatus : std::uint8_t
