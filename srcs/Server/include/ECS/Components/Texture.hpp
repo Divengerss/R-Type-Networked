@@ -12,14 +12,11 @@
 
 class Texture {
     public:
-        Texture(std::string path) {
+        Texture(const std::string &path) {
             _path = path;
         };
 
         std::string _path;
-
-    protected:
-    private:
 };
 
 #endif /* !TEXTURE_HPP_ */

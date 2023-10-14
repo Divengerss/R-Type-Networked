@@ -10,6 +10,7 @@
 #include "Position.hpp"
 #include "Velocity.hpp"
 #include "Hitbox.hpp"
+#include "Controllable.hpp"
 
 #include <thread>
 #include <chrono>
@@ -21,7 +22,7 @@ namespace rtype
         public:
             Game() = delete;
             Game(asio::io_context &ioContext, asio::io_context &ioService) :
-                _server(ioContext, ioService), _reg(Registry())
+                _reg(Registry()), _server(ioContext, ioService, _reg)
             {
             };
 
@@ -39,36 +40,29 @@ namespace rtype
                 _reg.register_component<Position>();
                 _reg.register_component<Velocity>();
                 _reg.register_component<Hitbox>();
-
-                Hitbox hb(20, 40);
-                Entity entity = _reg.spawn_entity();
-                _reg.add_component<Hitbox>(entity, hb);
-
-                Position position2(4.44f, 89.567f);
-                Entity entity2 = _reg.spawn_entity();
-                _reg.add_component<Position>(entity2, position2);
-
-                Velocity v1(456);
-                Entity entity3 = _reg.spawn_entity();
-                _reg.add_component<Velocity>(entity3, v1);
-
-                auto &positions = _reg.get_components<Position>();
-                auto &velocities = _reg.get_components<Velocity>();
-                auto &hitboxes = _reg.get_components<Hitbox>();
+                _reg.register_component<Controllable>();
 
                 while (_server.isSocketOpen()) {
-                    std::this_thread::sleep_for(std::chrono::seconds(3));
+                    //std::this_thread::sleep_for(std::chrono::seconds(1));
                     if (_server.getClients().size()) {
-                        _server.sendSparseArray<Velocity>(packet::ECS_VELOCITY, velocities);
-                        _server.sendSparseArray<Position>(packet::ECS_POSITION, positions);
-                        _server.sendSparseArray<Hitbox>(packet::ECS_HITBOX, hitboxes);
+                        auto &positions = _reg.get_components<Position>();
+
+                        for (auto &component : positions) {
+                            if (component.has_value())
+                                std::cout << component.value()._x << " " << component.value()._y << std::endl;
+                            else
+                                std::cout << "nullopt" << std::endl;
+                        }
+                        //_server.sendSparseArray<Velocity>(packet::ECS_VELOCITY, velocities);
+                        //_server.sendSparseArray<Position>(packet::ECS_POSITION, positions);
+                        //_server.sendSparseArray<Hitbox>(packet::ECS_HITBOX, hitboxes);
                     }
                 }
             };
 
         private:
-            net::Server _server;
             Registry _reg;
+            net::Server _server;
     };
 }
 

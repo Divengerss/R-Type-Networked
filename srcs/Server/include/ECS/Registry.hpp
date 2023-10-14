@@ -71,7 +71,7 @@ class Registry
             }
         }
 
-        Entity entity_from_index(std::size_t idx);
+        Entity &entity_from_index(std::size_t idx);
 
         void kill_entity(Entity const &e)
         {

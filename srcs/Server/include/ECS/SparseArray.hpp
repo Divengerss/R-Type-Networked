@@ -107,31 +107,36 @@ public:
         }
         return *std::next(_data.begin(), pos);
     };
+
     reference_type insert_at(size_type pos, Component &&value)
     {
         _data.erase(_data.begin() + pos);
         return _data.insert(_data.begin() + pos, std::forward<Component>(value));
     };
+
     template <class... Params>
     reference_type emplace_at(size_type pos, Params &&...data)
     {
         _data.erase(_data.begin() + pos);
         return _data.emplace(_data.begin() + pos, data...);
     }
+
     reference_type push_back(std::optional<Component> &&value) {
         _data.push_back(value);
         return (_data.back());
     }
+
     void erase(size_type pos)
     {
         _data[pos] = std::nullopt;
     };
+
     size_type get_index(value_type const &value) const
     {
-        iterator ir = _data.begin();
-        for (ir; ir != _data.end(); ir++)
-            if (std::addressof(value) == std::addressof(ir))
-                return (ir - _data.begin());
+        for (size_type i = 0; i < _data.size(); ++i)
+            if (std::addressof(value) == std::addressof(_data[i]))
+                return i;
+        return -1;
     };
 
 private:

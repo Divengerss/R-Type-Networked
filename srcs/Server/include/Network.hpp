@@ -11,6 +11,10 @@
 #include "Logs.hpp"
 #include "Uuid.hpp"
 #include "SparseArray.hpp"
+#include "Registry.hpp"
+#include "Position.hpp"
+#include "Velocity.hpp"
+#include "Controllable.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -46,12 +50,12 @@ namespace net
     {
         public:
             Server() = delete;
-            Server(asio::io_context &ioContext, asio::io_service &ioService) :
+            Server(asio::io_context &ioContext, asio::io_service &ioService, Registry &reg) :
                 _ioContext(ioContext), _ioService(ioService),
                 _host(defaultHost), _port(defaultPort),
                 _socket(_ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), defaultPort)),
                 _logs(Log(utils::getCurrDir() + serverLogFile.data())),
-                _clients({})
+                _clients({}), _reg(reg)
             {
                 _logs.logTo(logInfo.data(), "Starting up server...");
                 utils::ParseCFG config(utils::getCurrDir() + serverConfigFilePath.data());
@@ -215,6 +219,12 @@ namespace net
                     _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
                     _logs.logTo(logWarn.data(), "    " + err);
                 }
+                Position position(30.f, 30.0f * _clients.size());
+                std::cout << cliUuid << std::endl;
+                Controllable ctrl(cliUuid);
+                Entity entity = _reg.spawn_entity();
+                _reg.add_component<Position>(entity, position);
+                _reg.add_component<Controllable>(entity, ctrl);
             }
 
             void handleDisconnectionRequest(packet::packetHeader &header) {
@@ -231,6 +241,11 @@ namespace net
                     std::string err = e.what();
                     _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
                     _logs.logTo(logWarn.data(), "    " + err);
+                }
+                for (auto &component : _reg.get_components<Controllable>()) {
+                    if (component.has_value() && std::strcmp(component.value()._playerId.c_str(), cliUuid.c_str())) {   
+                        _reg.kill_entity(Entity(_reg.get_components<Controllable>().get_index(component)));
+                    }
                 }
             }
 
@@ -341,6 +356,7 @@ namespace net
             std::array<std::uint8_t, packetSize> _packet;
             Log _logs;
             std::vector<Client> _clients;
+            Registry &_reg;
             static Server* serverInstance;
     };
 
