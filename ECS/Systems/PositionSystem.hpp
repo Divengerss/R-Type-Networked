@@ -31,12 +31,10 @@ class PositionSystem {
             auto const &vel = velocities[i];
             auto const &pat = patterns[i];
             auto const &cont = controllables[i];
-            std::cout << i << std::endl;
             if (positions[i].has_value() && vel && pat)
             {
                 if (cont->_playable == true)
                 {
-                    std::cout << "cont" << std::endl;
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
                         positions[i].value()._x -= vel.value()._velocity;
                     }
@@ -49,16 +47,27 @@ class PositionSystem {
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
                         positions[i].value()._y += vel.value()._velocity;
                     }
+                    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+                        std::cout << "ok" << std::endl;
+                        Entity bullet = r.spawn_entity();
+                        r.add_component<Texture>(bullet, {"./Release/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
+                        r.add_component<Position>(bullet, {positions[i].value()._x + 30, positions[i].value()._y});
+                        r.add_component<Scale>(bullet, {3, 3});
+                        r.add_component<Velocity>(bullet, {1});
+                        r.add_component<MovementPattern>(bullet, {STRAIGHTRIGHT});
+                        r.add_component<Controllable>(bullet, {false});
+                    }
                     //PLAYER MOVEMENT
                 } else {
-                    std::cout << "not cont" << std::endl;
                     switch (pat.value()._movementPattern)
                     {
                     case (MovementPatterns::STRAIGHTLEFT):
                         positions[i].value()._y = positions[i].value()._y;
                         positions[i].value()._x -= vel.value()._velocity;
-                        // if (positions[i].value()._x <= -1920)
-                        //     positions[i].value()._x = 1920;
+                        break;
+                    case (MovementPatterns::STRAIGHTRIGHT):
+                        positions[i].value()._y = positions[i].value()._y;
+                        positions[i].value()._x += vel.value()._velocity;
                         break;
                     case (MovementPatterns::SINUS):
                         positions[i].value()._y = sin(positions[i].value()._x) + pat.value()._baseHeight;

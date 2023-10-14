@@ -49,6 +49,30 @@ int main()
     reg.add_component<MovementPattern>(e, {NONE});
     reg.add_component<Controllable>(e, {true});
 
+    Entity e2 = reg.spawn_entity();
+    reg.add_component<Texture>(e2, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+    reg.add_component<Position>(e2, {10, 10});
+    reg.add_component<Scale>(e2, {3, 3});
+    reg.add_component<Velocity>(e2, {1});
+    reg.add_component<MovementPattern>(e2, {NONE});
+    reg.add_component<Controllable>(e2, {false});
+
+    Entity e3 = reg.spawn_entity();
+    reg.add_component<Texture>(e3, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+    reg.add_component<Position>(e3, {10, 10});
+    reg.add_component<Scale>(e3, {3, 3});
+    reg.add_component<Velocity>(e3, {1});
+    reg.add_component<MovementPattern>(e3, {NONE});
+    reg.add_component<Controllable>(e3, {false});
+
+    Entity e4 = reg.spawn_entity();
+    reg.add_component<Texture>(e4, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+    reg.add_component<Position>(e4, {10, 10});
+    reg.add_component<Scale>(e4, {3, 3});
+    reg.add_component<Velocity>(e4, {1});
+    reg.add_component<MovementPattern>(e4, {NONE});
+    reg.add_component<Controllable>(e4, {false});
+
     Entity monster = reg.spawn_entity();
     reg.add_component<Texture>(monster, {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
     reg.add_component<Position>(monster, {1920, 500});

@@ -10,6 +10,7 @@
 
 enum MovementPatterns{
     STRAIGHTLEFT,
+    STRAIGHTRIGHT,
     STRAIGHT,
     SINUS,
     CIRCLE,

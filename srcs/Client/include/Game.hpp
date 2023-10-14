@@ -41,15 +41,9 @@ public:
             auto pos = positions[i];
             auto scale = scales[i];
             PositionSystem p;
-            std::cout << texture->_path << " " << texture->_left << " " << texture->_height << std::endl;
             if (texture && pos)
             {
-                // MyRect myRect;
-                // myRect.left = 0;
-                // myRect.top = 0;
-                // myRect.width = 950;
-                // myRect.height = 200;
-                //////////////////////
+                std:: cout << texture->_path << std::endl;
                 sf::Sprite sprite(texture->_texture);
                 sprite.setPosition(pos->_x, pos->_y);
                 sprite.setTextureRect(sf::IntRect(texture->_left, texture->_top, texture->_width, texture->_height));
@@ -63,6 +57,8 @@ public:
 
 protected:
 private:
+    sf::Clock Clock;
+    float updateInterval = 1.0f;
 };
 
 #endif /* !GAME_HPP_ */
