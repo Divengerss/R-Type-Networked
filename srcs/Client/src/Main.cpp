@@ -1,8 +1,10 @@
 #include "Client.hpp"
+#include  "Screen.hpp"
 
 int main() {
     utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
     asio::io_context ioContext;
+    Screen Screen;
     try {
         std::string host = config.getData<std::string>("host");
         std::string port = config.getData<std::string>("port");
