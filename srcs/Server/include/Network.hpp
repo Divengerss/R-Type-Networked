@@ -243,7 +243,7 @@ namespace net
                     _logs.logTo(logWarn.data(), "    " + err);
                 }
                 for (auto &component : _reg.get_components<Controllable>()) {
-                    if (component.has_value() && std::strcmp(component.value()._playerId.c_str(), cliUuid.c_str())) {   
+                    if (component.has_value() && !std::strcmp(component.value()._playerId.c_str(), cliUuid.c_str())) {
                         _reg.kill_entity(Entity(_reg.get_components<Controllable>().get_index(component)));
                     }
                 }
