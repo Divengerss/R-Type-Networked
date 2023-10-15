@@ -33,11 +33,10 @@ class ActiveBonus {
             _fb = fb;
             _sb = sb;
         };
-    int _ss;
-    int _sb;
-    int _fb;
-    protected:
-    private:
+
+        int _ss;
+        int _sb;
+        int _fb;
 };
 
 #endif /* !ACTIVEBONUS_HPP_ */

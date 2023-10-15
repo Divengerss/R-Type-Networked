@@ -15,8 +15,6 @@ class Velocity {
         };
 
         int _velocity;
-    protected:
-    private:
 };
 
 #endif /* !VELOCITY_HPP_ */

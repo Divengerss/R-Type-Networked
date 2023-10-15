@@ -15,9 +15,6 @@ class Destroyable {
         };
 
         int _hp;
-
-    protected:
-    private:
 };
 
 #endif /* !DESTROYABLE_HPP_ */

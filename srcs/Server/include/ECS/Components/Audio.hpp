@@ -12,7 +12,7 @@
 
 class Audio {
     public:
-        Audio(float volume, std::string path, bool loop) {
+        Audio(float volume, const std::string &path, bool loop) {
             _volume = volume;
             std::string _path = path;
             bool _loop = loop;
@@ -21,9 +21,6 @@ class Audio {
         float _volume;
         std::string _path;
         bool _loop;
-
-    protected:
-    private:
 };
 
 #endif /* !AUDIO_HPP_ */

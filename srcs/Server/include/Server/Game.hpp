@@ -47,14 +47,11 @@ namespace rtype
                     if (_server.getClients().size()) {
                         auto &positions = _reg.get_components<Position>();
 
-                        int test = 1;
                         for (auto &component : positions) {
-                            std::cout << "client " << test << " ";
                             if (component.has_value()) {
                                 std::cout << "X = " << component.value()._x << " Y = " << component.value()._y << std::endl;
                             } else
                                 std::cout << "nullopt" << std::endl;
-                            test += 1;
                         }
                         //_server.sendSparseArray<Velocity>(packet::ECS_VELOCITY, velocities);
                         //_server.sendSparseArray<Position>(packet::ECS_POSITION, positions);
