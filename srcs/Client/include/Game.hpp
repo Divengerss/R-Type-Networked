@@ -28,8 +28,9 @@ class Game
 public:
     // Game();
     // ~Game();
-    void updateSprite(Registry &t, sf::RenderWindow &window)
+    void updateSprite(Registry &t)
     {
+        p.positionSystem(t);
         auto positions = t.get_components<Position>();
         auto velocities = t.get_components<Velocity>();
         auto textures = t.get_components<Texture>();
@@ -38,23 +39,35 @@ public:
         for (std::size_t i = 0; i < textures.size(); ++i)
         {
             auto &texture = textures[i];
-            auto pos = positions[i];
+            auto &pos = positions[i];
             auto scale = scales[i];
-            if (texture && pos)
+            if (texture && pos && _sprites.find(i) == _sprites.end())
             {
-                sf::Sprite sprite(texture->_texture);
+                std::cout << "sprite crée" << std::endl;
+                sf::Sprite sprite;
+                sf::Texture spriteTexture(texture->_texture);
+                sprite.setTexture(spriteTexture);
                 sprite.setPosition(pos->_x, pos->_y);
                 sprite.setTextureRect(sf::IntRect(texture->_left, texture->_top, texture->_width, texture->_height));
                 sprite.setScale(scale->_scaleX, scale->_scaleY);
-                p.positionSystem(t);
-                window.draw(sprite);
+                _sprites.emplace(i, std::pair<sf::Sprite, sf::Texture>(sprite, spriteTexture));
+                _sprites[i].first.setTexture(_sprites[i].second);
+            } else if (texture && pos) {
+                sf::Sprite &sprite = _sprites.at(i).first;
+                sprite.setPosition(pos->_x, pos->_y);
             }
         }
     };
-    void drawSprite(Registry &t);
+
+    void drawSprite(sf::RenderWindow &window)
+    {
+        for (auto &sprite : _sprites)
+            window.draw(sprite.second.first);
+    }
 
 protected:
 private:
+    std::map<size_t, std::pair<sf::Sprite, sf::Texture>> _sprites;
     sf::Clock Clock;
     PositionSystem p;
     float updateInterval = 1.0f;
