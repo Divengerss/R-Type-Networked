@@ -46,7 +46,6 @@ namespace packet
     {
         std::uint8_t status;
         std::array<std::uint8_t, uuidSize> uuid;
-
         connectionRequest() : status(REQUEST)
         {
             std::memset(&uuid, 0, uuidSize);
@@ -75,15 +74,19 @@ namespace packet
     {
         std::uint8_t status;
         std::array<std::uint8_t, uuidSize> uuid;
-        float x;
-        float y;
+        float posX;
+        float posY;
 
-        clientStatus() : status(LOSE_CLIENT) {}
-        clientStatus(const std::string &cliUuid) : status(LOSE_CLIENT)
+        clientStatus() : status(LOSE_CLIENT), posX(0.0f), posY(0.0f) {}
+        clientStatus(const std::string &cliUuid) : status(LOSE_CLIENT), posX(0.0f), posY(0.0f)
         {
             std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
-        clientStatus(const std::string &cliUuid, std::uint8_t status) : status(status)
+        clientStatus(const std::string &cliUuid, std::uint8_t status) : status(status), posX(0.0f), posY(0.0f)
+        {
+            std::memmove(&uuid, cliUuid.data(), uuidSize);
+        }
+        clientStatus(const std::string &cliUuid, std::uint8_t status, float x, float y) : status(status), posX(x), posY(y)
         {
             std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
