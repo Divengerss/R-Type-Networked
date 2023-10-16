@@ -64,7 +64,7 @@ public:
                 sprite.setPosition(pos->_x, pos->_y);
             }
         }
-        d.damageSystem(t);
+        d.damageSystem(t, _sprites);
     };
 
     void drawSprite(sf::RenderWindow &window)
