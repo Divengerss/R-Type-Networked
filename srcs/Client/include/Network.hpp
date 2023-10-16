@@ -123,14 +123,17 @@ namespace net
             void handleConnectionRequestPacket(const packet::connectionRequest &request) {
                 std::memmove(_uuid.data(), &request.uuid, uuidSize);
                 std::cout << "Got uuid = " << _uuid << std::endl;
+                std::cout << request.connectedNb << " client connected." << std::endl;
             }
 
             void handleClientStatusPacket(packet::clientStatus &cliStatus) {
                 std::string cliUuid(reinterpret_cast<char *>(cliStatus.uuid.data()));
                 if (cliStatus.status == packet::LOSE_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
                     std::cout << "Client " << cliUuid << " disconnected." << std::endl;
+                    std::cout << cliStatus.connectedNb << " clients connected." << std::endl;
                 } else if (cliStatus.status == packet::NEW_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
                     std::cout << "Client " << cliUuid << " connected at X: " << cliStatus.posX << " Y: " << cliStatus.posY << std::endl;
+                    std::cout << cliStatus.connectedNb << " clients connected." << std::endl;
                 }
             }
 

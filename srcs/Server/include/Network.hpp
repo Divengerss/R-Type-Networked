@@ -198,7 +198,7 @@ namespace net
 
             void handleConnectionRequest() {
                 std::string cliUuid = addClient();
-                packet::connectionRequest response(packet::ACCEPTED, cliUuid);
+                packet::connectionRequest response(packet::ACCEPTED, cliUuid, _clients.size());
                 _logs.logTo(logInfo.data(), "New connection received: UUID [" + cliUuid + "]");
                 packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(response));
                 std::array<std::uint8_t, sizeof(header) + sizeof(response)> buffer;
@@ -218,7 +218,7 @@ namespace net
                 Entity entity = _reg.spawn_entity();
                 _reg.add_component<Position>(entity, position);
                 _reg.add_component<Controllable>(entity, ctrl);
-                packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT, posX, posY);
+                packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT, posX, posY, _clients.size());
                 try {
                     sendResponse(packet::CLIENT_STATUS, cliStatus);
                 } catch (const std::system_error &e) {
@@ -229,13 +229,13 @@ namespace net
             }
 
             void handleDisconnectionRequest(packet::packetHeader &header) {
-                packet::disconnectionRequest request(packet::ACCEPTED);
+                packet::disconnectionRequest request(packet::ACCEPTED, _clients.size());
                 std::memmove(&request, &_packet[sizeof(header)], sizeof(request));
                 std::string cliUuid(uuidSize, 0);
                 std::memmove(cliUuid.data(), &request.uuid, uuidSize);
                 removeClient(cliUuid);
                 _logs.logTo(logInfo.data(), "Disconnection received from [" + cliUuid + "]");
-                packet::clientStatus cliStatus(cliUuid, packet::LOSE_CLIENT);
+                packet::clientStatus cliStatus(cliUuid, packet::LOSE_CLIENT, 0, 0, _clients.size());
                 try {
                     sendResponse(packet::CLIENT_STATUS, cliStatus);
                 } catch (const std::system_error &e) {
