@@ -13,6 +13,8 @@
 #include "Velocity.hpp"
 #include "MovementPattern.hpp"
 #include "Controllable.hpp"
+#include "Hitbox.hpp"
+#include "Damaging.hpp"
 #include <cmath>
 
 class PositionSystem {
@@ -48,16 +50,21 @@ class PositionSystem {
                         positions[i].value()._y += vel.value()._velocity;
                     }
                     if (_spacePressed <= 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-                        std::cout << "ok" << std::endl;
                         Entity bullet = r.spawn_entity();
                         r.add_component<Texture>(bullet, {"./Release/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
-                        r.add_component<Position>(bullet, {positions[i].value()._x + 30, positions[i].value()._y});
+                        r.add_component<Position>(bullet, {positions[i].value()._x + 100, positions[i].value()._y});
                         r.add_component<Scale>(bullet, {3, 3});
                         r.add_component<Velocity>(bullet, {3});
                         r.add_component<MovementPattern>(bullet, {STRAIGHTRIGHT});
                         r.add_component<Controllable>(bullet, {false});
+                        // r.add_component<Hitbox>(bullet, {25, 25});
+                        // r.add_component<Damaging>(bullet, {true});
                         _spacePressed = 300;
                     }
+                    // if (/*sf::Keyboard::isKeyPressed(sf::Keyboard::T)*/entity_a.getSprite().getGlobalBounds().intersects(entity_b.getSprite().getGlobalBounds()))
+                    // {
+                    //     r.kill_entity(Entity(i));
+                    // }
                     _spacePressed--;
                 } else {
                     switch (pat.value()._movementPattern)

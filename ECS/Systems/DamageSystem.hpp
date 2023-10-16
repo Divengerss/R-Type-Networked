@@ -17,18 +17,21 @@
 class DamageSystem
 {
 public:
-    DamageSystem();
-    ~DamageSystem();
+    DamageSystem() = default;
+    ~DamageSystem() = default;
 
     void damageSystem(Registry &r)
     {
-        auto const hitboxes = r.get_components<Hitbox>();
         auto const positions = r.get_components<Position>();
-        auto const damages = r.get_components<Damaging>();
         auto destroyable = r.get_components<Destroyable>();
+        auto const hitboxes = r.get_components<Hitbox>();
+        auto const damages = r.get_components<Damaging>();
 
+        // std::cout << "positions.size(): " << positions.size() << std::endl;
         for (size_t i = 0; i < positions.size(); ++i)
         {
+            // std::cout << "positions.size(): " << positions.size() << std::endl;
+            // std::cout << "i: " << i << std::endl;
             auto const &hb_dest = hitboxes[i];
             auto const &pos_dest = positions[i];
             auto &dest = destroyable[i];
@@ -36,7 +39,7 @@ public:
             {
                 for (size_t j = 0; j < positions.size(); ++j)
                 {
-                    if (i = j)
+                    if (i == j)
                         continue;
                     auto const &hb_dam = hitboxes[j];
                     auto const &pos_dam = positions[j];
@@ -46,9 +49,12 @@ public:
                         if (pos_dest.value()._x < pos_dam.value()._x + hb_dam.value()._width &&
                             pos_dest.value()._x + hb_dest.value()._width > pos_dam.value()._x &&
                             pos_dest.value()._y < pos_dam.value()._y + hb_dam.value()._height &&
-                            pos_dest.value()._y + hb_dest.value()._height > pos_dam.value()._y)
+                            pos_dest.value()._y + hb_dest.value()._height > pos_dam.value()._y) {
                             // COLLISION
+                            std::cout << pos_dam.value()._x << std::endl;
+                            r.kill_entity(Entity(i));
                             dest.value()._hp -= dam.value()._damages;
+                            }
                     }
                 }
             }
