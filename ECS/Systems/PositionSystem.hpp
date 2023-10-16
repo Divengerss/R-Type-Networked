@@ -54,11 +54,11 @@ class PositionSystem {
                         r.add_component<Texture>(bullet, {"./Release/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
                         r.add_component<Position>(bullet, {positions[i].value()._x + 100, positions[i].value()._y});
                         r.add_component<Scale>(bullet, {3, 3});
-                        r.add_component<Velocity>(bullet, {3});
+                        r.add_component<Velocity>(bullet, {20});
                         r.add_component<MovementPattern>(bullet, {STRAIGHTRIGHT});
                         // r.add_component<Hitbox>(bullet, {25, 25});
                         r.add_component<Damaging>(bullet, 4);
-                        _spacePressed = 300;
+                        _spacePressed = 20;
                     }
                     // if (/*sf::Keyboard::isKeyPressed(sf::Keyboard::T)*/entity_a.getSprite().getGlobalBounds().intersects(entity_b.getSprite().getGlobalBounds()))
                     // {
@@ -90,7 +90,7 @@ class PositionSystem {
         }
     }
 
-    int _spacePressed = 300;
+    int _spacePressed = 200;
     protected:
     private:
 };

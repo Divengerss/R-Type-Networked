@@ -43,7 +43,7 @@ int main()
     reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png", 0, 0, 950, 200});
     reg.add_component<Position>(Space_background, {0, 0});
     reg.add_component<Scale>(Space_background, {5, 5});
-    reg.add_component<Velocity>(Space_background, {2});
+    reg.add_component<Velocity>(Space_background, {1});
     reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
     // reg.add_component<Destroyable>(Space_background, {false});
     reg.add_component<Hitbox>(Space_background, {950, 200});
@@ -53,7 +53,7 @@ int main()
     reg.add_component<Texture>(e, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
     reg.add_component<Position>(e, {10, 10});
     reg.add_component<Scale>(e, {3, 3});
-    reg.add_component<Velocity>(e, {1});
+    reg.add_component<Velocity>(e, {10});
     reg.add_component<MovementPattern>(e, {NONE});
     reg.add_component<Controllable>(e, {" "});
     reg.add_component<Destroyable>(e, {3});
@@ -91,7 +91,7 @@ int main()
     reg.add_component<Texture>(monster, {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
     reg.add_component<Position>(monster, {1920, 500});
     reg.add_component<Scale>(monster, {3, 3});
-    reg.add_component<Velocity>(monster, {1});
+    reg.add_component<Velocity>(monster, {2});
     reg.add_component<MovementPattern>(monster, {STRAIGHTLEFT});
     reg.add_component<Destroyable>(monster, {2});
     reg.add_component<Hitbox>(monster, {33, 17});
@@ -99,7 +99,7 @@ int main()
 
     Game g;
     sf::Clock clock;
-    float updateInterval = 1/60;
+    float updateInterval = 1.0f/60;
     while (window.isOpen())
     {
         sf::Time elapsedTime = clock.getElapsedTime();
