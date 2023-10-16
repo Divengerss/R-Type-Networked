@@ -10,12 +10,13 @@
 
 class Position {
     public:
-        Position(float x = 0, float y = 0) {_x=x; _y=y;};
+        Position(float x = 0, float y = 0) {
+            _x = x;
+            _y = y;
+        };
 
         float _x;
         float _y;
-    protected:
-    private:
 };
 
 #endif /* !POSITION_HPP_ */

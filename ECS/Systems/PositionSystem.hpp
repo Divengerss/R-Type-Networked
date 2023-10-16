@@ -35,7 +35,7 @@ class PositionSystem {
             auto const &cont = controllables[i];
             if (positions[i].has_value() && vel && pat)
             {
-                if (cont->_playable == true)
+                if (cont)
                 {
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
                         positions[i].value()._x -= vel.value()._velocity;
@@ -56,7 +56,6 @@ class PositionSystem {
                         r.add_component<Scale>(bullet, {3, 3});
                         r.add_component<Velocity>(bullet, {3});
                         r.add_component<MovementPattern>(bullet, {STRAIGHTRIGHT});
-                        r.add_component<Controllable>(bullet, {false});
                         // r.add_component<Hitbox>(bullet, {25, 25});
                         r.add_component<Damaging>(bullet, 4);
                         _spacePressed = 300;
@@ -82,6 +81,8 @@ class PositionSystem {
                         break;
                     case (MovementPatterns::CIRCLE):
                         positions[i].value()._y = 0;
+                        break;
+                    case (MovementPatterns::NONE):
                         break;
                     }
                 }

@@ -10,6 +10,11 @@
 #include "Packets.hpp"
 #include "Logs.hpp"
 #include "Uuid.hpp"
+#include "SparseArray.hpp"
+#include "Registry.hpp"
+#include "Position.hpp"
+#include "Velocity.hpp"
+#include "Controllable.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -45,12 +50,12 @@ namespace net
     {
         public:
             Server() = delete;
-            Server(asio::io_context &ioContext, asio::io_context &ioService) :
+            Server(asio::io_context &ioContext, asio::io_service &ioService, Registry &reg) :
                 _ioContext(ioContext), _ioService(ioService),
                 _host(defaultHost), _port(defaultPort),
                 _socket(_ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), defaultPort)),
                 _logs(Log(utils::getCurrDir() + serverLogFile.data())),
-                _clients({})
+                _clients({}), _reg(reg)
             {
                 _logs.logTo(logInfo.data(), "Starting up server...");
                 utils::ParseCFG config(utils::getCurrDir() + serverConfigFilePath.data());
@@ -68,6 +73,10 @@ namespace net
                 _socket.set_option(option);
                 try {
                     _socket = asio::ip::udp::socket(_ioContext, asio::ip::udp::endpoint(asio::ip::make_address(_host), _port));
+                } catch (const std::system_error &e) {
+                    std::string err = e.what();
+                    _logs.logTo(logErr.data(), "Failed to start the server: " + err);
+                    throw std::runtime_error("socket");
                 } catch (const std::exception &e) {
                     std::string err = e.what();
                     _logs.logTo(logErr.data(), "Failed to start the server: " + err);
@@ -92,6 +101,7 @@ namespace net
                         thread.join();
                     }
                 }
+                _logs.logTo(logInfo.data(), "Server has been shut down successfully.");
             };
 
             asio::io_context &getIoContext() const noexcept {return _ioContext;}
@@ -107,6 +117,8 @@ namespace net
             void setPort(std::uint16_t port) {_port = port;}
             void setConnection(const std::string &host, std::uint16_t port) {_host = host; _port = port;}
             static void setServerInstance(Server* instance) {serverInstance = instance;}
+
+            bool isSocketOpen() const noexcept { return _socket.is_open(); }
 
             template<typename T>
             void setPacket(T &packet, packet::packetHeader &header, T &data)
@@ -145,18 +157,75 @@ namespace net
                 }
             }
 
+            template<class T>
+            void sendSparseArray(const packet::packetTypes &type, sparse_array<T> &sparseArray, const std::string cliUuid = "")
+            {
+                const std::size_t componentSize = sizeof(T);
+                const std::size_t componentsSize = (sizeof(bool) + componentSize) * sparseArray.size();
+                packet::packetHeader header(type, componentsSize);
+                const std::size_t headerSize = sizeof(header);
+                std::array<std::uint8_t, headerSize + sizeof(sparseArray)> buffer;
+                std::size_t offset = 0UL;
+
+                std::memmove(&buffer, &header, headerSize);
+                for (auto &component : sparseArray) {
+                    if (component.has_value()) {
+                        bool isNullOpt = false;
+                        std::memmove(&buffer[headerSize + offset], &isNullOpt, sizeof(bool));
+                        offset += sizeof(bool);
+                        std::memmove(&buffer[headerSize + offset], &component.value(), componentSize);
+                    } else {
+                        bool isNullOpt = true;
+                        std::memmove(&buffer[headerSize + offset], &isNullOpt, sizeof(bool));
+                        offset += sizeof(bool);
+                    }
+                    offset += componentSize;
+                }
+                if (cliUuid.empty() && !_clients.empty())
+                    _logs.logTo(logInfo.data(), "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
+                for (Client &client : _clients) {
+                    if (!cliUuid.empty()) {
+                        if (cliUuid == client.getUuid()) {
+                            _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client.getEndpoint());
+                            _logs.logTo(logInfo.data(), "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
+                        }
+                    } else {
+                        _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client.getEndpoint());
+                        _logs.logTo(logInfo.data(), "    Sent to [" + client.getUuid() + "]");
+                    }
+                }
+            }
+
             void handleConnectionRequest() {
                 std::string cliUuid = addClient();
                 packet::connectionRequest response(packet::ACCEPTED, cliUuid);
                 _logs.logTo(logInfo.data(), "New connection received: UUID [" + cliUuid + "]");
                 packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(response));
-                //sendResponse(packet::CONNECTION_REQUEST, response);
                 std::array<std::uint8_t, sizeof(header) + sizeof(response)> buffer;
                 std::memmove(&buffer, &header, sizeof(header));
                 std::memmove(&buffer[sizeof(header)], &response, sizeof(response));
-                _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
-                packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT);
-                sendResponse(packet::CLIENT_STATUS, cliStatus);
+                try {
+                    _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
+                } catch (const std::system_error &e) {
+                    std::string err = e.what();
+                    _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
+                    _logs.logTo(logWarn.data(), "    " + err);
+                }
+                float posX = 30.0f;
+                float posY = 30.0f * _clients.size();
+                Position position(posX, posY);
+                Controllable ctrl(cliUuid);
+                Entity entity = _reg.spawn_entity();
+                _reg.add_component<Position>(entity, position);
+                _reg.add_component<Controllable>(entity, ctrl);
+                packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT, posX, posY);
+                try {
+                    sendResponse(packet::CLIENT_STATUS, cliStatus);
+                } catch (const std::system_error &e) {
+                    std::string err = e.what();
+                    _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
+                    _logs.logTo(logWarn.data(), "    " + err);
+                }
             }
 
             void handleDisconnectionRequest(packet::packetHeader &header) {
@@ -167,7 +236,18 @@ namespace net
                 removeClient(cliUuid);
                 _logs.logTo(logInfo.data(), "Disconnection received from [" + cliUuid + "]");
                 packet::clientStatus cliStatus(cliUuid, packet::LOSE_CLIENT);
-                sendResponse(packet::CLIENT_STATUS, cliStatus);
+                try {
+                    sendResponse(packet::CLIENT_STATUS, cliStatus);
+                } catch (const std::system_error &e) {
+                    std::string err = e.what();
+                    _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
+                    _logs.logTo(logWarn.data(), "    " + err);
+                }
+                for (auto &component : _reg.get_components<Controllable>()) {
+                    if (component.has_value() && !std::strcmp(component.value()._playerId.c_str(), cliUuid.c_str())) {
+                        _reg.kill_entity(Entity(_reg.get_components<Controllable>().get_index(component)));
+                    }
+                }
             }
 
             void handleRequestStatus() {
@@ -186,7 +266,7 @@ namespace net
                 }
             }
 
-            void handleReceiveFrom(const asio::error_code &errCode, std::size_t bytesReceived)
+            void receiveCallback(const asio::error_code &errCode, std::size_t bytesReceived)
             {
                 if (!errCode) {
                     handleRequestStatus();
@@ -203,15 +283,29 @@ namespace net
                 _socket.async_receive_from(
                     asio::buffer(_packet, _packet.size()),
                     _serverEndpoint,
-                    std::bind(&Server::handleReceiveFrom, this, std::placeholders::_1, std::placeholders::_2)
+                    std::bind(&Server::receiveCallback, this, std::placeholders::_1, std::placeholders::_2)
                 );
             }
 
-            void startServer() {
+            void startServer()
+            {
                 setServerInstance(this);
                 _logs.logTo(logInfo.data(), "Server initialized successfully");
                 _logs.logTo(logInfo.data(), "Listening at " + _host + " on port " + std::to_string(_port));
                 receive();
+            }
+
+            void stopServer()
+            {
+                try {
+                    _socket.close();
+                } catch (const std::system_error &e) {
+                    std::string err = e.what();
+                    _logs.logTo(logWarn.data(), "Failed to close the socket:");
+                    _logs.logTo(logWarn.data(), "    " + err);
+                }
+                _ioContext.stop();
+                _ioService.stop();
             }
 
             static void signalHandler(int signum) {
@@ -263,10 +357,11 @@ namespace net
             std::array<std::uint8_t, packetSize> _packet;
             Log _logs;
             std::vector<Client> _clients;
+            Registry &_reg;
             static Server* serverInstance;
     };
 
     Server* Server::serverInstance = nullptr;
-};
+}
 
 #endif /* !NETWORK_HPP_ */

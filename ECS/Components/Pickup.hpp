@@ -21,8 +21,6 @@ class Pickup {
 
         BonusType _bonusType;
         bool positive;
-    protected:
-    private:
 };
 
 #endif /* !PICKUP_HPP_ */

@@ -45,7 +45,6 @@ int main()
     reg.add_component<Scale>(Space_background, {5, 5});
     reg.add_component<Velocity>(Space_background, {2});
     reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
-    reg.add_component<Controllable>(Space_background, {false});
     // reg.add_component<Destroyable>(Space_background, {false});
     reg.add_component<Hitbox>(Space_background, {950, 200});
     // reg.add_component<Damaging>(Space_background, {false});
@@ -56,7 +55,7 @@ int main()
     reg.add_component<Scale>(e, {3, 3});
     reg.add_component<Velocity>(e, {1});
     reg.add_component<MovementPattern>(e, {NONE});
-    reg.add_component<Controllable>(e, {true});
+    reg.add_component<Controllable>(e, {" "});
     reg.add_component<Destroyable>(e, {3});
     reg.add_component<Hitbox>(e, {33, 17});
     // reg.add_component<Damaging>(e, {false});
@@ -94,7 +93,6 @@ int main()
     reg.add_component<Scale>(monster, {3, 3});
     reg.add_component<Velocity>(monster, {1});
     reg.add_component<MovementPattern>(monster, {STRAIGHTLEFT});
-    reg.add_component<Controllable>(monster, {false});
     reg.add_component<Destroyable>(monster, {2});
     reg.add_component<Hitbox>(monster, {33, 17});
     reg.add_component<Damaging>(monster, {true});

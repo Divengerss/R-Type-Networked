@@ -11,7 +11,6 @@
 enum MovementPatterns{
     STRAIGHTLEFT,
     STRAIGHTRIGHT,
-    STRAIGHT,
     SINUS,
     CIRCLE,
     NONE,
@@ -25,8 +24,6 @@ class MovementPattern {
 
         MovementPatterns _movementPattern;
         int _baseHeight;
-    protected:
-    private:
 };
 
 #endif /* !MOVEMENTPATTERN_HPP_ */

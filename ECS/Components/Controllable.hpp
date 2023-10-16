@@ -11,13 +11,11 @@
 
 class Controllable {
     public:
-        Controllable(bool player = false) {
-            _playable = player;
+        Controllable(const std::string &playerId) {
+            _playerId = playerId;
         };
 
-        bool _playable;
-    protected:
-    private:
+        std::string _playerId;
 };
 
 #endif /* !CONTROLLABLE_HPP_ */

@@ -13,10 +13,8 @@ class Damaging {
         Damaging(int damages) {
             _damages = damages;
         };
-        int _damages;
 
-    protected:
-    private:
+        int _damages;
 };
 
 #endif /* !DAMAGING_HPP_ */

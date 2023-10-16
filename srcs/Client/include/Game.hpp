@@ -36,18 +36,12 @@ public:
         auto velocities = t.get_components<Velocity>();
         auto textures = t.get_components<Texture>();
         auto scales = t.get_components<Scale>();
-        auto destroyables = t.get_components<Destroyable>();
-        auto hitboxes = t.get_components<Hitbox>();
-        auto damagings = t.get_components<Damaging>();
 
         for (std::size_t i = 0; i < textures.size(); ++i)
         {
             auto &texture = textures[i];
             auto &pos = positions[i];
             auto scale = scales[i];
-            auto &destroyable = destroyables[i];
-            auto &hitbox = hitboxes[i];
-            auto &damaging = damagings[i];
             if (texture && pos && _sprites.find(i) == _sprites.end())
             {
                 std::cout << "sprite crée" << std::endl;
