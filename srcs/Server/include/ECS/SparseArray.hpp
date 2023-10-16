@@ -133,10 +133,10 @@ public:
 
     size_type get_index(value_type const &value) const
     {
-        for (size_type i = 0; i < _data.size(); ++i)
+        for (size_type i = 0UL; i < _data.size(); ++i)
             if (std::addressof(value) == std::addressof(_data[i]))
                 return i;
-        return -1;
+        return -1UL;
     };
 
 private:

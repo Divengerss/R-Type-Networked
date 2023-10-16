@@ -185,9 +185,9 @@ namespace net
                             Position component(0.0f, 0.0f);
                             handleECSComponent<Position>(header, tmp, component);
 
-                            for (auto &component : tmp)
-                                if (component.has_value())
-                                    std::cout << "X = " << component.value()._x << " Y = " << component.value()._y << std::endl;
+                            for (auto &cpnt : tmp)
+                                if (cpnt.has_value())
+                                    std::cout << "X = " << cpnt.value()._x << " Y = " << cpnt.value()._y << std::endl;
                         }},
                         {packet::ECS_HITBOX, [&]{
                             sparse_array<Hitbox> tmp; // Temporary, use the client's ECS when done.
