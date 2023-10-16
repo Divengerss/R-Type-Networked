@@ -20,7 +20,7 @@ jobs:
       with:
         submodules: 'recursive'
 
-    - name: Restore Vcpkg cache
+    - name: Restore Vcpkg cache (Ubuntu, macOS)
       id: vcpkg-cache
       uses: actions/cache@v3
       with:
@@ -31,6 +31,22 @@ jobs:
           libtool
         key: ${{ runner.os }}-vcpkg-${{ hashFiles('./vcpkg/vcpkg.json') }}
         restore-keys: ${{ runner.os }}-vcpkg-
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+    
+    - name: Restore Vcpkg cache (Windows)
+      id: vcpkg-cache-windows
+      uses: actions/cache@v3
+      with:
+        path: |
+          ./vcpkg/packages/
+          ./vcpkg/installed/
+          CMake
+          libtool
+          C:\Program Files\CMake\
+          C:\ProgramData\chocolatey\lib\cmake
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('./vcpkg/vcpkg.json') }}
+        restore-keys: ${{ runner.os }}-vcpkg-
+      if: matrix.os == 'windows-latest'
 
     - name: Clean up potential directory (Ubuntu, macOS)
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
