@@ -83,11 +83,10 @@ int main()
 
     Game g;
     sf::Clock clock;
-    float updateInterval = 0.01f;
+    float updateInterval = 1/60;
     while (window.isOpen())
     {
-         sf::Time elapsedTime = clock.getElapsedTime();
-
+        sf::Time elapsedTime = clock.getElapsedTime();
         sf::Event event;
         while (window.pollEvent(event))
         {
@@ -97,7 +96,8 @@ int main()
         if (elapsedTime.asSeconds() >= updateInterval)
         {
             window.clear();
-            g.updateSprite(reg, window);
+            g.updateSprite(reg);
+            g.drawSprite(window);
             window.display();
             clock.restart();
         }
