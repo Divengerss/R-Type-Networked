@@ -211,14 +211,7 @@ namespace net
                     _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
                     _logs.logTo(logWarn.data(), "    " + err);
                 }
-                float posX = 30.0f;
-                float posY = 30.0f * _clients.size();
-                Position position(posX, posY);
-                Controllable ctrl(cliUuid);
-                Entity entity = _reg.spawn_entity();
-                _reg.add_component<Position>(entity, position);
-                _reg.add_component<Controllable>(entity, ctrl);
-                packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT, posX, posY);
+                packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT);
                 try {
                     sendResponse(packet::CLIENT_STATUS, cliStatus);
                 } catch (const std::system_error &e) {
@@ -226,6 +219,12 @@ namespace net
                     _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
                     _logs.logTo(logWarn.data(), "    " + err);
                 }
+                Position position(30.f, 30.0f * _clients.size());
+                std::cout << cliUuid << std::endl;
+                Controllable ctrl(cliUuid);
+                Entity entity = _reg.spawn_entity();
+                _reg.add_component<Position>(entity, position);
+                _reg.add_component<Controllable>(entity, ctrl);
             }
 
             void handleDisconnectionRequest(packet::packetHeader &header) {

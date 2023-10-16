@@ -10,7 +10,7 @@
 
 class Destroyable {
     public:
-        Destroyable(int hp) {
+        Destroyable(bool hp) {
             _hp = hp;
         };
 
