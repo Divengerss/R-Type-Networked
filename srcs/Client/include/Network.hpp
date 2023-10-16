@@ -6,6 +6,7 @@
 #include <asio.hpp>
 #include <iostream>
 #include <csignal>
+#include <functional>
 #include "CFGParser.hpp"
 #include "Packets.hpp"
 #include "SparseArray.hpp"
@@ -129,7 +130,7 @@ namespace net
                 if (cliStatus.status == packet::LOSE_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
                     std::cout << "Client " << cliUuid << " disconnected." << std::endl;
                 } else if (cliStatus.status == packet::NEW_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
-                    std::cout << "Client " << cliUuid << " connected." << std::endl;
+                    std::cout << "Client " << cliUuid << " connected at X: " << cliStatus.posX << " Y: " << cliStatus.posY << std::endl;
                 }
             }
 
