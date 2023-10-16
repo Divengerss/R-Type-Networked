@@ -14,6 +14,7 @@
 #include <SFML/Window.hpp>
 #include "Scale.hpp"
 #include "PositionSystem.hpp"
+#include "DamageSystem.hpp"
 
 struct MyRect
 {
@@ -34,12 +35,19 @@ public:
         auto velocities = t.get_components<Velocity>();
         auto textures = t.get_components<Texture>();
         auto scales = t.get_components<Scale>();
+        auto destroyables = t.get_components<Destroyable>();
+        auto hitboxes = t.get_components<Hitbox>();
+        auto damagings = t.get_components<Damaging>();
 
         for (std::size_t i = 0; i < textures.size(); ++i)
         {
             auto &texture = textures[i];
             auto pos = positions[i];
             auto scale = scales[i];
+            auto &destroyable = destroyables[i];
+            auto &hitbox = hitboxes[i];
+            auto &damaging = damagings[i];
+
             if (texture && pos)
             {
                 sf::Sprite sprite(texture->_texture);
@@ -47,6 +55,7 @@ public:
                 sprite.setTextureRect(sf::IntRect(texture->_left, texture->_top, texture->_width, texture->_height));
                 sprite.setScale(scale->_scaleX, scale->_scaleY);
                 p.positionSystem(t);
+                d.damageSystem(t);
                 window.draw(sprite);
             }
         }
@@ -57,6 +66,7 @@ protected:
 private:
     sf::Clock Clock;
     PositionSystem p;
+    DamageSystem d;
     float updateInterval = 1.0f;
 };
 
