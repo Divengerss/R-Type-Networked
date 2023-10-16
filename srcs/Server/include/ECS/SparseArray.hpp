@@ -136,7 +136,7 @@ public:
         for (size_type i = 0UL; i < _data.size(); ++i)
             if (std::addressof(value) == std::addressof(_data[i]))
                 return i;
-        return -1UL;
+        return std::numeric_limits<uint64_t>::max();
     };
 
 private:
