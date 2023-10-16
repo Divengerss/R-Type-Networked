@@ -10,7 +10,7 @@
 
 class Damaging {
     public:
-        Damaging(int damages) {
+        Damaging(bool damages) {
             _damages = damages;
         };
 

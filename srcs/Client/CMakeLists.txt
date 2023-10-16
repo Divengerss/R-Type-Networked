@@ -27,8 +27,11 @@ set(CPACK_COMPONENTS_ALL ON)
 
 add_executable(${PROJECT_NAME}
     src/Main.cpp
+
     src/MainMenu.cpp
     src/Screen.cpp
+    src/Player.cpp
+    src/Background.cpp
 )
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
@@ -44,9 +47,9 @@ include(CPack)
 include_directories(
     include
     ${CMAKE_SOURCE_DIR}/includes
-    ${CMAKE_SOURCE_DIR}/ECS
-    ${CMAKE_SOURCE_DIR}/ECS/Components
-    ${CMAKE_SOURCE_DIR}/ECS/Systems
+    ${CMAKE_SOURCE_DIR}/srcs/Server/include/ECS
+    ${CMAKE_SOURCE_DIR}/srcs/Server/include/ECS/Components
+    ${CMAKE_SOURCE_DIR}/srcs/Server/include/ECS/Systems
 )
 
 if(MSVC)
