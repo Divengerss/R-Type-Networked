@@ -58,7 +58,7 @@ class PositionSystem {
                         r.add_component<MovementPattern>(bullet, {STRAIGHTRIGHT});
                         r.add_component<Controllable>(bullet, {false});
                         // r.add_component<Hitbox>(bullet, {25, 25});
-                        // r.add_component<Damaging>(bullet, {true});
+                        r.add_component<Damaging>(bullet, 4);
                         _spacePressed = 300;
                     }
                     // if (/*sf::Keyboard::isKeyPressed(sf::Keyboard::T)*/entity_a.getSprite().getGlobalBounds().intersects(entity_b.getSprite().getGlobalBounds()))
