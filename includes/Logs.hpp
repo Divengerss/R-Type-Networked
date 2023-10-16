@@ -6,9 +6,9 @@
 #include <iostream>
 #include <ctime>
 
-#define INFO  "I"
-#define WARN  "W"
-#define ERR   "E"
+static constexpr std::string_view logInfo = "I";
+static constexpr std::string_view logWarn = "W";
+static constexpr std::string_view logErr = "E";
 
 namespace net
 {
@@ -50,7 +50,7 @@ namespace net
 #endif
 
                 _logdate = tm;
-                if (status == INFO)
+                if (status == logInfo)
                     std::cout << _logdate << " | " << status << " | " << msg << std::endl;
                 else
                     std::cerr << _logdate << " | " << status << " | " << msg << std::endl;

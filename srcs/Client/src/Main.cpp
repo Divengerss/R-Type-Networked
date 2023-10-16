@@ -1,14 +1,15 @@
 #include "Client.hpp"
-#include "Netcode.hpp"
+#include  "Screen.hpp"
 
 int main() {
-    utils::ParseCFG config(utils::getCurrDir() + CLIENT_CONFIG_FILE_PATH);
+    utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
     asio::io_context ioContext;
-    rtype::Game game;
+    Screen Screen;
     try {
         std::string host = config.getData<std::string>("host");
         std::string port = config.getData<std::string>("port");
         net::Client client(ioContext, host, port);
+        rtype::Game game(client);
         game.runGame();
     } catch (const Error &e) {
         std::cerr << e.what() << std::endl;
