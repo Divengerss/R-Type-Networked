@@ -13,6 +13,8 @@
 #include "Position.hpp"
 #include "Damaging.hpp"
 #include "Destroyable.hpp"
+#include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
 
 class DamageSystem
 {
@@ -20,7 +22,7 @@ public:
     DamageSystem() = default;
     ~DamageSystem() = default;
 
-    void damageSystem(Registry &r)
+    void damageSystem(Registry &r, std::map<size_t, std::pair<sf::Sprite, sf::Texture>> &sprites)
     {
         auto const positions = r.get_components<Position>();
         auto destroyable = r.get_components<Destroyable>();
@@ -35,26 +37,20 @@ public:
             auto const &hb_dest = hitboxes[i];
             auto const &pos_dest = positions[i];
             auto &dest = destroyable[i];
+            auto &sprite_dest = sprites[i].first;
             if (pos_dest && hb_dest && dest)
             {
                 for (size_t j = 0; j < positions.size(); ++j)
                 {
                     if (i == j)
                         continue;
-                    auto const &hb_dam = hitboxes[j];
-                    auto const &pos_dam = positions[j];
+                    auto const &sprite_dam = sprites[j].first;
                     auto const &dam = damages[j];
-                    if (pos_dam && hb_dam && dam)
+                    if (sprite_dam.getGlobalBounds().intersects(sprite_dest.getGlobalBounds()) && dam)
                     {
-                        if (pos_dest.value()._x < pos_dam.value()._x + hb_dam.value()._width &&
-                            pos_dest.value()._x + hb_dest.value()._width > pos_dam.value()._x &&
-                            pos_dest.value()._y < pos_dam.value()._y + hb_dam.value()._height &&
-                            pos_dest.value()._y + hb_dest.value()._height > pos_dam.value()._y) {
-                            // COLLISION
-                            std::cout << pos_dam.value()._x << std::endl;
-                            r.kill_entity(Entity(i));
-                            dest.value()._hp -= dam.value()._damages;
-                            }
+                        std::cout << "EXPLOSION" << std::endl;
+                        r.kill_entity(Entity(i));
+                        sprites.erase(i);
                     }
                 }
             }
