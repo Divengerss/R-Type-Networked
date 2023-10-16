@@ -9,6 +9,8 @@
 #include "Registry.hpp"
 #include "Position.hpp"
 #include "Velocity.hpp"
+#include "Hitbox.hpp"
+#include "Controllable.hpp"
 
 #include <thread>
 #include <chrono>
@@ -20,7 +22,7 @@ namespace rtype
         public:
             Game() = delete;
             Game(asio::io_context &ioContext, asio::io_context &ioService) :
-                _server(ioContext, ioService), _reg(Registry())
+                _reg(Registry()), _server(ioContext, ioService, _reg)
             {
             };
 
@@ -37,20 +39,30 @@ namespace rtype
             void runGame() {
                 _reg.register_component<Position>();
                 _reg.register_component<Velocity>();
-                _reg.spawn_entity();
-                auto positions = _reg.get_components<Position>();
-                auto velocities = _reg.get_components<Velocity>();
+                _reg.register_component<Hitbox>();
+                _reg.register_component<Controllable>();
 
                 while (_server.isSocketOpen()) {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
                     if (_server.getClients().size()) {
-                        std::cout << positions.size() << " " << velocities.size() << std::endl;
+                        auto &positions = _reg.get_components<Position>();
+
+                        for (auto &component : positions) {
+                            if (component.has_value()) {
+                                std::cout << "X = " << component.value()._x << " Y = " << component.value()._y << std::endl;
+                            } else
+                                std::cout << "nullopt" << std::endl;
+                        }
+                        //_server.sendSparseArray<Velocity>(packet::ECS_VELOCITY, velocities);
+                        //_server.sendSparseArray<Position>(packet::ECS_POSITION, positions);
+                        //_server.sendSparseArray<Hitbox>(packet::ECS_HITBOX, hitboxes);
                     }
                 }
             };
 
         private:
-            net::Server _server;
             Registry _reg;
+            net::Server _server;
     };
 }
 

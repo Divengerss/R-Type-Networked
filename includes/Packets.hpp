@@ -18,7 +18,10 @@ namespace packet
         CONNECTION_REQUEST,
         DISCONNECTION_REQUEST,
         CLIENT_STATUS,
-        FORCE_DISCONNECT
+        FORCE_DISCONNECT,
+        ECS_VELOCITY,
+        ECS_POSITION,
+        ECS_HITBOX,
     };
 
     enum packetStatus : std::uint8_t
@@ -72,6 +75,8 @@ namespace packet
     {
         std::uint8_t status;
         std::array<std::uint8_t, uuidSize> uuid;
+        float x;
+        float y;
 
         clientStatus() : status(LOSE_CLIENT) {}
         clientStatus(const std::string &cliUuid) : status(LOSE_CLIENT)
@@ -83,7 +88,7 @@ namespace packet
             std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
     };
-};
+}
 
 #pragma pack(pop)
 #endif //PACKETS_HPP

@@ -8,6 +8,11 @@
 #include <csignal>
 #include "CFGParser.hpp"
 #include "Packets.hpp"
+#include "SparseArray.hpp"
+#include "Velocity.hpp"
+#include "Position.hpp"
+#include "Hitbox.hpp"
+#include "Texture.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -134,6 +139,24 @@ namespace net
                 std::cout << "Disconnection received from server." << std::endl;
             }
 
+            template<class T, typename U>
+            void handleECSComponent(packet::packetHeader &header, sparse_array<T> &arr, U &component) {
+                std::size_t componentSize = sizeof(T);
+
+                bool isNullOpt = false;
+                for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;) {
+                    std::memmove(&isNullOpt, &_packet[sizeof(header) + componentIdx], sizeof(bool));
+                    componentIdx += sizeof(bool);
+                    if (isNullOpt) {
+                        arr.push_back(std::nullopt);
+                    } else {
+                        std::memmove(&component, &_packet[sizeof(header) + componentIdx], componentSize);
+                        arr.push_back(component);
+                    }
+                    componentIdx += componentSize;
+                }
+            }
+
             void handleReceive(const asio::error_code &errCode) {
                 packet::packetHeader header;
 
@@ -152,6 +175,25 @@ namespace net
                             handleClientStatusPacket(cliStatus);
                         }},
                         {packet::FORCE_DISCONNECT, [&]{ handleForceDisconnectPacket(); }},
+                        {packet::ECS_VELOCITY, [&]{
+                            sparse_array<Velocity> tmp; // Temporary, use the client's ECS when done.
+                            Velocity component(0);
+                            handleECSComponent<Velocity>(header, tmp, component);
+                        }},
+                        {packet::ECS_POSITION, [&]{
+                            sparse_array<Position> tmp; // Temporary, use the client's ECS when done.
+                            Position component(0.0f, 0.0f);
+                            handleECSComponent<Position>(header, tmp, component);
+
+                            for (auto &cpnt : tmp)
+                                if (cpnt.has_value())
+                                    std::cout << "X = " << cpnt.value()._x << " Y = " << cpnt.value()._y << std::endl;
+                        }},
+                        {packet::ECS_HITBOX, [&]{
+                            sparse_array<Hitbox> tmp; // Temporary, use the client's ECS when done.
+                            Hitbox component(0, 0);
+                            handleECSComponent<Hitbox>(header, tmp, component);
+                        }}
                     };
 
                     auto handlerIt = packetHandlers.find(header.type);
@@ -212,6 +254,6 @@ namespace net
     };
 
     Client* Client::clientInstance = nullptr;
-}; // namespace net
+} // namespace net
 
 #endif /* !NETWORK_HPP_ */

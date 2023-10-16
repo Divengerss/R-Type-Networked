@@ -17,8 +17,6 @@ class Hitbox {
 
         int _width;
         int _height;
-    protected:
-    private:
 };
 
 #endif /* !HITBOX_HPP_ */

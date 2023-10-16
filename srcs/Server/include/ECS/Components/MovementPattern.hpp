@@ -22,8 +22,6 @@ class MovementPattern {
 
         MovementPatterns _movementPattern;
         int _baseHeight;
-    protected:
-    private:
 };
 
 #endif /* !MOVEMENTPATTERN_HPP_ */
