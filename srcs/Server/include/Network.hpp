@@ -248,7 +248,9 @@ namespace net
                     _logs.logTo(logWarn.data(), "    " + err);
                 }
                 for (auto &component : _reg.get_components<Controllable>()) {
-                    if (component.has_value() && !std::strcmp(component.value()._playerId.c_str(), cliUuid.c_str())) {
+                    std::string playId(uuidSize, 0);
+                    std::memmove(playId.data(), &component->_playerId, uuidSize);
+                    if (component.has_value() && !std::strcmp(playId.c_str(), cliUuid.c_str())) {
                         _reg.kill_entity(Entity(_reg.get_components<Controllable>().get_index(component)));
                     }
                 }
@@ -261,7 +263,9 @@ namespace net
                 std::memmove(uuid.data(), &event.uuid, uuidSize);
                 auto &conts = _reg.get_components<Controllable>();
                 for (auto &cont : conts) {
-                    if (cont && !std::strcmp(cont->_playerId.c_str(), uuid.c_str())) {
+                    std::string playId(uuidSize, 0);
+                    std::memmove(playId.data(), &cont->_playerId, uuidSize);
+                    if (cont && !std::strcmp(playId.c_str(), uuid.c_str())) {
                         cont->latestInput = event.keyCode;
                     }
                 }
