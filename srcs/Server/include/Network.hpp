@@ -16,6 +16,7 @@
 #include "Velocity.hpp"
 #include "Controllable.hpp"
 #include "MovementPattern.hpp"
+#include "Hitbox.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
