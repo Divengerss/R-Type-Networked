@@ -87,6 +87,9 @@ public:
                 case (MovementPatterns::NONE):
                     break;
                 }
+                if (pos->_x > 2000 || pos->_x < 0) {
+                    r.kill_entity(Entity(i));
+                }
             }
         }
     }
