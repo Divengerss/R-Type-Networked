@@ -15,13 +15,14 @@
 #include "Controllable.hpp"
 #include "Hitbox.hpp"
 #include "Damaging.hpp"
+#include "Packets.hpp"
 #include <cmath>
 
 class PositionSystem {
     public:
         PositionSystem() = default;
         ~PositionSystem() = default;
-    void positionSystem(Registry &r)
+    void positionSystemClient(Registry &r, net::Client &client)
     {
         auto &positions = r.get_components<Position>();
         auto &velocities = r.get_components<Velocity>();
@@ -39,15 +40,27 @@ class PositionSystem {
                 {
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
                         positions[i].value()._x -= vel.value()._velocity;
+                        packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
+                        packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Left));
+                        client.sendPacket(packet, event);
                     }
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
                         positions[i].value()._x += vel.value()._velocity;
+                        packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
+                        packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Right));
+                        client.sendPacket(packet, event);
                     }
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
                         positions[i].value()._y -= vel.value()._velocity;
+                        packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
+                        packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Up));
+                        client.sendPacket(packet, event);
                     }
                     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
                         positions[i].value()._y += vel.value()._velocity;
+                        packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
+                        packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Down));
+                        client.sendPacket(packet, event);
                     }
                     if (_spacePressed <= 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
                         Entity bullet = r.spawn_entity();
@@ -59,6 +72,9 @@ class PositionSystem {
                         // r.add_component<Hitbox>(bullet, {25, 25});
                         r.add_component<Damaging>(bullet, 4);
                         _spacePressed = 20;
+                        packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
+                        packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Space));
+                        client.sendPacket(packet, event);
                     }
                     // if (/*sf::Keyboard::isKeyPressed(sf::Keyboard::T)*/entity_a.getSprite().getGlobalBounds().intersects(entity_b.getSprite().getGlobalBounds()))
                     // {
