@@ -40,11 +40,25 @@ public:
                         continue;
                     auto const &pos_dam = positions[j];
                     auto const &dam = damages[j];
+                    // if (pos_dam.has_value())
+                    //     std::cout << pos_dam.value()._x << " " << pos_dam.value()._y << std::endl;
                     if (pos_dest.has_value() && pos_dam.has_value()) {
-                        if (pos_dest.value()._x > pos_dam.value()._x && pos_dest.value()._x < pos_dam.value()._x + hb_dest.value()._width) {
-                            if (pos_dest.value()._y > pos_dam.value()._y && pos_dest.value()._y < pos_dam.value()._y + hb_dest.value()._height)
+                        std::cout << pos_dest.value()._x << " " << pos_dest.value()._y << " // " << pos_dam.value()._x << " " << pos_dam.value()._y << std::endl;
+                        std::cout << hb_dest.value()._width << " " << hb_dest.value()._height << std::endl;
+                        if ((pos_dam.value()._x > pos_dest.value()._x && pos_dam.value()._x < pos_dest.value()._x + hb_dest.value()._width) &&   // Top left corner
+                            (pos_dam.value()._y < pos_dest.value()._y + hb_dest.value()._height && pos_dam.value()._y > pos_dest.value()._y)) {
+                                r.kill_entity(Entity(i));
+                        } else if ((pos_dam.value()._x + hb_dest.value()._width > pos_dest.value()._x && pos_dam.value()._x + hb_dest.value()._width < pos_dest.value()._x + hb_dest.value()._width) &&   // Top right corner
+                            (pos_dam.value()._y + hb_dest.value()._width < pos_dest.value()._y + hb_dest.value()._height && pos_dam.value()._y + hb_dest.value()._width > pos_dest.value()._y)) {
+                                r.kill_entity(Entity(i));
+                        } else if ((pos_dam.value()._x + hb_dest.value()._height > pos_dest.value()._x && pos_dam.value()._x + hb_dest.value()._height < pos_dest.value()._x + hb_dest.value()._height) &&   // Bottom left corner
+                            (pos_dam.value()._y + hb_dest.value()._height < pos_dest.value()._y + hb_dest.value()._height && pos_dam.value()._y + hb_dest.value()._height > pos_dest.value()._y)) {
+                                r.kill_entity(Entity(i));
+                        } else if ((pos_dam.value()._x + hb_dest.value()._height + hb_dest.value()._width > pos_dest.value()._x && pos_dam.value()._x + hb_dest.value()._height + hb_dest.value()._width < pos_dest.value()._x + hb_dest.value()._height) &&   // Bottom right corner
+                            (pos_dam.value()._y + hb_dest.value()._height + hb_dest.value()._width < pos_dest.value()._y + hb_dest.value()._height && pos_dam.value()._y + hb_dest.value()._height + hb_dest.value()._width > pos_dest.value()._y)) {
                                 r.kill_entity(Entity(i));
                         }
+
                     }
                     // if (/* intersection && */ dam)
                     // {
