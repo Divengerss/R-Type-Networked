@@ -18,6 +18,7 @@
 #include "Controllable.hpp"
 #include "Scale.hpp"
 #include "MovementPattern.hpp"
+#include "Destroyable.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -128,6 +129,28 @@ namespace net
                 std::memmove(_uuid.data(), &request.uuid, uuidSize);
                 std::cout << "Got uuid = " << _uuid << std::endl;
                 std::cout << request.connectedNb << " client connected." << std::endl;
+                for (std::size_t i = 0; i < request.connectedNb - 1; ++i) {
+                    Entity player = _reg.spawn_entity();
+                    Position pos(30.0f, 500.0f);
+                    Controllable ctrl("");
+                    Velocity velo(10);
+                    _reg.add_component<Texture>(player, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+                    _reg.add_component<Position>(player, pos);
+                    _reg.add_component<Scale>(player, {3, 3});
+                    _reg.add_component<MovementPattern>(player, {NONE});
+                    _reg.add_component<Controllable>(player, ctrl);
+                    _reg.add_component<Velocity>(player, velo);
+                    _reg.add_component<Hitbox>(player, {33, 17});
+                }
+                Entity e = _reg.spawn_entity();
+                _reg.add_component<Texture>(e, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+                _reg.add_component<Position>(e, {30.0f, 500.0f});
+                _reg.add_component<Scale>(e, {3, 3});
+                _reg.add_component<Velocity>(e, {10});
+                _reg.add_component<MovementPattern>(e, {NONE});
+                _reg.add_component<Controllable>(e, {" "});
+                _reg.add_component<Destroyable>(e, {3});
+                _reg.add_component<Hitbox>(e, {33, 17});
             }
 
             void handleClientStatusPacket(packet::clientStatus &cliStatus) {
@@ -139,7 +162,8 @@ namespace net
                     std::cout << "Client " << cliUuid << " connected at X: " << cliStatus.posX << " Y: " << cliStatus.posY << std::endl;
                     std::cout << cliStatus.connectedNb << " clients connected." << std::endl;
                     Entity player = _reg.spawn_entity();
-                    Position pos(cliStatus.posX, cliStatus.posY);
+                    //Position pos(cliStatus.posX, cliStatus.posY);
+                    Position pos(30, 500);
                     Controllable ctrl(cliUuid);
                     Velocity velo(10);
                     _reg.add_component<Texture>(player, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
@@ -163,8 +187,7 @@ namespace net
                 std::size_t componentSize = sizeof(T);
                 auto &arr = _reg.get_components<T>();
 
-                if (arr.size() == 0)
-                    return;
+                std::cout << arr.size() << std::endl;
                 bool isNullOpt = false;
                 std::size_t sparseArrIndex = 0UL;
                 for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;) {
@@ -178,6 +201,7 @@ namespace net
                             _reg.spawn_entity();
                         }
                         arr[sparseArrIndex] = component;
+                        //std::cout << sparseArrIndex << std::endl;
                     }
                     componentIdx += componentSize;
                     sparseArrIndex += 1UL;
@@ -214,9 +238,13 @@ namespace net
                             Position component(0.0f, 0.0f);
                             handleECSComponent<Position>(header, component);
 
-                            for (auto &cpnt : _reg.get_components<Position>())
-                                if (cpnt.has_value())
+                            std::cout << "=====" << std::endl;
+                            for (auto &cpnt : _reg.get_components<Position>()) {
+                                if (cpnt.has_value()) {
                                     std::cout << "X = " << cpnt.value()._x << " Y = " << cpnt.value()._y << std::endl;
+                                }
+                            }
+                            std::cout << "=====" << std::endl;
                         }},
                         {packet::ECS_HITBOX, [&]{
                             Hitbox component(0, 0);

@@ -16,6 +16,7 @@
 #include "Entity.hpp"
 #include "Server/PositionSystem.hpp"
 #include "Server/DamageSystem.hpp"
+#include "Destroyable.hpp"
 #include <thread>
 #include <chrono>
 

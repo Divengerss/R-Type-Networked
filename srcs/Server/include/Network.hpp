@@ -165,7 +165,9 @@ namespace net
                 const std::size_t componentsSize = (sizeof(bool) + componentSize) * sparseArray.size();
                 packet::packetHeader header(type, componentsSize);
                 const std::size_t headerSize = sizeof(header);
-                std::array<std::uint8_t, headerSize + sizeof(sparseArray)> buffer;
+                // const std::size_t bufferSize = headerSize + componentsSize;
+                // std::array<std::uint8_t, bufferSize> buffer;
+                std::array<std::uint8_t, packetSize> buffer;
                 std::size_t offset = 0UL;
 
                 std::memmove(&buffer, &header, headerSize);

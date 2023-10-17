@@ -127,7 +127,6 @@ namespace packet
             _status = status;
             keyCode = key;
         };
-
     };
 }
 
