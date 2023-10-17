@@ -36,6 +36,15 @@ namespace rtype
             _reg.register_component<Destroyable>();
             _reg.register_component<Damaging>();
             _reg.spawn_entity(); // Background index
+            Entity monster = _reg.spawn_entity();
+            // _reg.add_component<Texture>(monster, {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
+            _reg.add_component<Position>(monster, {1920, 500});
+            // _reg.add_component<Scale>(monster, {3, 3});
+            _reg.add_component<Velocity>(monster, {2});
+            _reg.add_component<MovementPattern>(monster, {STRAIGHTLEFT});
+            _reg.add_component<Destroyable>(monster, {2});
+            _reg.add_component<Hitbox>(monster, {33, 17});
+            _reg.add_component<Damaging>(monster, {true});
         };
 
         ~loopSystem() = default;
