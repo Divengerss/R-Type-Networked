@@ -70,14 +70,6 @@ class PositionSystem {
                 }
                 if (_spacePressed <= 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
                 {
-                    Entity bullet = r.spawn_entity();
-                    r.add_component<Texture>(bullet, {"./Release/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
-                    r.add_component<Position>(bullet, {pos->_x + 100, pos->_y});
-                    r.add_component<Scale>(bullet, {3, 3});
-                    r.add_component<Velocity>(bullet, {20});
-                    r.add_component<MovementPattern>(bullet, {STRAIGHTRIGHT});
-                    // r.add_component<Hitbox>(bullet, {25, 25});
-                    r.add_component<Damaging>(bullet, 4);
                     _spacePressed = 20;
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
                     packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Space));
@@ -90,10 +82,6 @@ class PositionSystem {
                     client.sendPacket(packet, event);
                     keyPressed = sf::Keyboard::Key::Unknown;
                 }
-                // if (/*sf::Keyboard::isKeyPressed(sf::Keyboard::T)*/entity_a.getSprite().getGlobalBounds().intersects(entity_b.getSprite().getGlobalBounds()))
-                // {
-                //     r.kill_entity(Entity(i));
-                // }
                 _spacePressed--;
             }
             else if (pos && vel && pat)
