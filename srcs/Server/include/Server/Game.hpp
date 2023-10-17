@@ -12,6 +12,8 @@
 #include "Hitbox.hpp"
 #include "Controllable.hpp"
 #include "Server/PositionSystem.hpp"
+#include "Scale.hpp"
+#include "Destroyable.hpp"
 #include <thread>
 #include <chrono>
 
@@ -42,12 +44,22 @@ namespace rtype
                 _reg.register_component<Hitbox>();
                 _reg.register_component<Controllable>();
                 _reg.register_component<MovementPattern>();
+                _reg.register_component<Destroyable>();
+                _reg.register_component<Damaging>();
 
-                _reg.spawn_entity(); // Background index
+                _reg.spawn_entity(); //Background index
+                // Entity monster = _reg.spawn_entity();
+                // _reg.add_component<Position>(monster, {1920, 500});
+                // _reg.add_component<Velocity>(monster, {2});
+                // _reg.add_component<MovementPattern>(monster, {STRAIGHTLEFT});
+                // _reg.add_component<Destroyable>(monster, {2});
+                // _reg.add_component<Hitbox>(monster, {33, 17});
+                // _reg.add_component<Damaging>(monster, {true});
+
                 while (_server.isSocketOpen()) {
                     std::this_thread::sleep_for(std::chrono::seconds(1));
                     if (_server.getClients().size()) {
-                        _pos.positionSystemServer(_reg);
+                        //_pos.positionSystemServer(_reg);
                         auto &positions = _reg.get_components<Position>();
                         for (auto &component : positions) {
                             if (component.has_value()) {
@@ -55,9 +67,7 @@ namespace rtype
                             } else
                                 std::cout << "nullopt" << std::endl;
                         }
-                        //_server.sendSparseArray<Velocity>(packet::ECS_VELOCITY, velocities);
                         _server.sendSparseArray<Position>(packet::ECS_POSITION, positions);
-                        //_server.sendSparseArray<Hitbox>(packet::ECS_HITBOX, hitboxes);
                     }
                 }
             };
