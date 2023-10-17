@@ -42,6 +42,7 @@ class PositionSystem {
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
                     packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Left));
                     client.sendPacket(packet, event);
+                    keyPressed = sf::Keyboard::Left;
                 }
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
                 {
@@ -49,6 +50,7 @@ class PositionSystem {
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
                     packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Right));
                     client.sendPacket(packet, event);
+                    keyPressed = sf::Keyboard::Right;
                 }
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
                 {
@@ -56,6 +58,7 @@ class PositionSystem {
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
                     packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Up));
                     client.sendPacket(packet, event);
+                    keyPressed = sf::Keyboard::Up;
                 }
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
                 {
@@ -63,6 +66,7 @@ class PositionSystem {
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
                     packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Down));
                     client.sendPacket(packet, event);
+                    keyPressed = sf::Keyboard::Down;
                 }
                 if (_spacePressed <= 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
                 {
@@ -78,6 +82,13 @@ class PositionSystem {
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
                     packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Space));
                     client.sendPacket(packet, event);
+                    keyPressed = sf::Keyboard::Space;
+                }
+                if (keyPressed != sf::Keyboard::Key::Unknown && !sf::Keyboard::isKeyPressed(keyPressed)) {
+                    packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
+                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Unknown));
+                    client.sendPacket(packet, event);
+                    keyPressed = sf::Keyboard::Key::Unknown;
                 }
                 // if (/*sf::Keyboard::isKeyPressed(sf::Keyboard::T)*/entity_a.getSprite().getGlobalBounds().intersects(entity_b.getSprite().getGlobalBounds()))
                 // {
@@ -111,6 +122,7 @@ class PositionSystem {
     }
 
     int _spacePressed = 200;
+    sf::Keyboard::Key keyPressed = sf::Keyboard::Key::Unknown;
     protected:
     private:
 };
