@@ -56,4 +56,4 @@ else()
 endif()
 
 find_package(SFML REQUIRED COMPONENTS graphics window system)
-target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics sfml-window sfml-system)
+target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics sfml-window sfml-system sfml-audio)

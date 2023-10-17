@@ -15,11 +15,15 @@
 #include "Destroyable.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
+#include <SFML/Audio.hpp>
 
 class DamageSystem
 {
 public:
-    DamageSystem() = default;
+    DamageSystem() {
+        sound.setBuffer(buffer);
+        buffer.loadFromFile("assets/All SFX/SND.DAT_00027.wav");
+    }
     ~DamageSystem() = default;
 
     void damageSystem(Registry &r, std::map<size_t, std::pair<sf::Sprite, sf::Texture>> &sprites)
@@ -49,6 +53,7 @@ public:
                     if (sprite_dam.getGlobalBounds().intersects(sprite_dest.getGlobalBounds()) && dam)
                     {
                         std::cout << "EXPLOSION" << std::endl;
+                        sound.play();
                         r.kill_entity(Entity(i));
                         sprites.erase(i);
                     }
@@ -56,6 +61,8 @@ public:
             }
         }
     }
+    sf::SoundBuffer buffer;
+    sf::Sound sound;
 
 protected:
 private:
