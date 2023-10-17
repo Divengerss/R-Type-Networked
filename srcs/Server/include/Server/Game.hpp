@@ -65,6 +65,8 @@ namespace rtype
                             _server.sendSparseArray<Position>(packet::ECS_POSITION, _reg.get_components<Position>());
                             _server.sendSparseArray<Velocity>(packet::ECS_VELOCITY, _reg.get_components<Velocity>());
                             _server.sendSparseArray<Hitbox>(packet::ECS_HITBOX, _reg.get_components<Hitbox>());
+                            _server.sendSparseArray<Controllable>(packet::ECS_CONTROLLABLE, _reg.get_components<Controllable>());
+
                             currentCooldown = pingCooldown;
                         }
                         _pos.positionSystemServer(_reg);
