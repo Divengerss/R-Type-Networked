@@ -129,28 +129,6 @@ namespace net
                 std::memmove(_uuid.data(), &request.uuid, uuidSize);
                 std::cout << "Got uuid = " << _uuid << std::endl;
                 std::cout << request.connectedNb << " client connected." << std::endl;
-                for (std::size_t i = 0; i < request.connectedNb - 1; ++i) {
-                    Entity player = _reg.spawn_entity();
-                    Position pos(30.0f, 500.0f);
-                    Controllable ctrl("");
-                    Velocity velo(10);
-                    _reg.add_component<Texture>(player, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
-                    _reg.add_component<Position>(player, pos);
-                    _reg.add_component<Scale>(player, {3, 3});
-                    _reg.add_component<MovementPattern>(player, {NONE});
-                    _reg.add_component<Controllable>(player, ctrl);
-                    _reg.add_component<Velocity>(player, velo);
-                    _reg.add_component<Hitbox>(player, {33, 17});
-                }
-                Entity e = _reg.spawn_entity();
-                _reg.add_component<Texture>(e, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
-                _reg.add_component<Position>(e, {30.0f, 500.0f});
-                _reg.add_component<Scale>(e, {3, 3});
-                _reg.add_component<Velocity>(e, {10});
-                _reg.add_component<MovementPattern>(e, {NONE});
-                _reg.add_component<Controllable>(e, {" "});
-                _reg.add_component<Destroyable>(e, {3});
-                _reg.add_component<Hitbox>(e, {33, 17});
             }
 
             void handleClientStatusPacket(packet::clientStatus &cliStatus) {
@@ -231,7 +209,7 @@ namespace net
                             handleECSComponent<Velocity>(header, component);
                         }},
                         {packet::ECS_CONTROLLABLE, [&]{
-                            Controllable component(0);
+                            Controllable component("");
                             handleECSComponent<Controllable>(header, component);
                         }},
                         {packet::ECS_POSITION, [&]{
