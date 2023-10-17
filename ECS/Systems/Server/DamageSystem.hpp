@@ -13,8 +13,6 @@
 #include "Position.hpp"
 #include "Damaging.hpp"
 #include "Destroyable.hpp"
-#include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
 
 class DamageSystem
 {
