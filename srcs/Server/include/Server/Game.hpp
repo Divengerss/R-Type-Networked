@@ -11,7 +11,7 @@
 #include "Velocity.hpp"
 #include "Hitbox.hpp"
 #include "Controllable.hpp"
-
+#include "Server/PositionSystem.hpp"
 #include <thread>
 #include <chrono>
 
@@ -22,7 +22,7 @@ namespace rtype
         public:
             Game() = delete;
             Game(asio::io_context &ioContext, asio::io_context &ioService) :
-                _reg(Registry()), _server(ioContext, ioService, _reg)
+                _reg(Registry()), _pos(), _server(ioContext, ioService, _reg)
             {
             };
 
@@ -41,14 +41,14 @@ namespace rtype
                 _reg.register_component<Velocity>();
                 _reg.register_component<Hitbox>();
                 _reg.register_component<Controllable>();
+                _reg.register_component<MovementPattern>();
 
                 _reg.spawn_entity(); // Background index
-
                 while (_server.isSocketOpen()) {
                     std::this_thread::sleep_for(std::chrono::seconds(1));
                     if (_server.getClients().size()) {
+                        _pos.positionSystemServer(_reg);
                         auto &positions = _reg.get_components<Position>();
-
                         for (auto &component : positions) {
                             if (component.has_value()) {
                                 std::cout << "X = " << component.value()._x << " Y = " << component.value()._y << std::endl;
@@ -64,6 +64,7 @@ namespace rtype
 
         private:
             Registry _reg;
+            PositionSystem _pos;
             net::Server _server;
     };
 }
