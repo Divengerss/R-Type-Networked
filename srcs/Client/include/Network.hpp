@@ -174,6 +174,9 @@ namespace net
                         // do nothing
                     } else {
                         std::memmove(&component, &_packet[sizeof(header) + componentIdx], componentSize);
+                        if (sparseArrIndex == arr.size()) {
+                            _reg.spawn_entity();
+                        }
                         arr[sparseArrIndex] = component;
                     }
                     componentIdx += componentSize;
@@ -202,6 +205,10 @@ namespace net
                         {packet::ECS_VELOCITY, [&]{
                             Velocity component(0);
                             handleECSComponent<Velocity>(header, component);
+                        }},
+                        {packet::ECS_CONTROLLABLE, [&]{
+                            Controllable component(0);
+                            handleECSComponent<Controllable>(header, component);
                         }},
                         {packet::ECS_POSITION, [&]{
                             Position component(0.0f, 0.0f);

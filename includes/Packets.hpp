@@ -22,6 +22,7 @@ namespace packet
         ECS_VELOCITY,
         ECS_POSITION,
         ECS_HITBOX,
+        ECS_CONTROLLABLE,
         KEYBOARD_EVENT
     };
 
