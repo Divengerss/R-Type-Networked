@@ -51,7 +51,7 @@ namespace rtype
 
             void updateSprite()
             {
-                posSys.positionSystem(_reg);
+                posSys.positionSystemClient(_reg, _client);
                 auto positions = _reg.get_components<Position>();
                 auto velocities = _reg.get_components<Velocity>();
                 auto textures = _reg.get_components<Texture>();

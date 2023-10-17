@@ -292,6 +292,10 @@ namespace net
                 std::exit(EXIT_SUCCESS);
             }
 
+            const std::string getUuid() const {
+                return _uuid;
+            }
+
         private:
             asio::io_context &_ioContext;
             asio::error_code _errCode;
