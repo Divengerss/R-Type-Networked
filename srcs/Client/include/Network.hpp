@@ -203,14 +203,6 @@ namespace net
                         {packet::ECS_POSITION, [&]{
                             Position component(0.0f, 0.0f);
                             handleECSComponent<Position>(header, component);
-
-                            std::cout << "=====" << std::endl;
-                            for (auto &cpnt : _reg.get_components<Position>()) {
-                                if (cpnt.has_value()) {
-                                    std::cout << "X = " << cpnt.value()._x << " Y = " << cpnt.value()._y << std::endl;
-                                }
-                            }
-                            std::cout << "=====" << std::endl;
                         }},
                         {packet::ECS_HITBOX, [&]{
                             Hitbox component(0, 0);
