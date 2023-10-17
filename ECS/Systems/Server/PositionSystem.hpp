@@ -38,7 +38,6 @@ public:
             auto const &cont = controllables[i];
             if (pos && vel && cont)
             {
-                std::cout << cont->latestInput << std::endl;
                 if (cont->latestInput == 71)
                 {
                     pos->_x -= vel.value()._velocity;

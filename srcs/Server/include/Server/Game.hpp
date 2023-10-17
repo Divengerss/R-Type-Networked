@@ -75,6 +75,7 @@ namespace rtype
                             _server.sendSparseArray<Velocity>(packet::ECS_VELOCITY, _reg.get_components<Velocity>());
                             _server.sendSparseArray<Hitbox>(packet::ECS_HITBOX, _reg.get_components<Hitbox>());
                             _server.sendSparseArray<Controllable>(packet::ECS_CONTROLLABLE, _reg.get_components<Controllable>());
+                            _server.sendSparseArray<Damaging>(packet::ECS_DAMAGES, _reg.get_components<Damaging>());
 
                             currentCooldown = pingCooldown;
                         }

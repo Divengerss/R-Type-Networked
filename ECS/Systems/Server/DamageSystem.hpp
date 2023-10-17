@@ -40,11 +40,17 @@ public:
                         continue;
                     auto const &pos_dam = positions[j];
                     auto const &dam = damages[j];
-                    if (/* intersection && */ dam)
-                    {
-                        std::cout << "EXPLOSION" << std::endl;
-                        r.kill_entity(Entity(i));
+                    if (pos_dest.has_value() && pos_dam.has_value()) {
+                        if (pos_dest.value()._x > pos_dam.value()._x && pos_dest.value()._x < pos_dam.value()._x + hb_dest.value()._width) {
+                            if (pos_dest.value()._y > pos_dam.value()._y && pos_dest.value()._y < pos_dam.value()._y + hb_dest.value()._height)
+                                r.kill_entity(Entity(i));
+                        }
                     }
+                    // if (/* intersection && */ dam)
+                    // {
+                    //     std::cout << "EXPLOSION" << std::endl;
+                    //     r.kill_entity(Entity(i));
+                    // }
                 }
             }
         }

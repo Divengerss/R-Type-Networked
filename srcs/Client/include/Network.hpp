@@ -19,6 +19,7 @@
 #include "Scale.hpp"
 #include "MovementPattern.hpp"
 #include "Destroyable.hpp"
+#include "Damaging.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -153,7 +154,6 @@ namespace net
                 std::size_t componentSize = sizeof(T);
                 auto &arr = _reg.get_components<T>();
 
-                std::cout << arr.size() << std::endl;
                 bool isNullOpt = false;
                 std::size_t sparseArrIndex = 0UL;
                 for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;) {
@@ -215,6 +215,10 @@ namespace net
                         {packet::ECS_HITBOX, [&]{
                             Hitbox component(0, 0);
                             handleECSComponent<Hitbox>(header, component);
+                        }},
+                        {packet::ECS_DAMAGES, [&]{
+                            Damaging component(0);
+                            handleECSComponent<Damaging>(header, component);
                         }}
                     };
 
