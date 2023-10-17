@@ -57,9 +57,9 @@ namespace rtype
                 // _reg.add_component<Damaging>(monster, {true});
 
                 while (_server.isSocketOpen()) {
-                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    // std::this_thread::sleep_for(std::chrono::seconds(1));
                     if (_server.getClients().size()) {
-                        //_pos.positionSystemServer(_reg);
+                        _pos.positionSystemServer(_reg);
                         auto &positions = _reg.get_components<Position>();
                         for (auto &component : positions) {
                             if (component.has_value()) {
