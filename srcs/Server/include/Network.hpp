@@ -15,6 +15,7 @@
 #include "Position.hpp"
 #include "Velocity.hpp"
 #include "Controllable.hpp"
+#include "MovementPattern.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -217,6 +218,7 @@ namespace net
                 Controllable ctrl(cliUuid);
                 Entity entity = _reg.spawn_entity();
                 _reg.add_component<Position>(entity, position);
+                _reg.add_component<Velocity>(entity, 3);
                 _reg.add_component<Controllable>(entity, ctrl);
                 packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT, posX, posY, _clients.size());
                 try {
@@ -250,12 +252,25 @@ namespace net
                 }
             }
 
+            void handleKeyboardEvent(packet::packetHeader& header) {
+                packet::keyboardEvent event;
+                std::memmove(&event, &_packet[sizeof(header)], sizeof(event));
+                std::string uuid (uuidSize, 0);
+                std::memmove(uuid.data(), &event.uuid, uuidSize);
+                auto &conts = _reg.get_components<Controllable>();
+                for (auto &cont : conts) {
+                    if (cont && !std::strcmp(cont->_playerId.c_str(), uuid.c_str())) {
+                        cont->latestInput = event.keyCode;
+                    }
+                }
+            }
             void handleRequestStatus() {
                 packet::packetHeader header = *reinterpret_cast<packet::packetHeader*>(_packet.data());
 
                 std::unordered_map<uint16_t, std::function<void()>> packetHandlers = {
                     {packet::CONNECTION_REQUEST, [&]{ handleConnectionRequest(); }},
                     {packet::DISCONNECTION_REQUEST, [&]{ handleDisconnectionRequest(header); }},
+                    {packet::KEYBOARD_EVENT, [&] {handleKeyboardEvent(header);}}
                 };
 
                 auto handlerIt = packetHandlers.find(header.type);
