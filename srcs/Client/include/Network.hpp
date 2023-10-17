@@ -14,6 +14,7 @@
 #include "Position.hpp"
 #include "Hitbox.hpp"
 #include "Texture.hpp"
+#include "Registry.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -33,9 +34,9 @@ namespace net
     {
         public:
             Client() = delete;
-            Client(asio::io_context &ioContext, const std::string &host, const std::string &port) :
+            Client(asio::io_context &ioContext, const std::string &host, const std::string &port, Registry &reg) :
                 _ioContext(ioContext), _errCode(asio::error_code()), _resolver(ioContext), _endpoint(*_resolver.resolve(asio::ip::udp::v4(), host, port).begin()),
-                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(uuidSize, 0), _packet({})
+                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(uuidSize, 0), _packet({}), _reg(reg)
             {
                 try {
                     utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
@@ -144,20 +145,25 @@ namespace net
             }
 
             template<class T, typename U>
-            void handleECSComponent(packet::packetHeader &header, sparse_array<T> &arr, U &component) {
+            void handleECSComponent(packet::packetHeader &header, U &component) {
                 std::size_t componentSize = sizeof(T);
+                auto &arr = _reg.get_components<T>();
 
+                if (arr.size() == 0)
+                    return;
                 bool isNullOpt = false;
+                std::size_t sparseArrIndex = 0UL;
                 for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;) {
                     std::memmove(&isNullOpt, &_packet[sizeof(header) + componentIdx], sizeof(bool));
                     componentIdx += sizeof(bool);
                     if (isNullOpt) {
-                        arr.push_back(std::nullopt);
+                        // do nothing
                     } else {
                         std::memmove(&component, &_packet[sizeof(header) + componentIdx], componentSize);
-                        arr.push_back(component);
+                        arr[sparseArrIndex] = component;
                     }
                     componentIdx += componentSize;
+                    sparseArrIndex += 1UL;
                 }
             }
 
@@ -180,23 +186,20 @@ namespace net
                         }},
                         {packet::FORCE_DISCONNECT, [&]{ handleForceDisconnectPacket(); }},
                         {packet::ECS_VELOCITY, [&]{
-                            sparse_array<Velocity> tmp; // Temporary, use the client's ECS when done.
                             Velocity component(0);
-                            handleECSComponent<Velocity>(header, tmp, component);
+                            handleECSComponent<Velocity>(header, component);
                         }},
                         {packet::ECS_POSITION, [&]{
-                            sparse_array<Position> tmp; // Temporary, use the client's ECS when done.
                             Position component(0.0f, 0.0f);
-                            handleECSComponent<Position>(header, tmp, component);
+                            handleECSComponent<Position>(header, component);
 
-                            for (auto &cpnt : tmp)
+                            for (auto &cpnt : _reg.get_components<Position>())
                                 if (cpnt.has_value())
                                     std::cout << "X = " << cpnt.value()._x << " Y = " << cpnt.value()._y << std::endl;
                         }},
                         {packet::ECS_HITBOX, [&]{
-                            sparse_array<Hitbox> tmp; // Temporary, use the client's ECS when done.
                             Hitbox component(0, 0);
-                            handleECSComponent<Hitbox>(header, tmp, component);
+                            handleECSComponent<Hitbox>(header, component);
                         }}
                     };
 
@@ -254,6 +257,7 @@ namespace net
             std::string _uuid;
             std::vector<std::thread> _threadPool;
             std::array<std::uint8_t, localPacketSize> _packet;
+            Registry &_reg;
             static Client* clientInstance;
     };
 

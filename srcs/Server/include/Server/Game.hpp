@@ -42,6 +42,8 @@ namespace rtype
                 _reg.register_component<Hitbox>();
                 _reg.register_component<Controllable>();
 
+                _reg.spawn_entity(); // Background index
+
                 while (_server.isSocketOpen()) {
                     std::this_thread::sleep_for(std::chrono::seconds(1));
                     if (_server.getClients().size()) {
@@ -54,7 +56,7 @@ namespace rtype
                                 std::cout << "nullopt" << std::endl;
                         }
                         //_server.sendSparseArray<Velocity>(packet::ECS_VELOCITY, velocities);
-                        //_server.sendSparseArray<Position>(packet::ECS_POSITION, positions);
+                        _server.sendSparseArray<Position>(packet::ECS_POSITION, positions);
                         //_server.sendSparseArray<Hitbox>(packet::ECS_HITBOX, hitboxes);
                     }
                 }

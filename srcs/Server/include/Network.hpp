@@ -212,7 +212,7 @@ namespace net
                     _logs.logTo(logWarn.data(), "    " + err);
                 }
                 float posX = 30.0f;
-                float posY = 30.0f * _clients.size();
+                float posY = 150.0f * _clients.size();
                 Position position(posX, posY);
                 Controllable ctrl(cliUuid);
                 Entity entity = _reg.spawn_entity();
