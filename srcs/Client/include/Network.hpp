@@ -105,7 +105,9 @@ namespace net
 
                 std::memmove(&packet, &header, headerSize);
                 std::memmove(&packet[headerSize], &data, dataSize);
-                return _socket.send_to(asio::buffer(&packet, headerSize + dataSize), _endpoint);
+                if (_socket.is_open())
+                    return _socket.send_to(asio::buffer(&packet, headerSize + dataSize), _endpoint);
+                return 0UL;
             }
 
             void listenServer()
@@ -144,9 +146,10 @@ namespace net
             }
 
             void handleForceDisconnectPacket() {
+                _socket.cancel();
                 _ioContext.stop();
                 _socket.close();
-                std::cout << "Disconnection received from server." << std::endl;
+                _uuid.clear();
             }
 
             template<class T, typename U>
@@ -243,11 +246,15 @@ namespace net
             {
                 packet::disconnectionRequest request(_uuid.data());
                 packet::packetHeader header(packet::DISCONNECTION_REQUEST, sizeof(request));
-                std::size_t bytesSent = sendPacket(header, request);
-                if (bytesSent == 0UL)
-                    std::cerr << "Something went wrong sending the packet disconnection." << std::endl;
+                if (_socket.is_open()) {
+                    std::size_t bytesSent = sendPacket(header, request);
+                    if (bytesSent == 0UL)
+                        std::cerr << "Something went wrong sending the packet disconnection." << std::endl;
+                }
                 std::cout << "Disconnected from the server." << std::endl;
                 _uuid.clear();
+                _ioContext.stop();
+                _socket.close();
             }
 
             static void signalHandler(int signum) {

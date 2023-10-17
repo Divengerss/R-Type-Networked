@@ -40,19 +40,23 @@ public:
             {
                 if (cont->latestInput == 71)
                 {
-                    pos->_x -= vel.value()._velocity;
+                    if (pos->_x > 10)
+                        pos->_x -= vel.value()._velocity;
                 }
                 if (cont->latestInput == 72)
                 {
-                    pos->_x += vel.value()._velocity;
+                    if (pos->_x < 1900)
+                        pos->_x += vel.value()._velocity;
                 }
                 if (cont->latestInput == 73)
                 {
-                    pos->_y -= vel.value()._velocity;
+                    if (pos->_y > 10)
+                        pos->_y -= vel.value()._velocity;
                 }
                 if (cont->latestInput == 74)
                 {
-                    pos->_y += vel.value()._velocity;
+                    if (pos->_y < 1050)
+                        pos->_y += vel.value()._velocity;
                 }
                 if (_spacePressed <= 0 && cont->latestInput == 57)
                 {

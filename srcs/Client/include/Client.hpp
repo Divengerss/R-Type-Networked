@@ -177,6 +177,7 @@ namespace rtype
                         _clock.restart();
                     }
                 }
+                _client.disconnect();
             }
 
             private:
