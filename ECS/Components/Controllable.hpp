@@ -16,6 +16,7 @@ class Controllable {
         };
 
         std::string _playerId;
+        int latestInput = -1;
 };
 
 #endif /* !CONTROLLABLE_HPP_ */
