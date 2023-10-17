@@ -52,7 +52,7 @@ include_directories(
 if(MSVC)
   target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
 else()
-  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -g3)
+  target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 find_package(SFML REQUIRED COMPONENTS graphics window system)

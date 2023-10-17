@@ -15,6 +15,9 @@
 #include "Hitbox.hpp"
 #include "Texture.hpp"
 #include "Registry.hpp"
+#include "Controllable.hpp"
+#include "Scale.hpp"
+#include "MovementPattern.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -135,6 +138,17 @@ namespace net
                 } else if (cliStatus.status == packet::NEW_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
                     std::cout << "Client " << cliUuid << " connected at X: " << cliStatus.posX << " Y: " << cliStatus.posY << std::endl;
                     std::cout << cliStatus.connectedNb << " clients connected." << std::endl;
+                    Entity player = _reg.spawn_entity();
+                    Position pos(cliStatus.posX, cliStatus.posY);
+                    Controllable ctrl(cliUuid);
+                    Velocity velo(10);
+                    _reg.add_component<Texture>(player, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+                    _reg.add_component<Position>(player, pos);
+                    _reg.add_component<Scale>(player, {3, 3});
+                    _reg.add_component<MovementPattern>(player, {NONE});
+                    _reg.add_component<Controllable>(player, ctrl);
+                    _reg.add_component<Velocity>(player, velo);
+                    _reg.add_component<Hitbox>(player, {33, 17});
                 }
             }
 
