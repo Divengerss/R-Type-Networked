@@ -45,7 +45,6 @@ namespace rtype
                 _reg.add_component<Scale>(Space_background, {5, 5});
                 _reg.add_component<Velocity>(Space_background, {1});
                 _reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
-                _reg.add_component<Hitbox>(Space_background, {950, 200});
             }
             ~Game() = default;
 
@@ -53,17 +52,23 @@ namespace rtype
                 auto positions = _reg.get_components<Position>();
                 auto controllable = _reg.get_components<Controllable>();
                 auto textures = _reg.get_components<Texture>();
+                auto movements = _reg.get_components<MovementPattern>();
+
                 for (std::size_t i = 0; i < positions.size(); i++) {
                     auto &texture = textures[i];
                     auto &pos = positions[i];
                     auto &cont = controllable[i];
+                    auto &move = movements[i];
                     if (pos && cont && !texture.has_value()) {
                         _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
                         _reg.add_component<Scale>(Entity(i), {3, 3});
                         createdPlayers++;
                     }
                     else if (pos && !cont.has_value() && !texture.has_value()) {
-                        _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
+                        if (move->_movementPattern == MovementPatterns::STRAIGHTLEFT)
+                            _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
+                        if (move->_movementPattern == MovementPatterns::STRAIGHTRIGHT)
+                            _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
                         _reg.add_component<Scale>(Entity(i), {3, 3});
                     }
                 }
@@ -90,10 +95,6 @@ namespace rtype
                         sprite.setPosition(pos->_x, pos->_y);
                         sprite.setTextureRect(sf::IntRect(texture->_left, texture->_top, texture->_width, texture->_height));
                         sprite.setScale(scale->_scaleX, scale->_scaleY);
-                        std::cout << texture->_path << std::endl;
-                        std::cout << pos->_x << " " << pos->_y << std::endl;
-                        std::cout << texture->_left << " " << texture->_top << " " << texture->_width << " " << texture->_height << std::endl;
-                        std::cout << scale->_scaleX << " " << scale->_scaleY << std::endl;
                         _sprites.emplace(i, std::pair<sf::Sprite, sf::Texture>(sprite, spriteTexture));
                         _sprites[i].first.setTexture(_sprites[i].second);
                     } else if (texture && pos) {
@@ -151,8 +152,8 @@ namespace rtype
                                                     if (event.type == sf::Event::Closed)
                                                         window.close();
                                                 }
+                                                checkVictory();
                                                 window.clear();
-                                                updateSprite();
                                                 drawSprite(window);
                                                 window.display();
                                                 _clock.restart();
