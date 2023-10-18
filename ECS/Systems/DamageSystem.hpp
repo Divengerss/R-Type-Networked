@@ -26,28 +26,31 @@ public:
     }
     ~DamageSystem() = default;
 
-    void damageSystem(Registry &r)
+    void damageSystem(Registry &r, std::map<size_t, std::pair<sf::Sprite, sf::Texture>> &sprites)
     {
-        auto const hitboxes = r.get_components<Hitbox>();
         auto const positions = r.get_components<Position>();
-        auto const damages = r.get_components<Damaging>();
         auto destroyable = r.get_components<Destroyable>();
+        auto const hitboxes = r.get_components<Hitbox>();
+        auto const damages = r.get_components<Damaging>();
 
+        // std::cout << "positions.size(): " << positions.size() << std::endl;
         for (size_t i = 0; i < positions.size(); ++i)
         {
+            // std::cout << "positions.size(): " << positions.size() << std::endl;
+            // std::cout << "i: " << i << std::endl;
             auto const &hb_dest = hitboxes[i];
             auto const &pos_dest = positions[i];
             auto &dest = destroyable[i];
+            auto &sprite_dest = sprites[i].first;
             if (pos_dest && hb_dest && dest)
             {
                 for (size_t j = 0; j < positions.size(); ++j)
                 {
-                    if (i = j)
+                    if (i == j)
                         continue;
-                    auto const &hb_dam = hitboxes[j];
-                    auto const &pos_dam = positions[j];
+                    auto const &sprite_dam = sprites[j].first;
                     auto const &dam = damages[j];
-                    if (pos_dam && hb_dam && dam)
+                    if (sprite_dam.getGlobalBounds().intersects(sprite_dest.getGlobalBounds()) && dam)
                     {
                         std::cout << "EXPLOSION" << std::endl;
                         sound.play();
