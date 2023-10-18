@@ -15,6 +15,7 @@
 #include "Position.hpp"
 #include "Velocity.hpp"
 #include "Controllable.hpp"
+#include "Destroyable.hpp"
 #include "MovementPattern.hpp"
 #include "Hitbox.hpp"
 
@@ -219,10 +220,14 @@ namespace net
                 float posY = 250.0f * _clients.size();
                 Position position(posX, posY);
                 Controllable ctrl(cliUuid);
+                Hitbox hb(99, 51);
                 Entity entity = _reg.spawn_entity();
                 _reg.add_component<Position>(entity, position);
                 _reg.add_component<Velocity>(entity, 3);
                 _reg.add_component<Controllable>(entity, ctrl);
+                _reg.add_component<Hitbox>(entity, hb);
+                _reg.add_component<Destroyable>(entity, 1);
+
                 packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT, posX, posY, _clients.size());
                 try {
                     sendResponse(packet::CLIENT_STATUS, cliStatus);
