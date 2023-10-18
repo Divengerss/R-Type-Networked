@@ -40,16 +40,13 @@ public:
                         continue;
                     auto const &pos_dam = positions[j];
                     auto const &dam = damages[j];
-                    // if (pos_dam.has_value())
-                    //     std::cout << pos_dam.value()._x << " " << pos_dam.value()._y << std::endl;
-                    if (pos_dest.has_value() && pos_dam.has_value() && dam) {
-                        std::cout << pos_dest.value()._x << " " << pos_dest.value()._y << " // " << pos_dam.value()._x << " " << pos_dam.value()._y << std::endl;
-                        std::cout << hb_dest.value()._width << " " << hb_dest.value()._height << std::endl;
+                    auto const &hb_dam = hitboxes[j];
+                    if (pos_dam && dam && hb_dam) {
                         // hitbox 1
                         float damLeft = pos_dam.value()._x;
                         float damTop = pos_dam.value()._y;
-                        float damRight = damLeft + hb_dest.value()._width;
-                        float damBottom = damTop + hb_dest.value()._height;
+                        float damRight = damLeft + hb_dam.value()._width;
+                        float damBottom = damTop + hb_dam.value()._height;
 
                         // hitbox 2
                         float destLeft = pos_dest.value()._x;
@@ -57,18 +54,14 @@ public:
                         float destRight = destLeft + hb_dest.value()._width;
                         float destBottom = destTop + hb_dest.value()._height;
 
-                        if (damRight >= destLeft &&    // hitbox1 right edge past hitbox2 left
-                            damLeft <= destRight &&    // hitbox1 left edge past hitbox2 right
-                            damBottom >= destTop &&    // hitbox1 top edge past hitbox2 bottom
-                            damTop <= destBottom) {    // hitbox1 bottom edge past hitbox2 top
-                                r.kill_entity(Entity(i));
-                        }
+                        if (damLeft == damRight || damTop == damBottom || destRight == destLeft || destTop == destBottom)
+                            continue;
+                        if (damLeft > destRight || destLeft > damRight)
+                            continue;
+                        if (damBottom > destTop || destBottom > damTop)
+                            continue;
+                        r.kill_entity(Entity(i));
                     }
-                    // if (/* intersection && */ dam)
-                    // {
-                    //     std::cout << "EXPLOSION" << std::endl;
-                    //     r.kill_entity(Entity(i));
-                    // }
                 }
             }
         }
