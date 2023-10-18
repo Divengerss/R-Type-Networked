@@ -24,7 +24,9 @@ namespace packet
         ECS_HITBOX,
         ECS_CONTROLLABLE,
         KEYBOARD_EVENT,
-        ECS_DAMAGES
+        ECS_DAMAGES,
+        ECS_DESTROYABLE,
+        ECS_MOVEMENTPATTERN
     };
 
     enum packetStatus : std::uint8_t
