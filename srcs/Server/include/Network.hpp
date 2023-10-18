@@ -236,6 +236,12 @@ namespace net
                     _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
                     _logs.logTo(logWarn.data(), "    " + err);
                 }
+                Position position(30.f, 30.0f * _clients.size());
+                std::cout << cliUuid << std::endl;
+                Controllable ctrl(cliUuid);
+                Entity entity = _reg.spawn_entity();
+                _reg.add_component<Position>(entity, position);
+                _reg.add_component<Controllable>(entity, ctrl);
             }
 
             void handleDisconnectionRequest(packet::packetHeader &header) {

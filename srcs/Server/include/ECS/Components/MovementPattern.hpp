@@ -9,11 +9,9 @@
 #define MOVEMENTPATTERN_HPP_
 
 enum MovementPatterns{
-    STRAIGHTLEFT,
-    STRAIGHTRIGHT,
+    STRAIGHT,
     SINUS,
     CIRCLE,
-    NONE,
 };
 
 class MovementPattern {
