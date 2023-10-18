@@ -40,7 +40,11 @@ namespace rtype
                 _reg.register_component<Damaging>();
 
                 Entity Space_background = _reg.spawn_entity();
-                _reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png", 0, 0, 950, 200});
+                #ifdef WIN32
+                    _reg.add_component<Texture>(Space_background, {"Release\\assets\\sprites\\Space.png", 0, 0, 950, 200});
+                #else
+                    _reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png", 0, 0, 950, 200});
+                #endif
                 _reg.add_component<Position>(Space_background, {0, 0});
                 _reg.add_component<Scale>(Space_background, {5, 5});
                 _reg.add_component<Velocity>(Space_background, {1});
@@ -60,15 +64,28 @@ namespace rtype
                     auto &cont = controllable[i];
                     auto &move = movements[i];
                     if (pos && cont && !texture.has_value()) {
-                        _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
+                        #ifdef WIN32
+                            _reg.add_component<Texture>(Entity(i), {"Release\\assets\\sprites\\r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
+                        #else
+                            _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
+                        #endif
                         _reg.add_component<Scale>(Entity(i), {3, 3});
                         createdPlayers++;
                     }
                     else if (pos && !cont.has_value() && !texture.has_value()) {
                         if (move->_movementPattern == MovementPatterns::STRAIGHTLEFT)
-                            _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
+                            #ifdef WIN32
+                                _reg.add_component<Texture>(Entity(i), {"Release\\assets\\sprites\\r-typesheet5.gif", 233, 0, 33, 36});
+                            #else
+                                _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
+                            #endif
                         if (move->_movementPattern == MovementPatterns::STRAIGHTRIGHT)
-                            _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
+                            #ifdef WIN32
+                                _reg.add_component<Texture>(Entity(i), {"Release\\assets\\sprites\\r-typesheet2.gif", 185, 0, 25, 25});
+                                #else
+                                _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
+                                #endif
+
                         _reg.add_component<Scale>(Entity(i), {3, 3});
                     }
                 }
