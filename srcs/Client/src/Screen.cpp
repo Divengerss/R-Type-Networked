@@ -1,11 +1,13 @@
 #include <SFML/Graphics.hpp>
 #include "Screen.hpp"
 #include "MainMenu.hpp"
+#include "EndMenu.hpp"
 
 Screen::Screen()
 {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Main Menu");
     mainMenu mainMenu(window.getSize().x, window.getSize().y);
+    endMenu endMenu(window.getSize().x, window.getSize().y);
 
     while (window.isOpen())
     {
@@ -32,6 +34,8 @@ Screen::Screen()
                     sf::RenderWindow Play(sf::VideoMode(800, 600), "R-type");
                     sf::RenderWindow Options(sf::VideoMode(800, 600), "Options");
                     sf::RenderWindow Credits(sf::VideoMode(800, 600), "Credits");
+                    sf::RenderWindow End(sf::VideoMode(800, 600), "End Menu");
+                    int y = endMenu.endMenuPressed();
                     int x = mainMenu.mainMenuPressed();
                     if (x == 0)
                     {
@@ -99,6 +103,29 @@ Screen::Screen()
                     if (x == 3)
                         window.close();
                     break;
+                    if (y == 0)
+                    {
+                        while (Play.isOpen())
+                        {
+                            sf::Event aevent;
+                            while (Play.pollEvent(aevent))
+                            {
+                                if (aevent.type == sf::Event::Closed)
+                                    Play.close();
+                                if (aevent.type == sf::Event::KeyPressed)
+                                {
+                                    if (aevent.key.code == sf::Keyboard::Escape)
+                                        Play.close();
+                                }
+                            }
+                            Options.close();
+                            Credits.close();
+                            Play.clear();
+                            Play.display();
+                        }
+                    }
+                    if (y == 1)
+                        window.close();
                 }
             }
         }
