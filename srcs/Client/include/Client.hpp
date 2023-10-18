@@ -153,6 +153,7 @@ namespace rtype
                                                         window.close();
                                                 }
                                                 window.clear();
+                                                updateSprite();
                                                 drawSprite(window);
                                                 window.display();
                                                 _clock.restart();
