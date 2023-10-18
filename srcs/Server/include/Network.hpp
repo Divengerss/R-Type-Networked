@@ -15,6 +15,9 @@
 #include "Position.hpp"
 #include "Velocity.hpp"
 #include "Controllable.hpp"
+#include "Destroyable.hpp"
+#include "MovementPattern.hpp"
+#include "Hitbox.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -164,7 +167,9 @@ namespace net
                 const std::size_t componentsSize = (sizeof(bool) + componentSize) * sparseArray.size();
                 packet::packetHeader header(type, componentsSize);
                 const std::size_t headerSize = sizeof(header);
-                std::array<std::uint8_t, headerSize + sizeof(sparseArray)> buffer;
+                // const std::size_t bufferSize = headerSize + componentsSize;
+                // std::array<std::uint8_t, bufferSize> buffer;
+                std::array<std::uint8_t, packetSize> buffer;
                 std::size_t offset = 0UL;
 
                 std::memmove(&buffer, &header, headerSize);
@@ -198,7 +203,7 @@ namespace net
 
             void handleConnectionRequest() {
                 std::string cliUuid = addClient();
-                packet::connectionRequest response(packet::ACCEPTED, cliUuid);
+                packet::connectionRequest response(packet::ACCEPTED, cliUuid, _clients.size());
                 _logs.logTo(logInfo.data(), "New connection received: UUID [" + cliUuid + "]");
                 packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(response));
                 std::array<std::uint8_t, sizeof(header) + sizeof(response)> buffer;
@@ -211,7 +216,19 @@ namespace net
                     _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
                     _logs.logTo(logWarn.data(), "    " + err);
                 }
-                packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT);
+                float posX = 30.0f;
+                float posY = 250.0f * _clients.size();
+                Position position(posX, posY);
+                Controllable ctrl(cliUuid);
+                Hitbox hb(99, 51);
+                Entity entity = _reg.spawn_entity();
+                _reg.add_component<Position>(entity, position);
+                _reg.add_component<Velocity>(entity, 3);
+                _reg.add_component<Controllable>(entity, ctrl);
+                _reg.add_component<Hitbox>(entity, hb);
+                _reg.add_component<Destroyable>(entity, 1);
+
+                packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT, posX, posY, _clients.size());
                 try {
                     sendResponse(packet::CLIENT_STATUS, cliStatus);
                 } catch (const std::system_error &e) {
@@ -219,22 +236,16 @@ namespace net
                     _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
                     _logs.logTo(logWarn.data(), "    " + err);
                 }
-                Position position(30.f, 30.0f * _clients.size());
-                std::cout << cliUuid << std::endl;
-                Controllable ctrl(cliUuid);
-                Entity entity = _reg.spawn_entity();
-                _reg.add_component<Position>(entity, position);
-                _reg.add_component<Controllable>(entity, ctrl);
             }
 
             void handleDisconnectionRequest(packet::packetHeader &header) {
-                packet::disconnectionRequest request(packet::ACCEPTED);
+                packet::disconnectionRequest request(packet::ACCEPTED, _clients.size());
                 std::memmove(&request, &_packet[sizeof(header)], sizeof(request));
                 std::string cliUuid(uuidSize, 0);
                 std::memmove(cliUuid.data(), &request.uuid, uuidSize);
                 removeClient(cliUuid);
                 _logs.logTo(logInfo.data(), "Disconnection received from [" + cliUuid + "]");
-                packet::clientStatus cliStatus(cliUuid, packet::LOSE_CLIENT);
+                packet::clientStatus cliStatus(cliUuid, packet::LOSE_CLIENT, 0, 0, _clients.size());
                 try {
                     sendResponse(packet::CLIENT_STATUS, cliStatus);
                 } catch (const std::system_error &e) {
@@ -243,18 +254,35 @@ namespace net
                     _logs.logTo(logWarn.data(), "    " + err);
                 }
                 for (auto &component : _reg.get_components<Controllable>()) {
-                    if (component.has_value() && !std::strcmp(component.value()._playerId.c_str(), cliUuid.c_str())) {
+                    std::string playId(uuidSize, 0);
+                    std::memmove(playId.data(), &component->_playerId, uuidSize);
+                    if (component.has_value() && !std::strcmp(playId.c_str(), cliUuid.c_str())) {
                         _reg.kill_entity(Entity(_reg.get_components<Controllable>().get_index(component)));
                     }
                 }
             }
 
+            void handleKeyboardEvent(packet::packetHeader& header) {
+                packet::keyboardEvent event;
+                std::memmove(&event, &_packet[sizeof(header)], sizeof(event));
+                std::string uuid (uuidSize, 0);
+                std::memmove(uuid.data(), &event.uuid, uuidSize);
+                auto &conts = _reg.get_components<Controllable>();
+                for (auto &cont : conts) {
+                    std::string playId(uuidSize, 0);
+                    std::memmove(playId.data(), &cont->_playerId, uuidSize);
+                    if (cont && !std::strcmp(playId.c_str(), uuid.c_str())) {
+                        cont->latestInput = event.keyCode;
+                    }
+                }
+            }
             void handleRequestStatus() {
                 packet::packetHeader header = *reinterpret_cast<packet::packetHeader*>(_packet.data());
 
                 std::unordered_map<uint16_t, std::function<void()>> packetHandlers = {
                     {packet::CONNECTION_REQUEST, [&]{ handleConnectionRequest(); }},
                     {packet::DISCONNECTION_REQUEST, [&]{ handleDisconnectionRequest(header); }},
+                    {packet::KEYBOARD_EVENT, [&] {handleKeyboardEvent(header);}}
                 };
 
                 auto handlerIt = packetHandlers.find(header.type);

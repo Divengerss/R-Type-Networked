@@ -27,11 +27,8 @@ set(CPACK_COMPONENTS_ALL ON)
 
 add_executable(${PROJECT_NAME}
     src/Main.cpp
-
     src/MainMenu.cpp
     src/Screen.cpp
-    src/Player.cpp
-    src/Background.cpp
 )
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
@@ -47,9 +44,9 @@ include(CPack)
 include_directories(
     include
     ${CMAKE_SOURCE_DIR}/includes
-    ${CMAKE_SOURCE_DIR}/srcs/Server/include/ECS
-    ${CMAKE_SOURCE_DIR}/srcs/Server/include/ECS/Components
-    ${CMAKE_SOURCE_DIR}/srcs/Server/include/ECS/Systems
+    ${CMAKE_SOURCE_DIR}/ECS
+    ${CMAKE_SOURCE_DIR}/ECS/Components
+    ${CMAKE_SOURCE_DIR}/ECS/Systems
 )
 
 if(MSVC)
@@ -58,5 +55,5 @@ else()
   target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-find_package(SFML REQUIRED COMPONENTS graphics window system)
-target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics sfml-window sfml-system)
+find_package(SFML REQUIRED COMPONENTS graphics window system audio)
+target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics sfml-window sfml-system sfml-audio)

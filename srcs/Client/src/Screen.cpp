@@ -1,51 +1,50 @@
 #include <SFML/Graphics.hpp>
 #include "Screen.hpp"
 #include "MainMenu.hpp"
-using namespace sf;
 
 Screen::Screen()
 {
-    RenderWindow window(VideoMode(800, 600), "Main Menu");
+    sf::RenderWindow window(sf::VideoMode(800, 600), "Main Menu");
     mainMenu mainMenu(window.getSize().x, window.getSize().y);
 
     while (window.isOpen())
     {
-        Event event;
+        sf::Event event;
         while (window.pollEvent(event))
         {
-            if (event.type == Event::Closed)
+            if (event.type == sf::Event::Closed)
                 window.close();
 
-            if (event.type == Event::KeyReleased)
+            if (event.type == sf::Event::KeyReleased)
             {
-                if (event.key.code == Keyboard::Up)
+                if (event.key.code == sf::Keyboard::Up)
                 {
                     mainMenu.MoveUp();
                     break;
                 }
-                if (event.key.code == Keyboard::Down)
+                if (event.key.code == sf::Keyboard::Down)
                 {
                     mainMenu.MoveDown();
                     break;
                 }
-                if (event.key.code == Keyboard::Return)
+                if (event.key.code == sf::Keyboard::Return)
                 {
-                    RenderWindow Play(VideoMode(800, 600), "R-type");
-                    RenderWindow Options(VideoMode(800, 600), "Options");
-                    RenderWindow Credits(VideoMode(800, 600), "Credits");
+                    sf::RenderWindow Play(sf::VideoMode(800, 600), "R-type");
+                    sf::RenderWindow Options(sf::VideoMode(800, 600), "Options");
+                    sf::RenderWindow Credits(sf::VideoMode(800, 600), "Credits");
                     int x = mainMenu.mainMenuPressed();
                     if (x == 0)
                     {
                         while (Play.isOpen())
                         {
-                            Event aevent;
+                            sf::Event aevent;
                             while (Play.pollEvent(aevent))
                             {
-                                if (aevent.type == Event::Closed)
+                                if (aevent.type == sf::Event::Closed)
                                     Play.close();
-                                if (aevent.type == Event::KeyPressed)
+                                if (aevent.type == sf::Event::KeyPressed)
                                 {
-                                    if (aevent.key.code == Keyboard::Escape)
+                                    if (aevent.key.code == sf::Keyboard::Escape)
                                         Play.close();
                                 }
                             }
@@ -59,14 +58,14 @@ Screen::Screen()
                     {
                         while (Options.isOpen())
                         {
-                            Event aevent;
+                            sf::Event aevent;
                             while (Options.pollEvent(aevent))
                             {
-                                if (aevent.type == Event::Closed)
+                                if (aevent.type == sf::Event::Closed)
                                     Options.close();
-                                if (aevent.type == Event::KeyPressed)
+                                if (aevent.type == sf::Event::KeyPressed)
                                 {
-                                    if (aevent.key.code == Keyboard::Escape)
+                                    if (aevent.key.code == sf::Keyboard::Escape)
                                         Options.close();
                                 }
                             }
@@ -80,14 +79,14 @@ Screen::Screen()
                     {
                         while (Credits.isOpen())
                         {
-                            Event aevent;
+                            sf::Event aevent;
                             while (Credits.pollEvent(aevent))
                             {
-                                if (aevent.type == Event::Closed)
+                                if (aevent.type == sf::Event::Closed)
                                     Credits.close();
-                                if (aevent.type == Event::KeyPressed)
+                                if (aevent.type == sf::Event::KeyPressed)
                                 {
-                                    if (aevent.key.code == Keyboard::Escape)
+                                    if (aevent.key.code == sf::Keyboard::Escape)
                                         Credits.close();
                                 }
                             }
