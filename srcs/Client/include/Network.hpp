@@ -211,6 +211,14 @@ namespace net
                             Hitbox component(0, 0);
                             handleECSComponent<Hitbox>(header, component);
                         }},
+                        {packet::ECS_DESTROYABLE, [&]{
+                            Destroyable component(0);
+                            handleECSComponent<Destroyable>(header, component);
+                        }},
+                        {packet::ECS_MOVEMENTPATTERN, [&]{
+                            MovementPattern component(MovementPatterns::NONE);
+                            handleECSComponent<MovementPattern>(header, component);
+                        }},
                         {packet::ECS_DAMAGES, [&]{
                             Damaging component(0);
                             handleECSComponent<Damaging>(header, component);
