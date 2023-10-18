@@ -22,6 +22,11 @@ namespace packet
         ECS_VELOCITY,
         ECS_POSITION,
         ECS_HITBOX,
+        ECS_CONTROLLABLE,
+        KEYBOARD_EVENT,
+        ECS_DAMAGES,
+        ECS_DESTROYABLE,
+        ECS_MOVEMENTPATTERN
     };
 
     enum packetStatus : std::uint8_t
@@ -113,6 +118,18 @@ namespace packet
         {
             std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
+    };
+
+    struct keyboardEvent {
+        std::uint8_t _status;
+        std::array<std::uint8_t, uuidSize> uuid;
+        int keyCode;
+        keyboardEvent() : _status(0), keyCode(-1) {};
+        keyboardEvent(const std::string &cliUuid, std::uint8_t status, int key) {
+            std::memmove(&uuid, cliUuid.data(), uuidSize);
+            _status = status;
+            keyCode = key;
+        };
     };
 }
 

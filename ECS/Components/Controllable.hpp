@@ -12,10 +12,14 @@
 class Controllable {
     public:
         Controllable(const std::string &playerId) {
+            std::memmove(_playerId.data(), playerId.c_str(), uuidSize);
+        };
+        Controllable(std::array<std::uint8_t, uuidSize> &playerId) {
             _playerId = playerId;
         };
 
-        std::string _playerId;
+        std::array<std::uint8_t, uuidSize> _playerId;
+        int latestInput = -1;
 };
 
 #endif /* !CONTROLLABLE_HPP_ */

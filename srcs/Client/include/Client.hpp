@@ -27,17 +27,61 @@ namespace rtype
     {
         public:
             Game() = default;
-            Game(net::Client &client) : _client(client) {}
+            Game(net::Client &client, Registry &reg) : _client(client), _updateInterval(1.0f/60), _reg(reg)
+            {
+                _reg.register_component<Position>();
+                _reg.register_component<Velocity>();
+                _reg.register_component<Texture>();
+                _reg.register_component<Scale>();
+                _reg.register_component<MovementPattern>();
+                _reg.register_component<Controllable>();
+                _reg.register_component<Destroyable>();
+                _reg.register_component<Hitbox>();
+                _reg.register_component<Damaging>();
+
+                Entity Space_background = _reg.spawn_entity();
+                _reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png", 0, 0, 950, 200});
+                _reg.add_component<Position>(Space_background, {0, 0});
+                _reg.add_component<Scale>(Space_background, {5, 5});
+                _reg.add_component<Velocity>(Space_background, {1});
+                _reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
+            }
             ~Game() = default;
 
-            void updateSprite(Registry &t)
-            {
-                p.positionSystem(t);
-                auto positions = t.get_components<Position>();
-                auto velocities = t.get_components<Velocity>();
-                auto textures = t.get_components<Texture>();
-                auto scales = t.get_components<Scale>();
+            void textureSystem() {
+                auto positions = _reg.get_components<Position>();
+                auto controllable = _reg.get_components<Controllable>();
+                auto textures = _reg.get_components<Texture>();
+                auto movements = _reg.get_components<MovementPattern>();
 
+                for (std::size_t i = 0; i < positions.size(); i++) {
+                    auto &texture = textures[i];
+                    auto &pos = positions[i];
+                    auto &cont = controllable[i];
+                    auto &move = movements[i];
+                    if (pos && cont && !texture.has_value()) {
+                        _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
+                        _reg.add_component<Scale>(Entity(i), {3, 3});
+                        createdPlayers++;
+                    }
+                    else if (pos && !cont.has_value() && !texture.has_value()) {
+                        if (move->_movementPattern == MovementPatterns::STRAIGHTLEFT)
+                            _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
+                        if (move->_movementPattern == MovementPatterns::STRAIGHTRIGHT)
+                            _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
+                        _reg.add_component<Scale>(Entity(i), {3, 3});
+                    }
+                }
+            }
+
+            void updateSprite()
+            {
+                textureSystem();
+                posSys.positionSystemClient(_reg, _client);
+                auto positions = _reg.get_components<Position>();
+                auto velocities = _reg.get_components<Velocity>();
+                auto textures = _reg.get_components<Texture>();
+                auto scales = _reg.get_components<Scale>();
                 for (std::size_t i = 0; i < textures.size(); ++i)
                 {
                     auto &texture = textures[i];
@@ -46,8 +90,8 @@ namespace rtype
                     if (texture && pos && _sprites.find(i) == _sprites.end())
                     {
                         sf::Sprite sprite;
-                        sf::Texture spriteTexture(texture->_texture);
-                        sprite.setTexture(spriteTexture);
+                        sf::Texture spriteTexture = sf::Texture();
+                        spriteTexture.loadFromFile(texture->_path);
                         sprite.setPosition(pos->_x, pos->_y);
                         sprite.setTextureRect(sf::IntRect(texture->_left, texture->_top, texture->_width, texture->_height));
                         sprite.setScale(scale->_scaleX, scale->_scaleY);
@@ -58,7 +102,7 @@ namespace rtype
                         sprite.setPosition(pos->_x, pos->_y);
                     }
                 }
-                d.damageSystem(t, _sprites);
+                dmgSys.damageSystem(_reg, _sprites);
             };
 
             void drawSprite(sf::RenderWindow &window)
@@ -69,86 +113,14 @@ namespace rtype
 
             void runGame()
             {
-                sf::RenderWindow window(sf::VideoMode(1920, 1080), "SFML window");
-
-                Registry reg;
-                reg.register_component<Position>();
-                reg.register_component<Velocity>();
-                reg.register_component<Texture>();
-                reg.register_component<Scale>();
-                reg.register_component<MovementPattern>();
-                reg.register_component<Controllable>();
-                reg.register_component<Destroyable>();
-                reg.register_component<Hitbox>();
-                reg.register_component<Damaging>();
-
-                Entity Space_background = reg.spawn_entity();
-                reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png", 0, 0, 950, 200});
-                reg.add_component<Position>(Space_background, {0, 0});
-                reg.add_component<Scale>(Space_background, {5, 5});
-                reg.add_component<Velocity>(Space_background, {1});
-                reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
-                // reg.add_component<Destroyable>(Space_background, {false});
-                reg.add_component<Hitbox>(Space_background, {950, 200});
-                // reg.add_component<Damaging>(Space_background, {false});
-
-                Entity e = reg.spawn_entity();
-                reg.add_component<Texture>(e, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
-                reg.add_component<Position>(e, {10, 10});
-                reg.add_component<Scale>(e, {3, 3});
-                reg.add_component<Velocity>(e, {10});
-                reg.add_component<MovementPattern>(e, {NONE});
-                reg.add_component<Controllable>(e, {" "});
-                reg.add_component<Destroyable>(e, {3});
-                reg.add_component<Hitbox>(e, {33, 17});
-                // reg.add_component<Damaging>(e, {false});
-
-                // Entity e2 = reg.spawn_entity();
-                // reg.add_component<Texture>(e2, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
-                // reg.add_component<Position>(e2, {10, 10});
-                // reg.add_component<Scale>(e2, {3, 3});
-                // reg.add_component<Velocity>(e2, {1});
-                // reg.add_component<MovementPattern>(e2, {NONE});
-                // reg.add_component<Controllable>(e2, {false});
-                // // reg.add_component<Destroyable>(e2, {true});
-                // // reg.add_component<Hitbox>(e2, {33, 17});
-                // // reg.add_component<Damaging>(e2, {false});
-
-                // Entity e3 = reg.spawn_entity();
-                // reg.add_component<Texture>(e3, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
-                // reg.add_component<Position>(e3, {10, 10});
-                // reg.add_component<Scale>(e3, {3, 3});
-                // reg.add_component<Velocity>(e3, {1});
-                // reg.add_component<MovementPattern>(e3, {NONE});
-                // reg.add_component<Controllable>(e3, {false});
-
-                // Entity e4 = reg.spawn_entity();
-                // reg.add_component<Texture>(e4, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
-                // reg.add_component<Position>(e4, {10, 10});
-                // reg.add_component<Scale>(e4, {3, 3});
-                // reg.add_component<Velocity>(e4, {1});
-                // reg.add_component<MovementPattern>(e4, {NONE});
-                // reg.add_component<Controllable>(e4, {false});
-
-                Entity monster = reg.spawn_entity();
-                reg.add_component<Texture>(monster, {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
-                reg.add_component<Position>(monster, {1920, 500});
-                reg.add_component<Scale>(monster, {3, 3});
-                reg.add_component<Velocity>(monster, {2});
-                reg.add_component<MovementPattern>(monster, {STRAIGHTLEFT});
-                reg.add_component<Destroyable>(monster, {2});
-                reg.add_component<Hitbox>(monster, {33, 17});
-                reg.add_component<Damaging>(monster, {true});
-
-                sf::Clock clock;
-                float updateInterval = 1.0f/60;
+                sf::RenderWindow window(sf::VideoMode(1920, 1080), "R-Type Alpha");
                 mainMenu mainMenu(window.getSize().x, window.getSize().y);
 
                 while (window.isOpen() && _client.isSocketOpen())
                 {
                     sf::Event event;
-                    sf::Time elapsedTime = clock.getElapsedTime();
-                    if (elapsedTime.asSeconds() >= updateInterval)
+                    sf::Time elapsedTime = _clock.getElapsedTime();
+                    if (elapsedTime.asSeconds() >= _updateInterval)
                     {
                         while (window.pollEvent(event))
                         {
@@ -173,18 +145,18 @@ namespace rtype
                                     if (x == 0)
                                     {
                                         while (window.isOpen()) {
-                                            sf::Time elapsedTime = clock.getElapsedTime();
-                                            if (elapsedTime.asSeconds() >= updateInterval)
+                                            sf::Time elapsedTime = _clock.getElapsedTime();
+                                            if (elapsedTime.asSeconds() >= _updateInterval)
                                             {
                                                 while (window.pollEvent(event)) {
                                                     if (event.type == sf::Event::Closed)
                                                         window.close();
                                                 }
                                                 window.clear();
-                                                updateSprite(reg);
+                                                updateSprite();
                                                 drawSprite(window);
                                                 window.display();
-                                                clock.restart();
+                                                _clock.restart();
                                             }
                                         }
                                     }
@@ -203,18 +175,21 @@ namespace rtype
                         window.clear();
                         mainMenu.draw(window);
                         window.display();
-                        clock.restart();
+                        _clock.restart();
                     }
                 }
+                _client.disconnect();
             }
 
             private:
                 net::Client &_client;
                 std::map<size_t, std::pair<sf::Sprite, sf::Texture>> _sprites;
-                sf::Clock Clock;
-                PositionSystem p;
-                DamageSystem d;
-                float updateInterval = 1.0f;
+                sf::Clock _clock;
+                PositionSystem posSys;
+                DamageSystem dmgSys;
+                float _updateInterval;
+                Registry &_reg;
+                int createdPlayers = 0;
     };
 } // namespace rtype
 
