@@ -43,7 +43,7 @@ namespace rtype
             _reg.add_component<Velocity>(monster, {2});
             _reg.add_component<MovementPattern>(monster, {STRAIGHTLEFT});
             _reg.add_component<Destroyable>(monster, {2});
-            _reg.add_component<Hitbox>(monster, {33, 17});
+            _reg.add_component<Hitbox>(monster, {99, 51});
             _reg.add_component<Damaging>(monster, {true});
         };
 
@@ -76,6 +76,8 @@ namespace rtype
                             _server.sendSparseArray<Hitbox>(packet::ECS_HITBOX, _reg.get_components<Hitbox>());
                             _server.sendSparseArray<Controllable>(packet::ECS_CONTROLLABLE, _reg.get_components<Controllable>());
                             _server.sendSparseArray<Damaging>(packet::ECS_DAMAGES, _reg.get_components<Damaging>());
+                            _server.sendSparseArray<Destroyable>(packet::ECS_DESTROYABLE, _reg.get_components<Destroyable>());
+                            _server.sendSparseArray<MovementPattern>(packet::ECS_MOVEMENTPATTERN, _reg.get_components<MovementPattern>());
 
                             currentCooldown = pingCooldown;
                         }
