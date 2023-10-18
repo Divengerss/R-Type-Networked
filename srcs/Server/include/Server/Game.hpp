@@ -63,7 +63,7 @@ namespace rtype
             std::chrono::time_point<std::chrono::steady_clock> lastExecutionTime = std::chrono::steady_clock::now();
             while (_server.isSocketOpen())
             {
-                if (_server.getClients().size() > 1)
+                if (_server.getClients().size())
                 {
                     std::chrono::time_point<std::chrono::steady_clock> currentTime = std::chrono::steady_clock::now();
                     std::chrono::duration<double> elapsedTime = currentTime - lastExecutionTime;

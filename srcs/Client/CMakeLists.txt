@@ -58,5 +58,5 @@ else()
   target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-find_package(SFML REQUIRED COMPONENTS graphics window system audio)
+find_package(SFML REQUIRED COMPONENTS graphics window system)
 target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics sfml-window sfml-system sfml-audio)
