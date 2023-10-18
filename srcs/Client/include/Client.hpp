@@ -152,7 +152,6 @@ namespace rtype
                                                     if (event.type == sf::Event::Closed)
                                                         window.close();
                                                 }
-                                                checkVictory();
                                                 window.clear();
                                                 drawSprite(window);
                                                 window.display();
