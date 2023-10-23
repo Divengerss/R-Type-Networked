@@ -4,10 +4,10 @@
 #include <iostream>
 
 #define Max_End_Menu 2
-class endMenu
+class EndMenu
 {
     public:
-        endMenu(int width, int height);
+        EndMenu(int width, int height);
 
         void draw(sf::RenderWindow &window);
         void MoveUp();
@@ -16,7 +16,7 @@ class endMenu
         int endMenuPressed() {
             return endMenuselected;
         }
-        ~endMenu();
+        ~EndMenu();
 
     private:
         int endMenuselected;

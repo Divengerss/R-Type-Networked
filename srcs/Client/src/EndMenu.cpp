@@ -1,13 +1,13 @@
-#include EndMenu.hpp
+#include "EndMenu.hpp"
 
-endMenu::endMenu(int width, int height)
+EndMenu::EndMenu(int width, int height)
 {
     if (!font.loadFromFile("assets/arial.ttf")) {
         std::cerr << "Error loading arial.ttf" << std::endl;
     }
     End_Menu[0].setFont(font);
     End_Menu[0].setFillColor(sf::Color::Red);
-    End_Menu[0].setString("Play Again");
+    End_Menu[0].setString("Main Menu");
     End_Menu[0].setPosition(sf::Vector2f(width / 2, height / (Max_End_Menu + 1) * 1));
 
     End_Menu[1].setFont(font);
@@ -18,18 +18,18 @@ endMenu::endMenu(int width, int height)
     endMenuselected = 0;
 }
 
-endMenu::~endMenu()
+EndMenu::~EndMenu()
 {
 }
 
-void endMenu::draw(sf::RenderWindow &window)
+void EndMenu::draw(sf::RenderWindow &window)
 {
     for (int i = 0; i < Max_End_Menu; i++) {
         window.draw(End_Menu[i]);
     }
 }
 
-void endMenu::MoveUp()
+void EndMenu::MoveUp()
 {
     if (endMenuselected - 1 >= -1) {
         End_Menu[endMenuselected].setFillColor(sf::Color::White);
@@ -40,7 +40,7 @@ void endMenu::MoveUp()
     }
 }
 
-void endMenu::MoveDown()
+void EndMenu::MoveDown()
 {
     if (endMenuselected + 1 <= Max_End_Menu) {
         End_Menu[endMenuselected].setFillColor(sf::Color::White);

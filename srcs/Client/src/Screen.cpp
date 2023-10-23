@@ -7,7 +7,7 @@ Screen::Screen()
 {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Main Menu");
     mainMenu mainMenu(window.getSize().x, window.getSize().y);
-    endMenu endMenu(window.getSize().x, window.getSize().y);
+    EndMenu endMenu(window.getSize().x, window.getSize().y);
 
     while (window.isOpen())
     {
@@ -124,7 +124,27 @@ Screen::Screen()
                             Play.display();
                         }
                     }
-                    if (y == 1)
+                    if (y == 1) {
+                        while (Options.isOpen())
+                        {
+                            sf::Event aevent;
+                            while (Options.pollEvent(aevent))
+                            {
+                                if (aevent.type == sf::Event::Closed)
+                                    Options.close();
+                                if (aevent.type == sf::Event::KeyPressed)
+                                {
+                                    if (aevent.key.code == sf::Keyboard::Escape)
+                                        Options.close();
+                                }
+                            }
+                            Play.close();
+                            Credits.close();
+                            Options.clear();
+                            Options.display();
+                        }
+                    }
+                    if (y == 2)
                         window.close();
                 }
             }

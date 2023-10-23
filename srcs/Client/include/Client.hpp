@@ -20,6 +20,7 @@
 #include "PositionSystem.hpp"
 #include "DamageSystem.hpp"
 #include "MainMenu.hpp"
+#include "Tag.hpp"
 
 namespace rtype
 {
@@ -67,6 +68,28 @@ namespace rtype
                     window.draw(sprite.second.first);
             }
 
+            bool checkLoseCondition(Registry &t, mainMenu &mainMenu)
+            {
+                int count = 0;
+                auto tags = t.get_components<Tag>();
+
+                for (std::size_t i = 0; i < tags.size(); ++i)
+                {
+                    auto &tag = tags[i];
+                    if (tag && tag->_tag == "player")
+                    {
+                        count++;
+                    }
+                }
+
+                if (count == 0)
+                {
+                    mainMenu.setMenu(4);
+                    return true;
+                }
+                return false;
+            }
+
             void runGame()
             {
                 sf::RenderWindow window(sf::VideoMode(1920, 1080), "SFML window");
@@ -81,6 +104,7 @@ namespace rtype
                 reg.register_component<Destroyable>();
                 reg.register_component<Hitbox>();
                 reg.register_component<Damaging>();
+                reg.register_component<Tag>();
 
                 Entity Space_background = reg.spawn_entity();
                 reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png", 0, 0, 950, 200});
@@ -102,6 +126,7 @@ namespace rtype
                 reg.add_component<Destroyable>(e, {3});
                 reg.add_component<Hitbox>(e, {33, 17});
                 // reg.add_component<Damaging>(e, {false});
+                reg.add_component<Tag>(e, {"player"});
 
                 // Entity e2 = reg.spawn_entity();
                 // reg.add_component<Texture>(e2, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
@@ -185,6 +210,10 @@ namespace rtype
                                                 drawSprite(window);
                                                 window.display();
                                                 clock.restart();
+                                                if (checkLoseCondition(reg, mainMenu)) {
+                                                    x = 4;
+                                                    break;
+                                                }
                                             }
                                         }
                                     }
@@ -196,6 +225,53 @@ namespace rtype
                                     }
                                     if (x == 3)
                                         window.close();
+                                    if (x == 4)
+                                    {
+                                        EndMenu endMenu = mainMenu.getEndMenu();
+                                        bool returnPressed = false;
+                                        while (window.isOpen()) {
+                                            while (window.pollEvent(event)) {
+                                                if (event.type == sf::Event::Closed)
+                                                    window.close();
+
+                                                if (event.type == sf::Event::KeyReleased)
+                                                {
+                                                    if (event.key.code == sf::Keyboard::Up)
+                                                    {
+                                                        endMenu.MoveUp();
+                                                        break;
+                                                    }
+                                                    if (event.key.code == sf::Keyboard::Down)
+                                                    {
+                                                        endMenu.MoveDown();
+                                                        break;
+                                                    }
+                                                    if (event.key.code == sf::Keyboard::Return)
+                                                    {
+                                                        returnPressed = true;
+                                                    }
+                                                }
+                                            }
+                                            int y = endMenu.endMenuPressed();
+                                            if (returnPressed)
+                                            {
+                                                if (y == 0)
+                                                {
+                                                    mainMenu.setMenu(0);
+                                                    break;
+                                                }
+                                                if (y == 1)
+                                                {
+                                                    window.close();
+                                                    break;
+                                                }
+                                            }
+                                            window.clear();
+                                            endMenu.draw(window);
+                                            window.display();
+                                            clock.restart();
+                                        }
+                                    }
                                     break;
                                 }
                             }
