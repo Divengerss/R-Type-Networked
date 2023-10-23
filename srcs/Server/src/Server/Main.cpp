@@ -7,7 +7,7 @@ int main() {
     asio::io_context ioContext;
     asio::io_service ioService;
     try {
-        rtype::Game game(ioContext, ioService);
+        rtype::loopSystem game(ioContext, ioService);
         game.runNetwork();
         game.runGame();
     } catch (const Error &e) {

@@ -28,17 +28,78 @@ namespace rtype
     {
         public:
             Game() = default;
-            Game(net::Client &client) : _client(client) {}
+            Game(net::Client &client, Registry &reg) : _client(client), _updateInterval(1.0f/60), _reg(reg)
+            {
+                _reg.register_component<Position>();
+                _reg.register_component<Velocity>();
+                _reg.register_component<Texture>();
+                _reg.register_component<Scale>();
+                _reg.register_component<MovementPattern>();
+                _reg.register_component<Controllable>();
+                _reg.register_component<Destroyable>();
+                _reg.register_component<Hitbox>();
+                _reg.register_component<Damaging>();
+
+                Entity Space_background = _reg.spawn_entity();
+                #ifdef WIN32
+                    _reg.add_component<Texture>(Space_background, {"Release\\assets\\sprites\\Space.png", 0, 0, 950, 200});
+                #else
+                    _reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png", 0, 0, 950, 200});
+                #endif
+                _reg.add_component<Position>(Space_background, {0, 0});
+                _reg.add_component<Scale>(Space_background, {5, 5});
+                _reg.add_component<Velocity>(Space_background, {1});
+                _reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
+            }
             ~Game() = default;
 
-            void updateSprite(Registry &t)
-            {
-                p.positionSystem(t);
-                auto positions = t.get_components<Position>();
-                auto velocities = t.get_components<Velocity>();
-                auto textures = t.get_components<Texture>();
-                auto scales = t.get_components<Scale>();
+            void textureSystem() {
+                auto positions = _reg.get_components<Position>();
+                auto controllable = _reg.get_components<Controllable>();
+                auto textures = _reg.get_components<Texture>();
+                auto movements = _reg.get_components<MovementPattern>();
 
+                for (std::size_t i = 0; i < positions.size(); i++) {
+                    auto &texture = textures[i];
+                    auto &pos = positions[i];
+                    auto &cont = controllable[i];
+                    auto &move = movements[i];
+                    if (pos && cont && !texture.has_value()) {
+                        #ifdef WIN32
+                            _reg.add_component<Texture>(Entity(i), {"Release\\assets\\sprites\\r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
+                        #else
+                            _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
+                        #endif
+                        _reg.add_component<Scale>(Entity(i), {3, 3});
+                        createdPlayers++;
+                    }
+                    else if (pos && !cont.has_value() && !texture.has_value()) {
+                        if (move->_movementPattern == MovementPatterns::STRAIGHTLEFT)
+                            #ifdef WIN32
+                                _reg.add_component<Texture>(Entity(i), {"Release\\assets\\sprites\\r-typesheet5.gif", 233, 0, 33, 36});
+                            #else
+                                _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
+                            #endif
+                        if (move->_movementPattern == MovementPatterns::STRAIGHTRIGHT)
+                            #ifdef WIN32
+                                _reg.add_component<Texture>(Entity(i), {"Release\\assets\\sprites\\r-typesheet2.gif", 185, 0, 25, 25});
+                                #else
+                                _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
+                                #endif
+
+                        _reg.add_component<Scale>(Entity(i), {3, 3});
+                    }
+                }
+            }
+
+            void updateSprite()
+            {
+                textureSystem();
+                posSys.positionSystemClient(_reg, _client);
+                auto positions = _reg.get_components<Position>();
+                auto velocities = _reg.get_components<Velocity>();
+                auto textures = _reg.get_components<Texture>();
+                auto scales = _reg.get_components<Scale>();
                 for (std::size_t i = 0; i < textures.size(); ++i)
                 {
                     auto &texture = textures[i];
@@ -47,8 +108,8 @@ namespace rtype
                     if (texture && pos && _sprites.find(i) == _sprites.end())
                     {
                         sf::Sprite sprite;
-                        sf::Texture spriteTexture(texture->_texture);
-                        sprite.setTexture(spriteTexture);
+                        sf::Texture spriteTexture = sf::Texture();
+                        spriteTexture.loadFromFile(texture->_path);
                         sprite.setPosition(pos->_x, pos->_y);
                         sprite.setTextureRect(sf::IntRect(texture->_left, texture->_top, texture->_width, texture->_height));
                         sprite.setScale(scale->_scaleX, scale->_scaleY);
@@ -59,7 +120,7 @@ namespace rtype
                         sprite.setPosition(pos->_x, pos->_y);
                     }
                 }
-                d.damageSystem(t, _sprites);
+                dmgSys.damageSystem(_reg, _sprites);
             };
 
             void drawSprite(sf::RenderWindow &window)
@@ -92,7 +153,7 @@ namespace rtype
 
             void runGame()
             {
-                sf::RenderWindow window(sf::VideoMode(1920, 1080), "SFML window");
+                sf::RenderWindow window(sf::VideoMode(1920, 1080), "R-Type Alpha");
 
                 Registry reg;
                 reg.register_component<Position>();
@@ -167,13 +228,14 @@ namespace rtype
 
                 sf::Clock clock;
                 float updateInterval = 1.0f/60;
+    
                 mainMenu mainMenu(window.getSize().x, window.getSize().y);
 
                 while (window.isOpen() && _client.isSocketOpen())
                 {
                     sf::Event event;
-                    sf::Time elapsedTime = clock.getElapsedTime();
-                    if (elapsedTime.asSeconds() >= updateInterval)
+                    sf::Time elapsedTime = _clock.getElapsedTime();
+                    if (elapsedTime.asSeconds() >= _updateInterval)
                     {
                         while (window.pollEvent(event))
                         {
@@ -198,22 +260,24 @@ namespace rtype
                                     if (x == 0)
                                     {
                                         while (window.isOpen()) {
-                                            sf::Time elapsedTime = clock.getElapsedTime();
-                                            if (elapsedTime.asSeconds() >= updateInterval)
+                                            sf::Time elapsedTime = _clock.getElapsedTime();
+                                            if (elapsedTime.asSeconds() >= _updateInterval)
                                             {
                                                 while (window.pollEvent(event)) {
                                                     if (event.type == sf::Event::Closed)
                                                         window.close();
                                                 }
                                                 window.clear();
-                                                updateSprite(reg);
+                                                updateSprite();
                                                 drawSprite(window);
                                                 window.display();
-                                                clock.restart();
+
+                                               _clock.restart();
                                                 if (checkLoseCondition(reg, mainMenu)) {
                                                     x = 4;
                                                     break;
                                                 }
+
                                             }
                                         }
                                     }
@@ -279,18 +343,21 @@ namespace rtype
                         window.clear();
                         mainMenu.draw(window);
                         window.display();
-                        clock.restart();
+                        _clock.restart();
                     }
                 }
+                _client.disconnect();
             }
 
             private:
                 net::Client &_client;
                 std::map<size_t, std::pair<sf::Sprite, sf::Texture>> _sprites;
-                sf::Clock Clock;
-                PositionSystem p;
-                DamageSystem d;
-                float updateInterval = 1.0f;
+                sf::Clock _clock;
+                PositionSystem posSys;
+                DamageSystem dmgSys;
+                float _updateInterval;
+                Registry &_reg;
+                int createdPlayers = 0;
     };
 } // namespace rtype
 

@@ -14,6 +14,12 @@
 #include "Position.hpp"
 #include "Hitbox.hpp"
 #include "Texture.hpp"
+#include "Registry.hpp"
+#include "Controllable.hpp"
+#include "Scale.hpp"
+#include "MovementPattern.hpp"
+#include "Destroyable.hpp"
+#include "Damaging.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -33,9 +39,9 @@ namespace net
     {
         public:
             Client() = delete;
-            Client(asio::io_context &ioContext, const std::string &host, const std::string &port) :
+            Client(asio::io_context &ioContext, const std::string &host, const std::string &port, Registry &reg) :
                 _ioContext(ioContext), _errCode(asio::error_code()), _resolver(ioContext), _endpoint(*_resolver.resolve(asio::ip::udp::v4(), host, port).begin()),
-                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(uuidSize, 0), _packet({})
+                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(uuidSize, 0), _packet({}), _reg(reg)
             {
                 try {
                     utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
@@ -99,7 +105,9 @@ namespace net
 
                 std::memmove(&packet, &header, headerSize);
                 std::memmove(&packet[headerSize], &data, dataSize);
-                return _socket.send_to(asio::buffer(&packet, headerSize + dataSize), _endpoint);
+                if (_socket.is_open())
+                    return _socket.send_to(asio::buffer(&packet, headerSize + dataSize), _endpoint);
+                return 0UL;
             }
 
             void listenServer()
@@ -138,26 +146,34 @@ namespace net
             }
 
             void handleForceDisconnectPacket() {
+                _socket.cancel();
                 _ioContext.stop();
                 _socket.close();
-                std::cout << "Disconnection received from server." << std::endl;
+                _uuid.clear();
             }
 
             template<class T, typename U>
-            void handleECSComponent(packet::packetHeader &header, sparse_array<T> &arr, U &component) {
+            void handleECSComponent(packet::packetHeader &header, U &component) {
                 std::size_t componentSize = sizeof(T);
+                auto &arr = _reg.get_components<T>();
 
                 bool isNullOpt = false;
+                std::size_t sparseArrIndex = 0UL;
                 for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;) {
                     std::memmove(&isNullOpt, &_packet[sizeof(header) + componentIdx], sizeof(bool));
                     componentIdx += sizeof(bool);
                     if (isNullOpt) {
-                        arr.push_back(std::nullopt);
+                        // do nothing
                     } else {
                         std::memmove(&component, &_packet[sizeof(header) + componentIdx], componentSize);
-                        arr.push_back(component);
+                        if (sparseArrIndex == arr.size()) {
+                            _reg.spawn_entity();
+                        }
+                        arr[sparseArrIndex] = component;
+                        //std::cout << sparseArrIndex << std::endl;
                     }
                     componentIdx += componentSize;
+                    sparseArrIndex += 1UL;
                 }
             }
 
@@ -180,23 +196,32 @@ namespace net
                         }},
                         {packet::FORCE_DISCONNECT, [&]{ handleForceDisconnectPacket(); }},
                         {packet::ECS_VELOCITY, [&]{
-                            sparse_array<Velocity> tmp; // Temporary, use the client's ECS when done.
                             Velocity component(0);
-                            handleECSComponent<Velocity>(header, tmp, component);
+                            handleECSComponent<Velocity>(header, component);
+                        }},
+                        {packet::ECS_CONTROLLABLE, [&]{
+                            Controllable component("");
+                            handleECSComponent<Controllable>(header, component);
                         }},
                         {packet::ECS_POSITION, [&]{
-                            sparse_array<Position> tmp; // Temporary, use the client's ECS when done.
                             Position component(0.0f, 0.0f);
-                            handleECSComponent<Position>(header, tmp, component);
-
-                            for (auto &cpnt : tmp)
-                                if (cpnt.has_value())
-                                    std::cout << "X = " << cpnt.value()._x << " Y = " << cpnt.value()._y << std::endl;
+                            handleECSComponent<Position>(header, component);
                         }},
                         {packet::ECS_HITBOX, [&]{
-                            sparse_array<Hitbox> tmp; // Temporary, use the client's ECS when done.
                             Hitbox component(0, 0);
-                            handleECSComponent<Hitbox>(header, tmp, component);
+                            handleECSComponent<Hitbox>(header, component);
+                        }},
+                        {packet::ECS_DESTROYABLE, [&]{
+                            Destroyable component(0);
+                            handleECSComponent<Destroyable>(header, component);
+                        }},
+                        {packet::ECS_MOVEMENTPATTERN, [&]{
+                            MovementPattern component(MovementPatterns::NONE);
+                            handleECSComponent<MovementPattern>(header, component);
+                        }},
+                        {packet::ECS_DAMAGES, [&]{
+                            Damaging component(0);
+                            handleECSComponent<Damaging>(header, component);
                         }}
                     };
 
@@ -229,11 +254,15 @@ namespace net
             {
                 packet::disconnectionRequest request(_uuid.data());
                 packet::packetHeader header(packet::DISCONNECTION_REQUEST, sizeof(request));
-                std::size_t bytesSent = sendPacket(header, request);
-                if (bytesSent == 0UL)
-                    std::cerr << "Something went wrong sending the packet disconnection." << std::endl;
+                if (_socket.is_open()) {
+                    std::size_t bytesSent = sendPacket(header, request);
+                    if (bytesSent == 0UL)
+                        std::cerr << "Something went wrong sending the packet disconnection." << std::endl;
+                }
                 std::cout << "Disconnected from the server." << std::endl;
                 _uuid.clear();
+                _ioContext.stop();
+                _socket.close();
             }
 
             static void signalHandler(int signum) {
@@ -242,6 +271,10 @@ namespace net
                         clientInstance->disconnect();
                 }
                 std::exit(EXIT_SUCCESS);
+            }
+
+            const std::string getUuid() const {
+                return _uuid;
             }
 
         private:
@@ -254,6 +287,7 @@ namespace net
             std::string _uuid;
             std::vector<std::thread> _threadPool;
             std::array<std::uint8_t, localPacketSize> _packet;
+            Registry &_reg;
             static Client* clientInstance;
     };
 
