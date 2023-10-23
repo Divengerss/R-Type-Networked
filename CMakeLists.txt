@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
-include(ExternalProject)
 if (WIN32)
     execute_process(
         COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.bat
