@@ -26,7 +26,7 @@ set(CPACK_SOURCE_IGNORE_FILES*
 )
 set(CPACK_COMPONENTS_ALL ON)
 
-add_executable(${PROJECT_NAME} src/Server/Main.cpp)
+add_executable(${PROJECT_NAME} src/Main.cpp)
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
 install(FILES
@@ -49,7 +49,6 @@ include_directories(
     include
     ${PATH_ASIO}
     ${CMAKE_SOURCE_DIR}/srcs/Netcode
-    include/Server
     ${CMAKE_SOURCE_DIR}/includes
     ${CMAKE_SOURCE_DIR}/ECS
     ${CMAKE_SOURCE_DIR}/ECS/Components
