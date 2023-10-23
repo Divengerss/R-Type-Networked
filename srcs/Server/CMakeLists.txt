@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(r-type_server)
 
-
 if(WIN32)
   set(CPACK_GENERATOR "ZIP")
 else()
@@ -26,12 +25,13 @@ set(CPACK_SOURCE_IGNORE_FILES*
 )
 set(CPACK_COMPONENTS_ALL ON)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 add_executable(${PROJECT_NAME} src/Main.cpp)
 
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
-install(FILES
-    ${CMAKE_SOURCE_DIR}/Release/server.cfg
-    DESTINATION .)
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/bin
+)
 
 include(CPack)
 
@@ -48,12 +48,11 @@ endif (APPLE)
 include_directories(
     include
     ${PATH_ASIO}
-    ${CMAKE_SOURCE_DIR}/srcs/Netcode
     ${CMAKE_SOURCE_DIR}/includes
     ${CMAKE_SOURCE_DIR}/ECS
     ${CMAKE_SOURCE_DIR}/ECS/Components
     ${CMAKE_SOURCE_DIR}/ECS/Systems
-
+    ${CMAKE_SOURCE_DIR}/srcs/Engine/include
 )
 
 if(MSVC)
@@ -63,4 +62,5 @@ else()
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${PATH_ASIO})
-target_link_libraries(${PROJECT_NAME} -pthread)
+link_directories(${CMAKE_BINARY_DIR}/lib)
+target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/lib/RTEngine.so -pthread)

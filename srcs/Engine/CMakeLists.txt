@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(r-type-engine)
 
-set(SOURCES
-    src/Engine.cpp
-)
-
 include_directories(
     include
     ${CMAKE_SOURCE_DIR}/ECS
@@ -12,13 +8,14 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/Systems
 )
 
-add_library(${PROJECT_NAME} SHARED ${SOURCES})
+add_library(${PROJECT_NAME} SHARED
+    src/Engine.cpp
+)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    VERSION 1.0
-    SOVERSION 1
     OUTPUT_NAME "RTEngine"
     PREFIX ""
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
 )
 
 if(WIN32)
@@ -27,7 +24,7 @@ endif()
 
 install(
     TARGETS ${PROJECT_NAME}
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/lib
+    ARCHIVE DESTINATION ${CMAKE_BINARY_DIR}/lib
+    RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/bin
 )

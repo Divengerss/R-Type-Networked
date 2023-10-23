@@ -3,9 +3,12 @@
 #include <iostream>
 #include <filesystem>
 
+#include "Engine.hpp"
+
 int main() {
     asio::io_context ioContext;
     asio::io_service ioService;
+    rtype::Engine engine;
     try {
         rtype::loopSystem game(ioContext, ioService);
         game.runNetwork();
