@@ -17,10 +17,11 @@ class Pickup {
     public:
         Pickup(BonusType bonusType = SpeedBoost, bool positive = true) {
             _bonusType = bonusType;
+            _positive = positive;
         };
 
         BonusType _bonusType;
-        bool positive;
+        bool _positive;
 };
 
 #endif /* !PICKUP_HPP_ */
