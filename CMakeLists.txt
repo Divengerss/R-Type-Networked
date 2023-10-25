@@ -5,17 +5,9 @@ if (WIN32)
         COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.bat
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg
     )
-    execute_process(
-        COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/vcpkg.exe install asio sfml
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg
-    )
 else()
     execute_process(
         COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.sh
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg
-    )
-    execute_process(
-        COMMAND ${CMAKE_SOURCE_DIR}/vcpkg/vcpkg install asio sfml
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/vcpkg
     )
 endif()
@@ -27,6 +19,6 @@ file(COPY ${CMAKE_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR}/bin/)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_subdirectory(srcs/Engine)
+#add_subdirectory(srcs/Engine)
 add_subdirectory(srcs/Server)
 add_subdirectory(srcs/Client)

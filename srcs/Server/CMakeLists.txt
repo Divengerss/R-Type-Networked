@@ -63,4 +63,4 @@ endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${PATH_ASIO})
 link_directories(${CMAKE_BINARY_DIR}/lib)
-target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/lib/RTEngine.so -pthread)
+target_link_libraries(${PROJECT_NAME} -pthread)

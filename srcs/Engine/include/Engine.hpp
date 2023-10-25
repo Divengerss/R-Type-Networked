@@ -8,6 +8,8 @@
 #ifndef ENGINE_HPP_
 #define ENGINE_HPP_
 
+#include <initializer_list>
+
 #include "Registry.hpp"
 
 namespace rtype
@@ -20,11 +22,11 @@ namespace rtype
 
             const Registry &getRegistry() const noexcept { return _ecs; }
 
-            template<class ... Component>
-            void registerComponents(Component ... component)
-            {
-                _ecs.register_component<component...>();
-                registerComponents(component...);
+            template <class... Component>
+            void registerComponents() {
+                (void) std::initializer_list<int> {
+                    (static_cast<void>(_ecs.register_component<Component>()), 0)...
+                };
             }
 
         private:
