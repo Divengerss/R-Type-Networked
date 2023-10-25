@@ -13,14 +13,15 @@
 #include "Position.hpp"
 #include "Damaging.hpp"
 #include "Destroyable.hpp"
+#include "ISystem.hpp"
 
-class DamageSystem
+class DamageSystem : public ISystem
 {
 public:
     DamageSystem() = default;
     ~DamageSystem() = default;
 
-    void damageSystemServer(Registry &r)
+    void runSystem(Registry &r)
     {
         auto const positions = r.get_components<Position>();
         auto destroyable = r.get_components<Destroyable>();

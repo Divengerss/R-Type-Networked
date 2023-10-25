@@ -8,6 +8,8 @@
 #ifndef GAMESYSTEM_HPP_
 #define GAMESYSTEM_HPP_
 
+#include "ISystem.hpp"
+
 #include "Registry.hpp"
 
 #include "Destroyable.hpp"
@@ -18,10 +20,10 @@
 #include "Damaging.hpp"
 #include "MovementPattern.hpp"
 
-class GameSystem
+class GameSystem : public ISystem
 {
 public:
-    void gameSystem(Registry &r)
+    void runSystem(Registry &r) override
     {
         auto hps = r.get_components<Destroyable>();
         auto positions = r.get_components<Position>();
@@ -42,7 +44,7 @@ public:
                 enemySpawnCooldown -= 0.1;
         }
         currentCooldown -= 0.1;
-        if (currentCooldown <= 0)
+        if (currentCooldown <= 0) {
             currentCooldown = enemySpawnCooldown;
             //ENEMY CREATION
             auto entity = r.spawn_entity();
@@ -52,6 +54,7 @@ public:
             r.add_component<Destroyable>(entity, 1);
             r.add_component<Damaging>(entity, 1);
             r.add_component<MovementPattern>(entity, MovementPatterns::SINUS);
+        }
     }
     int currentLevel = 1;
     int enemiesToKill = 10;

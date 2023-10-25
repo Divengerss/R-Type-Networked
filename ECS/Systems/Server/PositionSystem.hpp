@@ -16,15 +16,16 @@
 #include "Hitbox.hpp"
 #include "Damaging.hpp"
 #include "Packets.hpp"
+#include "ISystem.hpp"
 #include <cmath>
 
-class PositionSystem
+class PositionSystem : public ISystem
 {
 public:
     PositionSystem() = default;
     ~PositionSystem() = default;
 
-    void positionSystemServer(Registry &r)
+    void runSystem(Registry &r)
     {
         auto &positions = r.get_components<Position>();
         auto &velocities = r.get_components<Velocity>();

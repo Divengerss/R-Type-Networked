@@ -8,7 +8,7 @@
 #ifndef POSITIONSYSTEM_HPP_
 #define POSITIONSYSTEM_HPP_
 
-#include <Registry.hpp>
+#include "Registry.hpp"
 #include "Position.hpp"
 #include "Velocity.hpp"
 #include "MovementPattern.hpp"
@@ -18,11 +18,13 @@
 #include "Packets.hpp"
 #include <cmath>
 
-class PositionSystem {
+#include <SFML/Graphics.hpp>
+
+class PositionSystem : public ISystem {
     public:
         PositionSystem() = default;
         ~PositionSystem() = default;
-    void positionSystemClient(Registry &r, net::Client &client)
+    void runSystem(Registry &r)
     {
         auto &positions = r.get_components<Position>();
         auto &velocities = r.get_components<Velocity>();
@@ -40,46 +42,46 @@ class PositionSystem {
                 {
                     pos->_x -= vel->_velocity;
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
-                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Left));
-                    client.sendPacket(packet, event);
+                    packet::keyboardEvent event("", packet::ACCEPTED, int(sf::Keyboard::Left));
+                    r.queueToSend.push({packet, event});
                     keyPressed = sf::Keyboard::Left;
                 }
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
                 {
                     pos->_x += vel->_velocity;
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
-                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Right));
-                    client.sendPacket(packet, event);
+                    packet::keyboardEvent event("", packet::ACCEPTED, int(sf::Keyboard::Right));
+                    r.queueToSend.push({packet, event});
                     keyPressed = sf::Keyboard::Right;
                 }
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
                 {
                     pos->_y -= vel->_velocity;
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
-                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Up));
-                    client.sendPacket(packet, event);
+                    packet::keyboardEvent event("", packet::ACCEPTED, int(sf::Keyboard::Up));
+                    r.queueToSend.push({packet, event});
                     keyPressed = sf::Keyboard::Up;
                 }
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
                 {
                     pos->_y += vel->_velocity;
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
-                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Down));
-                    client.sendPacket(packet, event);
+                    packet::keyboardEvent event("", packet::ACCEPTED, int(sf::Keyboard::Down));
+                    r.queueToSend.push({packet, event});
                     keyPressed = sf::Keyboard::Down;
                 }
                 if (_spacePressed <= 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
                 {
                     _spacePressed = 20;
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
-                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Space));
-                    client.sendPacket(packet, event);
+                    packet::keyboardEvent event("", packet::ACCEPTED, int(sf::Keyboard::Space));
+                    r.queueToSend.push({packet, event});
                     keyPressed = sf::Keyboard::Space;
                 }
                 if (keyPressed != sf::Keyboard::Key::Unknown && !sf::Keyboard::isKeyPressed(keyPressed)) {
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
-                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Unknown));
-                    client.sendPacket(packet, event);
+                    packet::keyboardEvent event("", packet::ACCEPTED, int(sf::Keyboard::Unknown));
+                    r.queueToSend.push({packet, event});
                     keyPressed = sf::Keyboard::Key::Unknown;
                 }
                 _spacePressed--;
@@ -111,6 +113,7 @@ class PositionSystem {
 
     int _spacePressed = 200;
     sf::Keyboard::Key keyPressed = sf::Keyboard::Key::Unknown;
+
     protected:
     private:
 };
