@@ -16,6 +16,7 @@
 #include "Entity.hpp"
 #include "Server/PositionSystem.hpp"
 #include "Server/DamageSystem.hpp"
+#include "Server/BonusSystem.hpp"
 #include "Destroyable.hpp"
 #include <thread>
 #include <chrono>
@@ -26,8 +27,15 @@ namespace rtype
     {
     public:
         loopSystem() = delete;
-        loopSystem(asio::io_context &ioContext, asio::io_context &ioService) : _reg(Registry()), _pos(), _server(ioContext, ioService, _reg)
+        loopSystem(asio::io_context &ioContext, asio::io_context &ioService) : _reg(Registry()), _server(ioContext, ioService, _reg)
         {
+            BonusSystem bs;
+            DamageSystem ds;
+            PositionSystem ps;
+            ISystem * ibs = &bs;
+            ISystem * ids = &ds;
+            ISystem * ips = &ps;
+            _reg.add_sytems({ibs, ids, ips});
             _reg.register_component<Position>();
             _reg.register_component<Velocity>();
             _reg.register_component<Hitbox>();
@@ -81,9 +89,7 @@ namespace rtype
 
                             currentCooldown = pingCooldown;
                         }
-                        _pos.positionSystemServer(_reg);
-                        _dam.damageSystemServer(_reg);
-
+                        _reg.run_systems();
                         lastExecutionTime = currentTime;
                     }
                 }
@@ -91,8 +97,6 @@ namespace rtype
         };
 
         Registry _reg;
-        DamageSystem _dam;
-        PositionSystem _pos;
         net::Server _server;
         int pingCooldown = 3;
         int currentCooldown = 3;
