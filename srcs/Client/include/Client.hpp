@@ -38,6 +38,7 @@ namespace rtype
                 _reg.register_component<Destroyable>();
                 _reg.register_component<Hitbox>();
                 _reg.register_component<Damaging>();
+                _reg.register_component<Score>();
 
                 Entity Space_background = _reg.spawn_entity();
                 #ifdef WIN32

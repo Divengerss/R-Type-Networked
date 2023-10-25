@@ -26,7 +26,8 @@ namespace packet
         KEYBOARD_EVENT,
         ECS_DAMAGES,
         ECS_DESTROYABLE,
-        ECS_MOVEMENTPATTERN
+        ECS_MOVEMENTPATTERN,
+        ECS_SCORE
     };
 
     enum packetStatus : std::uint8_t

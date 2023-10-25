@@ -20,6 +20,7 @@
 #include "MovementPattern.hpp"
 #include "Destroyable.hpp"
 #include "Damaging.hpp"
+#include "Score.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -222,6 +223,10 @@ namespace net
                         {packet::ECS_DAMAGES, [&]{
                             Damaging component(0);
                             handleECSComponent<Damaging>(header, component);
+                        }},
+                        {packet::ECS_SCORE, [&]{
+                            Score component(0);
+                            handleECSComponent<Score>(header, component);
                         }}
                     };
 
