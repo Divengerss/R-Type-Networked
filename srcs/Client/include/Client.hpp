@@ -17,8 +17,7 @@
 #include "Screen.hpp"
 #include "Damaging.hpp"
 #include "Screen.hpp"
-#include "PositionSystem.hpp"
-#include "DamageSystem.hpp"
+#include "Client/PositionSystem.hpp"
 #include "MainMenu.hpp"
 
 namespace rtype
@@ -51,82 +50,6 @@ namespace rtype
                 _reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
             }
             ~Game() = default;
-
-            void textureSystem() {
-                auto positions = _reg.get_components<Position>();
-                auto controllable = _reg.get_components<Controllable>();
-                auto textures = _reg.get_components<Texture>();
-                auto movements = _reg.get_components<MovementPattern>();
-
-                for (std::size_t i = 0; i < positions.size(); i++) {
-                    auto &texture = textures[i];
-                    auto &pos = positions[i];
-                    auto &cont = controllable[i];
-                    auto &move = movements[i];
-                    if (pos && cont && !texture.has_value()) {
-                        #ifdef WIN32
-                            _reg.add_component<Texture>(Entity(i), {"Release\\assets\\sprites\\r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
-                        #else
-                            _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
-                        #endif
-                        _reg.add_component<Scale>(Entity(i), {3, 3});
-                        createdPlayers++;
-                    }
-                    else if (pos && !cont.has_value() && !texture.has_value()) {
-                        if (move->_movementPattern == MovementPatterns::STRAIGHTLEFT)
-                            #ifdef WIN32
-                                _reg.add_component<Texture>(Entity(i), {"Release\\assets\\sprites\\r-typesheet5.gif", 233, 0, 33, 36});
-                            #else
-                                _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
-                            #endif
-                        if (move->_movementPattern == MovementPatterns::STRAIGHTRIGHT)
-                            #ifdef WIN32
-                                _reg.add_component<Texture>(Entity(i), {"Release\\assets\\sprites\\r-typesheet2.gif", 185, 0, 25, 25});
-                                #else
-                                _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
-                                #endif
-
-                        _reg.add_component<Scale>(Entity(i), {3, 3});
-                    }
-                }
-            }
-
-            void updateSprite()
-            {
-                textureSystem();
-                posSys.positionSystemClient(_reg, _client);
-                auto positions = _reg.get_components<Position>();
-                auto velocities = _reg.get_components<Velocity>();
-                auto textures = _reg.get_components<Texture>();
-                auto scales = _reg.get_components<Scale>();
-                for (std::size_t i = 0; i < textures.size(); ++i)
-                {
-                    auto &texture = textures[i];
-                    auto &pos = positions[i];
-                    auto scale = scales[i];
-                    if (texture && pos && _sprites.find(i) == _sprites.end())
-                    {
-                        sf::Sprite sprite;
-                        sf::Texture spriteTexture = sf::Texture();
-                        spriteTexture.loadFromFile(texture->_path);
-                        sprite.setPosition(pos->_x, pos->_y);
-                        sprite.setTextureRect(sf::IntRect(texture->_left, texture->_top, texture->_width, texture->_height));
-                        sprite.setScale(scale->_scaleX, scale->_scaleY);
-                        _sprites.emplace(i, std::pair<sf::Sprite, sf::Texture>(sprite, spriteTexture));
-                        _sprites[i].first.setTexture(_sprites[i].second);
-                    } else if (texture && pos) {
-                        sf::Sprite &sprite = _sprites.at(i).first;
-                        sprite.setPosition(pos->_x, pos->_y);
-                    }
-                }
-                dmgSys.damageSystem(_reg, _sprites);
-            };
-
-            void drawSprite(sf::RenderWindow &window)
-            {
-                for (auto &sprite : _sprites)
-                    window.draw(sprite.second.first);
-            }
 
             void runGame()
             {
@@ -170,8 +93,7 @@ namespace rtype
                                                         window.close();
                                                 }
                                                 window.clear();
-                                                updateSprite();
-                                                drawSprite(window);
+                                                _reg.run_systems();
                                                 window.display();
                                                 _clock.restart();
                                             }
@@ -200,10 +122,7 @@ namespace rtype
 
             private:
                 net::Client &_client;
-                std::map<size_t, std::pair<sf::Sprite, sf::Texture>> _sprites;
                 sf::Clock _clock;
-                PositionSystem posSys;
-                DamageSystem dmgSys;
                 float _updateInterval;
                 Registry &_reg;
                 int createdPlayers = 0;
