@@ -25,10 +25,10 @@ static constexpr std::uint16_t defaultPort = 12345U;
 static constexpr std::uint32_t packetSize = 1024U;
 
 #ifdef _WIN32
-    static constexpr std::string_view serverConfigFilePath = "\\server.cfg";
+    static constexpr std::string_view serverConfigFilePath = "\\resources\\server.cfg";
     static constexpr std::string_view serverLogFile = "\\server.log";
 #else
-    static constexpr std::string_view serverConfigFilePath = "/server.cfg";
+    static constexpr std::string_view serverConfigFilePath = "/resources/server.cfg";
     static constexpr std::string_view serverLogFile = "/server.log";
 #endif /* !_WIN32 */
 

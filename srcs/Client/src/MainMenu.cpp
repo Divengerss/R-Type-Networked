@@ -1,6 +1,6 @@
 #include "MainMenu.hpp"
 
-mainMenu::mainMenu(int width, int height)
+mainMenu::mainMenu(int width, int height) : endMenu(width, height)
 {
     if (!font.loadFromFile("assets/arial.ttf")) {
         std::cout << "Error loading file" << std::endl;
@@ -59,4 +59,9 @@ void mainMenu::MoveDown()
             mainMenuselected = 0;
         Main_Menu[mainMenuselected].setFillColor(sf::Color::Red);
     }
+}
+
+void mainMenu::setMenu(int index)
+{
+    mainMenuselected = index;
 }

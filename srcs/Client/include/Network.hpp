@@ -29,9 +29,9 @@ static constexpr std::uint8_t defaultTimeout = 5U;
 static constexpr std::uint32_t localPacketSize = 1024U;
 
 #ifdef _WIN32
-    static constexpr std::string_view clientConfigFilePath = "\\client.cfg";
+    static constexpr std::string_view clientConfigFilePath = "\\resources\\client.cfg";
 #else
-    static constexpr std::string_view clientConfigFilePath = "/client.cfg";
+    static constexpr std::string_view clientConfigFilePath = "/resources/client.cfg";
 #endif /* !_WIN32 */
 
 namespace net

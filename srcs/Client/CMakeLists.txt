@@ -25,19 +25,18 @@ set(CPACK_SOURCE_IGNORE_FILES*
 )
 set(CPACK_COMPONENTS_ALL ON)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 add_executable(${PROJECT_NAME}
     src/Main.cpp
     src/MainMenu.cpp
     src/Screen.cpp
+    src/EndMenu.cpp
 )
 
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
-install(FILES
-    ${CMAKE_SOURCE_DIR}/Release/client.cfg
-    DESTINATION .)
-install(DIRECTORY
-    ${CMAKE_SOURCE_DIR}/Release/assets
-    DESTINATION .)
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/bin
+)
 
 include(CPack)
 
@@ -57,3 +56,4 @@ endif()
 
 find_package(SFML REQUIRED COMPONENTS graphics window system audio)
 target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics sfml-window sfml-system sfml-audio)
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
