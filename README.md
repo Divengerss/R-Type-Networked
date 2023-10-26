@@ -21,8 +21,8 @@ Simply run `install.sh` on Linux or `install.bat` on Windows.
 
 To compile the programs `r-type_client` and `r-type_server`:
 ```bash
-  $> cmake -S . -B Build/
-  $> make -C Build/ -j
+  cmake -S . -B Build/
+  make -C Build/ -j
 ```
 *Note: Make sure you are under the root directory before running the compilation commands.*
     
