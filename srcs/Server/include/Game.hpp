@@ -17,6 +17,7 @@
 #include "Server/PositionSystem.hpp"
 #include "Server/DamageSystem.hpp"
 #include "Destroyable.hpp"
+#include "Score.hpp"
 #include <thread>
 #include <chrono>
 
@@ -35,6 +36,7 @@ namespace rtype
             _reg.register_component<MovementPattern>();
             _reg.register_component<Destroyable>();
             _reg.register_component<Damaging>();
+            _reg.register_component<Score>();
             _reg.spawn_entity(); // Background index
             Entity monster = _reg.spawn_entity();
             // _reg.add_component<Texture>(monster, {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
@@ -45,6 +47,7 @@ namespace rtype
             _reg.add_component<Destroyable>(monster, {2});
             _reg.add_component<Hitbox>(monster, {99, 51});
             _reg.add_component<Damaging>(monster, {true});
+            _reg.add_component<Score>(monster, {10});
         };
 
         ~loopSystem() = default;
@@ -78,7 +81,7 @@ namespace rtype
                             _server.sendSparseArray<Damaging>(packet::ECS_DAMAGES, _reg.get_components<Damaging>());
                             _server.sendSparseArray<Destroyable>(packet::ECS_DESTROYABLE, _reg.get_components<Destroyable>());
                             _server.sendSparseArray<MovementPattern>(packet::ECS_MOVEMENTPATTERN, _reg.get_components<MovementPattern>());
-
+                            _server.sendSparseArray<Score>(packet::ECS_SCORE, _reg.get_components<Score>());
                             currentCooldown = pingCooldown;
                         }
                         _pos.positionSystemServer(_reg);

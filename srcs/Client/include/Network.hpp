@@ -20,6 +20,7 @@
 #include "MovementPattern.hpp"
 #include "Destroyable.hpp"
 #include "Damaging.hpp"
+#include "Score.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -28,9 +29,9 @@ static constexpr std::uint8_t defaultTimeout = 5U;
 static constexpr std::uint32_t localPacketSize = 1024U;
 
 #ifdef _WIN32
-    static constexpr std::string_view clientConfigFilePath = "\\client.cfg";
+    static constexpr std::string_view clientConfigFilePath = "\\resources\\client.cfg";
 #else
-    static constexpr std::string_view clientConfigFilePath = "/client.cfg";
+    static constexpr std::string_view clientConfigFilePath = "/resources/client.cfg";
 #endif /* !_WIN32 */
 
 namespace net
@@ -222,6 +223,10 @@ namespace net
                         {packet::ECS_DAMAGES, [&]{
                             Damaging component(0);
                             handleECSComponent<Damaging>(header, component);
+                        }},
+                        {packet::ECS_SCORE, [&]{
+                            Score component(0);
+                            handleECSComponent<Score>(header, component);
                         }}
                     };
 
