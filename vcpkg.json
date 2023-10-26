@@ -1,6 +1,7 @@
 {
     "dependencies": [
       "asio",
-      "sfml"
+      "sfml",
+      "sdl2"
     ]
 }

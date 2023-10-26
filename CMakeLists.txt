@@ -21,3 +21,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(srcs/Server)
 add_subdirectory(srcs/Client)
+add_subdirectory(srcs/Runner)
