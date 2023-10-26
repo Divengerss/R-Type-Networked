@@ -13,6 +13,7 @@
 #include "Position.hpp"
 #include "Damaging.hpp"
 #include "Destroyable.hpp"
+#include "Score.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/Audio.hpp>
@@ -32,6 +33,7 @@ public:
         auto destroyable = r.get_components<Destroyable>();
         auto const hitboxes = r.get_components<Hitbox>();
         auto const damages = r.get_components<Damaging>();
+        auto const scores = r.get_components<Score>();
 
         // std::cout << "positions.size(): " << positions.size() << std::endl;
         for (size_t i = 0; i < positions.size(); ++i)
@@ -42,6 +44,8 @@ public:
             auto const &pos_dest = positions[i];
             auto &dest = destroyable[i];
             auto &sprite_dest = sprites[i].first;
+            auto &score = scores[i];
+
             if (pos_dest && hb_dest && dest)
             {
                 for (size_t j = 0; j < positions.size(); ++j)
@@ -54,7 +58,10 @@ public:
                     {
                         std::cout << "EXPLOSION" << std::endl;
                         sound.play();
-                        r.kill_entity(Entity(i));
+                        if (score) {
+                            std::cout << "ok" << std::endl;
+                        }
+                            r.kill_entity(Entity(i));
                         sprites.erase(i);
                     }
                 }
