@@ -19,6 +19,5 @@ file(COPY ${CMAKE_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR}/bin/)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-#add_subdirectory(srcs/Engine)
 add_subdirectory(srcs/Server)
 add_subdirectory(srcs/Client)

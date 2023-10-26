@@ -27,7 +27,9 @@ set(CPACK_COMPONENTS_ALL ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-add_executable(${PROJECT_NAME} src/Main.cpp)
+add_executable(${PROJECT_NAME}
+    src/Main.cpp
+)
 
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/bin
@@ -63,4 +65,4 @@ endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${PATH_ASIO})
 link_directories(${CMAKE_BINARY_DIR}/lib)
-target_link_libraries(${PROJECT_NAME} -pthread)
+target_link_libraries(${PROJECT_NAME}  -pthread)
