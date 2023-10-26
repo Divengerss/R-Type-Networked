@@ -20,6 +20,7 @@
 #include "PositionSystem.hpp"
 #include "DamageSystem.hpp"
 #include "MainMenu.hpp"
+#include "Tag.hpp"
 
 namespace rtype
 {
@@ -128,9 +129,106 @@ namespace rtype
                     window.draw(sprite.second.first);
             }
 
+            bool checkLoseCondition(Registry &t, mainMenu &mainMenu)
+            {
+                int count = 0;
+                auto tags = t.get_components<Tag>();
+
+                for (std::size_t i = 0; i < tags.size(); ++i)
+                {
+                    auto &tag = tags[i];
+                    if (tag && tag->_tag == "player")
+                    {
+                        count++;
+                    }
+                }
+
+                if (count == 0)
+                {
+                    mainMenu.setMenu(4);
+                    return true;
+                }
+                return false;
+            }
+
             void runGame()
             {
                 sf::RenderWindow window(sf::VideoMode(1920, 1080), "R-Type Alpha");
+
+                Registry reg;
+                reg.register_component<Position>();
+                reg.register_component<Velocity>();
+                reg.register_component<Texture>();
+                reg.register_component<Scale>();
+                reg.register_component<MovementPattern>();
+                reg.register_component<Controllable>();
+                reg.register_component<Destroyable>();
+                reg.register_component<Hitbox>();
+                reg.register_component<Damaging>();
+                reg.register_component<Tag>();
+
+                Entity Space_background = reg.spawn_entity();
+                reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png", 0, 0, 950, 200});
+                reg.add_component<Position>(Space_background, {0, 0});
+                reg.add_component<Scale>(Space_background, {5, 5});
+                reg.add_component<Velocity>(Space_background, {1});
+                reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
+                // reg.add_component<Destroyable>(Space_background, {false});
+                reg.add_component<Hitbox>(Space_background, {950, 200});
+                // reg.add_component<Damaging>(Space_background, {false});
+
+                Entity e = reg.spawn_entity();
+                reg.add_component<Texture>(e, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+                reg.add_component<Position>(e, {10, 10});
+                reg.add_component<Scale>(e, {3, 3});
+                reg.add_component<Velocity>(e, {10});
+                reg.add_component<MovementPattern>(e, {NONE});
+                reg.add_component<Controllable>(e, {" "});
+                reg.add_component<Destroyable>(e, {3});
+                reg.add_component<Hitbox>(e, {33, 17});
+                // reg.add_component<Damaging>(e, {false});
+                reg.add_component<Tag>(e, {"player"});
+
+                // Entity e2 = reg.spawn_entity();
+                // reg.add_component<Texture>(e2, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+                // reg.add_component<Position>(e2, {10, 10});
+                // reg.add_component<Scale>(e2, {3, 3});
+                // reg.add_component<Velocity>(e2, {1});
+                // reg.add_component<MovementPattern>(e2, {NONE});
+                // reg.add_component<Controllable>(e2, {false});
+                // // reg.add_component<Destroyable>(e2, {true});
+                // // reg.add_component<Hitbox>(e2, {33, 17});
+                // // reg.add_component<Damaging>(e2, {false});
+
+                // Entity e3 = reg.spawn_entity();
+                // reg.add_component<Texture>(e3, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+                // reg.add_component<Position>(e3, {10, 10});
+                // reg.add_component<Scale>(e3, {3, 3});
+                // reg.add_component<Velocity>(e3, {1});
+                // reg.add_component<MovementPattern>(e3, {NONE});
+                // reg.add_component<Controllable>(e3, {false});
+
+                // Entity e4 = reg.spawn_entity();
+                // reg.add_component<Texture>(e4, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+                // reg.add_component<Position>(e4, {10, 10});
+                // reg.add_component<Scale>(e4, {3, 3});
+                // reg.add_component<Velocity>(e4, {1});
+                // reg.add_component<MovementPattern>(e4, {NONE});
+                // reg.add_component<Controllable>(e4, {false});
+
+                Entity monster = reg.spawn_entity();
+                reg.add_component<Texture>(monster, {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
+                reg.add_component<Position>(monster, {1920, 500});
+                reg.add_component<Scale>(monster, {3, 3});
+                reg.add_component<Velocity>(monster, {2});
+                reg.add_component<MovementPattern>(monster, {STRAIGHTLEFT});
+                reg.add_component<Destroyable>(monster, {2});
+                reg.add_component<Hitbox>(monster, {33, 17});
+                reg.add_component<Damaging>(monster, {true});
+
+                sf::Clock clock;
+                float updateInterval = 1.0f/60;
+    
                 mainMenu mainMenu(window.getSize().x, window.getSize().y);
 
                 while (window.isOpen() && _client.isSocketOpen())
@@ -173,7 +271,13 @@ namespace rtype
                                                 updateSprite();
                                                 drawSprite(window);
                                                 window.display();
-                                                _clock.restart();
+
+                                               _clock.restart();
+                                                if (checkLoseCondition(reg, mainMenu)) {
+                                                    x = 4;
+                                                    break;
+                                                }
+
                                             }
                                         }
                                     }
@@ -185,6 +289,53 @@ namespace rtype
                                     }
                                     if (x == 3)
                                         window.close();
+                                    if (x == 4)
+                                    {
+                                        EndMenu endMenu = mainMenu.getEndMenu();
+                                        bool returnPressed = false;
+                                        while (window.isOpen()) {
+                                            while (window.pollEvent(event)) {
+                                                if (event.type == sf::Event::Closed)
+                                                    window.close();
+
+                                                if (event.type == sf::Event::KeyReleased)
+                                                {
+                                                    if (event.key.code == sf::Keyboard::Up)
+                                                    {
+                                                        endMenu.MoveUp();
+                                                        break;
+                                                    }
+                                                    if (event.key.code == sf::Keyboard::Down)
+                                                    {
+                                                        endMenu.MoveDown();
+                                                        break;
+                                                    }
+                                                    if (event.key.code == sf::Keyboard::Return)
+                                                    {
+                                                        returnPressed = true;
+                                                    }
+                                                }
+                                            }
+                                            int y = endMenu.endMenuPressed();
+                                            if (returnPressed)
+                                            {
+                                                if (y == 0)
+                                                {
+                                                    mainMenu.setMenu(0);
+                                                    break;
+                                                }
+                                                if (y == 1)
+                                                {
+                                                    window.close();
+                                                    break;
+                                                }
+                                            }
+                                            window.clear();
+                                            endMenu.draw(window);
+                                            window.display();
+                                            clock.restart();
+                                        }
+                                    }
                                     break;
                                 }
                             }

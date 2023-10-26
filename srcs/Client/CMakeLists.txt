@@ -31,6 +31,7 @@ add_executable(${PROJECT_NAME}
     src/Main.cpp
     src/MainMenu.cpp
     src/Screen.cpp
+    src/EndMenu.cpp
 )
 
 install(TARGETS ${PROJECT_NAME}
