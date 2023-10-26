@@ -6,7 +6,7 @@
 #include <string>
 #include <cstring>
 
-static constexpr std::size_t uuidSize = 0x24UL;
+#include "Uuid.hpp"
 
 #pragma pack(push, 1)
 
