@@ -5,7 +5,6 @@
 #include <array>
 #include <string>
 #include <cstring>
-
 #include "Uuid.hpp"
 
 #pragma pack(push, 1)
@@ -121,7 +120,8 @@ namespace packet
         }
     };
 
-    struct keyboardEvent {
+    struct keyboardEvent
+    {
         std::uint8_t _status;
         std::array<std::uint8_t, uuidSize> uuid;
         int keyCode;

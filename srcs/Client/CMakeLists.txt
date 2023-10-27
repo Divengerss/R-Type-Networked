@@ -55,5 +55,6 @@ else()
 endif()
 
 find_package(SFML REQUIRED COMPONENTS graphics window system audio)
-target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics sfml-window sfml-system sfml-audio)
+find_package(ZLIB REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics sfml-window sfml-system sfml-audio ZLIB::ZLIB)
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

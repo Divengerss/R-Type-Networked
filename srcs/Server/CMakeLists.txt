@@ -29,6 +29,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_executable(${PROJECT_NAME}
     src/Main.cpp
+    src/Network.cpp
 )
 
 install(TARGETS ${PROJECT_NAME}
@@ -63,6 +64,7 @@ else()
   target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+find_package(ZLIB REQUIRED)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PATH_ASIO})
 link_directories(${CMAKE_BINARY_DIR}/lib)
-target_link_libraries(${PROJECT_NAME}  -pthread)
+target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB -pthread)
