@@ -5,6 +5,8 @@
     #define _WIN32_WINNT 0x0601
 #endif /* !_WIN32 */
 
+#include <iostream>
+
 #include "Network.hpp"
 #include "Registry.hpp"
 #include "Position.hpp"
@@ -21,14 +23,15 @@
 #include "DamageSystem.hpp"
 #include "MainMenu.hpp"
 #include "Tag.hpp"
+#include "Score.hpp"
 
 namespace rtype
 {
     class Game
     {
         public:
-            Game() = default;
-            Game(net::Client &client, Registry &reg) : _client(client), _updateInterval(1.0f/60), _reg(reg)
+
+            Game(std::string host, std::string port): _host(host), _port(port), _updateInterval(1.0f/60)
             {
                 _reg.register_component<Position>();
                 _reg.register_component<Velocity>();
@@ -39,21 +42,25 @@ namespace rtype
                 _reg.register_component<Destroyable>();
                 _reg.register_component<Hitbox>();
                 _reg.register_component<Damaging>();
+                _reg.register_component<Tag>();
+                _reg.register_component<Score>();
 
                 Entity Space_background = _reg.spawn_entity();
                 #ifdef WIN32
-                    _reg.add_component<Texture>(Space_background, {"Release\\assets\\sprites\\Space.png", 0, 0, 950, 200});
+                    _reg.add_component<Texture>(Space_background, {"Build\\bin\\assets\\sprites\\Space.png", 0, 0, 950, 200});
                 #else
-                    _reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png", 0, 0, 950, 200});
+                    _reg.add_component<Texture>(Space_background, {"./Build/bin/assets/sprites/Space.png", 0, 0, 950, 200});
                 #endif
                 _reg.add_component<Position>(Space_background, {0, 0});
                 _reg.add_component<Scale>(Space_background, {5, 5});
                 _reg.add_component<Velocity>(Space_background, {1});
                 _reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
             }
+
             ~Game() = default;
 
-            void textureSystem() {
+            void textureSystem()
+            {
                 auto positions = _reg.get_components<Position>();
                 auto controllable = _reg.get_components<Controllable>();
                 auto textures = _reg.get_components<Texture>();
@@ -66,9 +73,9 @@ namespace rtype
                     auto &move = movements[i];
                     if (pos && cont && !texture.has_value()) {
                         #ifdef WIN32
-                            _reg.add_component<Texture>(Entity(i), {"Release\\assets\\sprites\\r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
+                            _reg.add_component<Texture>(Entity(i), {"Build\\bin\\assets\\sprites\\r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
                         #else
-                            _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
+                            _reg.add_component<Texture>(Entity(i), {"./Build/bin/assets/sprites/r-typesheet42.gif", 66, createdPlayers * 18, 33, 17});
                         #endif
                         _reg.add_component<Scale>(Entity(i), {3, 3});
                         createdPlayers++;
@@ -76,15 +83,15 @@ namespace rtype
                     else if (pos && !cont.has_value() && !texture.has_value()) {
                         if (move->_movementPattern == MovementPatterns::STRAIGHTLEFT)
                             #ifdef WIN32
-                                _reg.add_component<Texture>(Entity(i), {"Release\\assets\\sprites\\r-typesheet5.gif", 233, 0, 33, 36});
+                                _reg.add_component<Texture>(Entity(i), {"Build\\bin\\assets\\sprites\\r-typesheet5.gif", 233, 0, 33, 36});
                             #else
-                                _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
+                                _reg.add_component<Texture>(Entity(i), {"./Build/bin/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
                             #endif
                         if (move->_movementPattern == MovementPatterns::STRAIGHTRIGHT)
                             #ifdef WIN32
-                                _reg.add_component<Texture>(Entity(i), {"Release\\assets\\sprites\\r-typesheet2.gif", 185, 0, 25, 25});
+                                _reg.add_component<Texture>(Entity(i), {"Build\\bin\\assets\\sprites\\r-typesheet2.gif", 185, 0, 25, 25});
                                 #else
-                                _reg.add_component<Texture>(Entity(i), {"./Release/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
+                                _reg.add_component<Texture>(Entity(i), {"./Build/bin/assets/sprites/r-typesheet2.gif", 185, 0, 25, 25});
                                 #endif
 
                         _reg.add_component<Scale>(Entity(i), {3, 3});
@@ -92,10 +99,10 @@ namespace rtype
                 }
             }
 
-            void updateSprite()
+            void updateSprite(net::Client &client)
             {
                 textureSystem();
-                posSys.positionSystemClient(_reg, _client);
+                posSys.positionSystemClient(_reg, client);
                 auto positions = _reg.get_components<Position>();
                 auto velocities = _reg.get_components<Velocity>();
                 auto textures = _reg.get_components<Texture>();
@@ -121,7 +128,7 @@ namespace rtype
                     }
                 }
                 dmgSys.damageSystem(_reg, _sprites);
-            };
+            }
 
             void drawSprite(sf::RenderWindow &window)
             {
@@ -132,14 +139,16 @@ namespace rtype
             bool checkLoseCondition(Registry &t, mainMenu &mainMenu)
             {
                 int count = 0;
-                auto tags = t.get_components<Tag>();
 
-                for (std::size_t i = 0; i < tags.size(); ++i)
+                for (int i = 0; i < t.get_entity_number(); ++i)
                 {
-                    auto &tag = tags[i];
-                    if (tag && tag->_tag == "player")
-                    {
-                        count++;
+                    if (t.entity_has_component<Tag>(Entity(i)) && t.entity_has_component<Destroyable>(Entity(i))) {
+                        auto &tag = t.get_component<Tag>(Entity(i));
+                        auto &destroyable = t.get_component<Destroyable>(Entity(i));
+                        if (tag._tag == "player" && destroyable._hp > 0)
+                        {
+                            count++;
+                        }
                     }
                 }
 
@@ -155,83 +164,71 @@ namespace rtype
             {
                 sf::RenderWindow window(sf::VideoMode(1920, 1080), "R-Type Alpha");
 
-                Registry reg;
-                reg.register_component<Position>();
-                reg.register_component<Velocity>();
-                reg.register_component<Texture>();
-                reg.register_component<Scale>();
-                reg.register_component<MovementPattern>();
-                reg.register_component<Controllable>();
-                reg.register_component<Destroyable>();
-                reg.register_component<Hitbox>();
-                reg.register_component<Damaging>();
-                reg.register_component<Tag>();
+                Entity Space_background = _reg.spawn_entity();
+                _reg.add_component<Texture>(Space_background, {"./Build/bin/assets/sprites/Space.png", 0, 0, 950, 200});
+                _reg.add_component<Position>(Space_background, {0, 0});
+                _reg.add_component<Scale>(Space_background, {5, 5});
+                _reg.add_component<Velocity>(Space_background, {1});
+                _reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
+                // _reg.add_component<Destroyable>(Space_background, {false});
+                _reg.add_component<Hitbox>(Space_background, {950, 200});
+                // _reg.add_component<Damaging>(Space_background, {false});
 
-                Entity Space_background = reg.spawn_entity();
-                reg.add_component<Texture>(Space_background, {"./Release/assets/sprites/Space.png", 0, 0, 950, 200});
-                reg.add_component<Position>(Space_background, {0, 0});
-                reg.add_component<Scale>(Space_background, {5, 5});
-                reg.add_component<Velocity>(Space_background, {1});
-                reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
-                // reg.add_component<Destroyable>(Space_background, {false});
-                reg.add_component<Hitbox>(Space_background, {950, 200});
-                // reg.add_component<Damaging>(Space_background, {false});
+                Entity e = _reg.spawn_entity();
+                _reg.add_component<Texture>(e, {"./Build/bin/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+                _reg.add_component<Position>(e, {10, 10});
+                _reg.add_component<Scale>(e, {3, 3});
+                _reg.add_component<Velocity>(e, {10});
+                _reg.add_component<MovementPattern>(e, {NONE});
+                _reg.add_component<Controllable>(e, {" "});
+                _reg.add_component<Destroyable>(e, {3});
+                _reg.add_component<Hitbox>(e, {33, 17});
+                // _reg.add_component<Damaging>(e, {false});
+                _reg.add_component<Tag>(e, {"player"});
 
-                Entity e = reg.spawn_entity();
-                reg.add_component<Texture>(e, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
-                reg.add_component<Position>(e, {10, 10});
-                reg.add_component<Scale>(e, {3, 3});
-                reg.add_component<Velocity>(e, {10});
-                reg.add_component<MovementPattern>(e, {NONE});
-                reg.add_component<Controllable>(e, {" "});
-                reg.add_component<Destroyable>(e, {3});
-                reg.add_component<Hitbox>(e, {33, 17});
-                // reg.add_component<Damaging>(e, {false});
-                reg.add_component<Tag>(e, {"player"});
+                // Entity e2 = _reg.spawn_entity();
+                // _reg.add_component<Texture>(e2, {"./Build/bin/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+                // _reg.add_component<Position>(e2, {10, 10});
+                // _reg.add_component<Scale>(e2, {3, 3});
+                // _reg.add_component<Velocity>(e2, {1});
+                // _reg.add_component<MovementPattern>(e2, {NONE});
+                // _reg.add_component<Controllable>(e2, {false});
+                // // _reg.add_component<Destroyable>(e2, {true});
+                // // _reg.add_component<Hitbox>(e2, {33, 17});
+                // // _reg.add_component<Damaging>(e2, {false});
 
-                // Entity e2 = reg.spawn_entity();
-                // reg.add_component<Texture>(e2, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
-                // reg.add_component<Position>(e2, {10, 10});
-                // reg.add_component<Scale>(e2, {3, 3});
-                // reg.add_component<Velocity>(e2, {1});
-                // reg.add_component<MovementPattern>(e2, {NONE});
-                // reg.add_component<Controllable>(e2, {false});
-                // // reg.add_component<Destroyable>(e2, {true});
-                // // reg.add_component<Hitbox>(e2, {33, 17});
-                // // reg.add_component<Damaging>(e2, {false});
+                // Entity e3 = _reg.spawn_entity();
+                // _reg.add_component<Texture>(e3, {"./Build/bin/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+                // _reg.add_component<Position>(e3, {10, 10});
+                // _reg.add_component<Scale>(e3, {3, 3});
+                // _reg.add_component<Velocity>(e3, {1});
+                // _reg.add_component<MovementPattern>(e3, {NONE});
+                // _reg.add_component<Controllable>(e3, {false});
 
-                // Entity e3 = reg.spawn_entity();
-                // reg.add_component<Texture>(e3, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
-                // reg.add_component<Position>(e3, {10, 10});
-                // reg.add_component<Scale>(e3, {3, 3});
-                // reg.add_component<Velocity>(e3, {1});
-                // reg.add_component<MovementPattern>(e3, {NONE});
-                // reg.add_component<Controllable>(e3, {false});
+                // Entity e4 = _reg.spawn_entity();
+                // _reg.add_component<Texture>(e4, {"./Build/bin/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
+                // _reg.add_component<Position>(e4, {10, 10});
+                // _reg.add_component<Scale>(e4, {3, 3});
+                // _reg.add_component<Velocity>(e4, {1});
+                // _reg.add_component<MovementPattern>(e4, {NONE});
+                // _reg.add_component<Controllable>(e4, {false});
 
-                // Entity e4 = reg.spawn_entity();
-                // reg.add_component<Texture>(e4, {"./Release/assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
-                // reg.add_component<Position>(e4, {10, 10});
-                // reg.add_component<Scale>(e4, {3, 3});
-                // reg.add_component<Velocity>(e4, {1});
-                // reg.add_component<MovementPattern>(e4, {NONE});
-                // reg.add_component<Controllable>(e4, {false});
-
-                Entity monster = reg.spawn_entity();
-                reg.add_component<Texture>(monster, {"./Release/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
-                reg.add_component<Position>(monster, {1920, 500});
-                reg.add_component<Scale>(monster, {3, 3});
-                reg.add_component<Velocity>(monster, {2});
-                reg.add_component<MovementPattern>(monster, {STRAIGHTLEFT});
-                reg.add_component<Destroyable>(monster, {2});
-                reg.add_component<Hitbox>(monster, {33, 17});
-                reg.add_component<Damaging>(monster, {true});
+                Entity monster = _reg.spawn_entity();
+                _reg.add_component<Texture>(monster, {"./Build/bin/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
+                _reg.add_component<Position>(monster, {1920, 500});
+                _reg.add_component<Scale>(monster, {3, 3});
+                _reg.add_component<Velocity>(monster, {2});
+                _reg.add_component<MovementPattern>(monster, {STRAIGHTLEFT});
+                _reg.add_component<Destroyable>(monster, {2});
+                _reg.add_component<Hitbox>(monster, {33, 17});
+                _reg.add_component<Damaging>(monster, {true});
 
                 sf::Clock clock;
                 float updateInterval = 1.0f/60;
-    
+
                 mainMenu mainMenu(window.getSize().x, window.getSize().y);
 
-                while (window.isOpen() && _client.isSocketOpen())
+                while (window.isOpen())
                 {
                     sf::Event event;
                     sf::Time elapsedTime = _clock.getElapsedTime();
@@ -259,7 +256,10 @@ namespace rtype
                                 {
                                     if (x == 0)
                                     {
-                                        while (window.isOpen()) {
+                                        asio::io_context io_context;
+                                        net::Client client(io_context, _host, _port, _reg);
+
+                                        while (window.isOpen() && client.isSocketOpen()) {
                                             sf::Time elapsedTime = _clock.getElapsedTime();
                                             if (elapsedTime.asSeconds() >= _updateInterval)
                                             {
@@ -268,18 +268,18 @@ namespace rtype
                                                         window.close();
                                                 }
                                                 window.clear();
-                                                updateSprite();
+                                                updateSprite(client);
                                                 drawSprite(window);
                                                 window.display();
 
-                                               _clock.restart();
-                                                if (checkLoseCondition(reg, mainMenu)) {
+                                                _clock.restart();
+                                                if (checkLoseCondition(_reg, mainMenu)) {
                                                     x = 4;
                                                     break;
                                                 }
-
                                             }
                                         }
+                                        client.disconnect();
                                     }
                                     if (x == 1)
                                     {
@@ -346,17 +346,16 @@ namespace rtype
                         _clock.restart();
                     }
                 }
-                _client.disconnect();
             }
-
             private:
-                net::Client &_client;
+                std::string _host;
+                std::string _port;
                 std::map<size_t, std::pair<sf::Sprite, sf::Texture>> _sprites;
                 sf::Clock _clock;
                 PositionSystem posSys;
                 DamageSystem dmgSys;
                 float _updateInterval;
-                Registry &_reg;
+                Registry _reg;
                 int createdPlayers = 0;
     };
 } // namespace rtype

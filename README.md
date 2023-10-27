@@ -25,7 +25,7 @@ To compile the programs `r-type_client` and `r-type_server`:
   $> make -C Build/ -j
 ```
 *Note: Make sure you are under the root directory before running the compilation commands.*
-    
+
 ## Tech Stack
 
 Both programs use **C++**

@@ -16,6 +16,11 @@
 #include <list>
 
 #include <iostream>
+#include <optional>
+
+// Debug register_component, est-ce que le type_index et le vector se changent comme tu veux ?
+// Debug quand tu handle recieve, le registry est-ce qu'il est good ? et quand t'appelles les fonctions qui touchent aux vectors est-ce que c'est good aussi ?
+// Debug handleECSComponent
 
 class Registry
 {
@@ -52,6 +57,22 @@ class Registry
             return std::any_cast<const sparse_array<Component> &>(it->second);
         }
 
+        template <class Component>
+        Component &get_component(Entity const &e)
+        {
+            sparse_array<Component> &array = get_components<Component>();
+            std::optional<Component> &opt = array[e()];
+            return *opt;
+        }
+
+        template <class Component>
+        Component const &get_component(Entity const &e) const
+        {
+            sparse_array<Component> const &array = get_components<Component>();
+            std::optional<Component> const &opt = array[e()];
+            return *opt;
+        }
+
         // #########################################################
         // #                 ENTITY MANAGEMENT                     #
         // #########################################################
@@ -72,6 +93,18 @@ class Registry
         }
 
         Entity &entity_from_index(std::size_t idx);
+
+        template <typename Component>
+        bool entity_has_component(Entity const &e) const
+        {
+            sparse_array<Component> const &array = get_components<Component>();
+            return array.has_value(e());
+        }
+
+        int get_entity_number() const
+        {
+            return entity_number;
+        }
 
         void kill_entity(Entity const &e)
         {

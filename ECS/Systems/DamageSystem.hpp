@@ -13,9 +13,11 @@
 #include "Position.hpp"
 #include "Damaging.hpp"
 #include "Destroyable.hpp"
+#include "Score.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/Audio.hpp>
+#include <iostream>
 
 class DamageSystem
 {
@@ -28,35 +30,26 @@ public:
 
     void damageSystem(Registry &r, std::map<size_t, std::pair<sf::Sprite, sf::Texture>> &sprites)
     {
-        auto const positions = r.get_components<Position>();
-        auto destroyable = r.get_components<Destroyable>();
-        auto const hitboxes = r.get_components<Hitbox>();
-        auto const damages = r.get_components<Damaging>();
+        for (int i = 0; i < r.get_entity_number(); i++) {
+            if (!r.entity_has_component<Position>(Entity(i)) || !r.entity_has_component<Hitbox>(Entity(i)) || !r.entity_has_component<Destroyable>(Entity(i)))
+                continue;
+            auto &destroyable_dest = r.get_component<Destroyable>(Entity(i));
 
-        // std::cout << "positions.size(): " << positions.size() << std::endl;
-        for (size_t i = 0; i < positions.size(); ++i)
-        {
-            // std::cout << "positions.size(): " << positions.size() << std::endl;
-            // std::cout << "i: " << i << std::endl;
-            auto const &hb_dest = hitboxes[i];
-            auto const &pos_dest = positions[i];
-            auto &dest = destroyable[i];
-            auto &sprite_dest = sprites[i].first;
-            if (pos_dest && hb_dest && dest)
-            {
-                for (size_t j = 0; j < positions.size(); ++j)
-                {
-                    if (i == j)
-                        continue;
-                    auto const &sprite_dam = sprites[j].first;
-                    auto const &dam = damages[j];
-                    if (sprite_dam.getGlobalBounds().intersects(sprite_dest.getGlobalBounds()) && dam)
-                    {
-                        std::cout << "EXPLOSION" << std::endl;
-                        sound.play();
-                        r.kill_entity(Entity(i));
-                        sprites.erase(i);
-                    }
+            auto const &sprite_dest = sprites[i].first;
+
+             for (int j = 0; j < r.get_entity_number(); j++) {
+                if (i == j)
+                    continue;
+                if (!r.entity_has_component<Position>(Entity(j)) || !r.entity_has_component<Hitbox>(Entity(j)) || !r.entity_has_component<Destroyable>(Entity(j)) || !r.entity_has_component<Damaging>(Entity(j)))
+                    continue;
+                auto const &sprite_from = sprites[j].first;
+
+                if (sprite_from.getGlobalBounds().intersects(sprite_dest.getGlobalBounds())) {
+                    std::cout << "EXPLOSION" << std::endl;
+                    sound.play();
+                    r.kill_entity(Entity(i));
+                    destroyable_dest._hp = 0;
+                    sprites.erase(i);
                 }
             }
         }

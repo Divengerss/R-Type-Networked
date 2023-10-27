@@ -139,6 +139,11 @@ public:
         return std::numeric_limits<uint64_t>::max();
     };
 
+    bool has_value(size_type pos) const
+    {
+        return _data[pos].has_value();
+    };
+
 private:
     container_t _data;
 };
