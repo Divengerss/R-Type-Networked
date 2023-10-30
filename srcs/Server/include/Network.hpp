@@ -68,7 +68,7 @@ namespace net
             void setHost(const std::string &host) {_host = host;}
             void setPort(std::uint16_t port) {_port = port;}
             void setConnection(const std::string &host, std::uint16_t port) {_host = host; _port = port;}
-            static void setServerInstance(Network* instance) {serverInstance = instance;}
+            static void setServerInstance(Network *instance) {serverInstance = instance;}
 
             void writeToLogs(const std::string_view &status, const std::string &msg)
             {
@@ -91,14 +91,16 @@ namespace net
             }
 
             template<typename T>
-            void sendResponse(const packet::packetTypes &type, T &data, const std::string cliUuid = "", bool toServerEndpoint = false)
+            void sendResponse(const packet::packetTypes &type, T &data, bool toServerEndpoint = false, const std::string cliUuid = "")
             {
                 packet::packetHeader header(type, sizeof(data));
                 std::array<std::uint8_t, sizeof(header) + sizeof(data)> buffer;
                 std::memmove(&buffer, &header, sizeof(header));
                 std::memmove(&buffer[sizeof(header)], &data, header.dataSize);
-                if (toServerEndpoint)
+                if (toServerEndpoint) {
                     _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
+                    return;
+                }
                 else if (cliUuid.empty() && !_clients.empty())
                     _logs.logTo(logInfo.data(), "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
                 for (Client &client : _clients) {

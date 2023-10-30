@@ -39,6 +39,7 @@ namespace rtype
 
             void removePlayer(Registry &ecs, const std::string &clientUUID)
             {
+                std::cout << clientUUID << std::endl;
                 for (auto &component : ecs.get_components<Controllable>()) {
                     std::string playId(uuidSize, 0);
                     std::memmove(playId.data(), &component->_playerId, uuidSize);
@@ -84,7 +85,7 @@ namespace rtype
                 packet::connectionRequest data(packet::ACCEPTED, clientUUID, getConnectedNb());
                 _net.writeToLogs(logInfo, "UUID of player is " + clientUUID);
                 _net.writeToLogs(logInfo, "Connected!");
-                _net.sendResponse<packet::connectionRequest>(packet::CONNECTION_REQUEST, data, "", true);
+                _net.sendResponse(packet::CONNECTION_REQUEST, data, true);
                 packet::clientStatus cliStatus(clientUUID, packet::NEW_CLIENT, pos.first, pos.second, getConnectedNb());
                 try {
                     _net.sendResponse(packet::CLIENT_STATUS, cliStatus);
@@ -146,6 +147,7 @@ namespace rtype
                             _net.writeToLogs(logWarn, "Unknown packet type " + std::to_string(header.type));
                         }
                     }
+                    // std::cout << _net.getClients().size() << std::endl;
                 }
             }
 
