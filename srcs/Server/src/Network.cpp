@@ -14,12 +14,12 @@
 #include "Destroyable.hpp"
 #include "Uuid.hpp"
 
-net::Network::Network(Registry &ecs) :
+net::Network::Network() :
     _ioContext(asio::io_context()), _ioService(asio::io_service()),
     _host(defaultHost), _port(defaultPort),
     _socket(_ioContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), defaultPort)),
     _logs(Log(utils::getCurrDir() + serverLogFile.data())),
-    _clients({}), _game(core::Engine(ecs))
+    _clients({})
 {
     _logs.logTo(logInfo.data(), "Starting up server...");
     utils::ParseCFG config(utils::getCurrDir() + serverConfigFilePath.data());
@@ -59,6 +59,7 @@ net::Network::Network(Registry &ecs) :
 
 net::Network::~Network()
 {
+    stopServer();
     for (std::thread &thread : _threadPool) {
         if (thread.joinable()) {
             thread.join();
@@ -67,93 +68,96 @@ net::Network::~Network()
     _logs.logTo(logInfo.data(), "Network has been shut down successfully.");
 }
 
-void net::Network::handleConnectionRequest()
-{
-    std::string cliUuid = addClient();
-    packet::connectionRequest response(packet::ACCEPTED, cliUuid, _clients.size());
-    _logs.logTo(logInfo.data(), "New connection received: UUID [" + cliUuid + "]");
-    packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(response));
-    std::array<std::uint8_t, sizeof(header) + sizeof(response)> buffer;
-    std::memmove(&buffer, &header, sizeof(header));
-    std::memmove(&buffer[sizeof(header)], &response, sizeof(response));
-    try {
-        _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
-    } catch (const std::system_error &e) {
-        std::string err = e.what();
-        _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
-        _logs.logTo(logWarn.data(), "    " + err);
-    }
-    std::tuple<int, int> positions = _game.addPlayer(cliUuid, getClients().size());
-    packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT, std::get<0>(positions), std::get<1>(positions), _clients.size());
-    try {
-        sendResponse(packet::CLIENT_STATUS, cliStatus);
-    } catch (const std::system_error &e) {
-        std::string err = e.what();
-        _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
-        _logs.logTo(logWarn.data(), "    " + err);
-    }
-}
+// void net::Network::handleConnectionRequest()
+// {
+    //std::string cliUuid = addClient();
+    //packet::connectionRequest response(packet::ACCEPTED, cliUuid, _clients.size());
+    //_logs.logTo(logInfo.data(), "New connection received.");
+    //packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(response));
+    // std::array<std::uint8_t, sizeof(header) + sizeof(response)> buffer;
+    // std::memcpy(&buffer, &header, sizeof(header));
+    // std::memcpy(&buffer[sizeof(header)], &response, sizeof(response));
+    // try {
+    //     _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
+    // } catch (const std::system_error &e) {
+    //     std::string err = e.what();
+    //     _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
+    //     _logs.logTo(logWarn.data(), "    " + err);
+    // }
+    // std::tuple<int, int> positions = _game.addPlayer(cliUuid, getClients().size());
+    //packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT, std::get<0>(positions), std::get<1>(positions), _clients.size());
+    // packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT, 30, 500, _clients.size()); // BAD
+    // try {
+    //     sendResponse(packet::CLIENT_STATUS, cliStatus);
+    // } catch (const std::system_error &e) {
+    //     std::string err = e.what();
+    //     _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
+    //     _logs.logTo(logWarn.data(), "    " + err);
+    // }
+//}
 
-void net::Network::handleDisconnectionRequest(packet::packetHeader &header)
-{
-    packet::disconnectionRequest request(packet::ACCEPTED, _clients.size());
-    std::memmove(&request, &_packet[sizeof(header)], sizeof(request));
-    std::string cliUuid(uuidSize, 0);
-    std::memmove(cliUuid.data(), &request.uuid, uuidSize);
-    removeClient(cliUuid);
-    _logs.logTo(logInfo.data(), "Disconnection received from [" + cliUuid + "]");
-    packet::clientStatus cliStatus(cliUuid, packet::LOSE_CLIENT, 0, 0, _clients.size());
-    try {
-        sendResponse(packet::CLIENT_STATUS, cliStatus);
-    } catch (const std::system_error &e) {
-        std::string err = e.what();
-        _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
-        _logs.logTo(logWarn.data(), "    " + err);
-    }
-    _game.removePlayer(cliUuid);
-}
+//void net::Network::handleDisconnectionRequest()
+//{
+    // packet::disconnectionRequest request(packet::ACCEPTED, _clients.size());
+    // std::memmove(&request, &_packet[sizeof(header)], sizeof(request));
+    // std::string cliUuid(uuidSize, 0);
+    // std::memmove(cliUuid.data(), &request.uuid, uuidSize);
+    // if (cliUuid.empty()) {
+    //     _logs.logTo(logWarn.data(), "Disconnection received from unknown client. Ignored");
+    //     return;
+    // }
+    //_logs.logTo(logInfo.data(), "Disconnection received");
+    //removeClient(cliUuid);
+    // packet::clientStatus cliStatus(cliUuid, packet::LOSE_CLIENT, 0, 0, _clients.size());
+    // try {
+    //     sendResponse(packet::CLIENT_STATUS, cliStatus);
+    // } catch (const std::system_error &e) {
+    //     std::string err = e.what();
+    //     _logs.logTo(logWarn.data(), "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
+    //     _logs.logTo(logWarn.data(), "    " + err);
+    // }
+    // _game.removePlayer(cliUuid);
+//}
 
-void net::Network::handleKeyboardEvent(packet::packetHeader &header)
-{
-    packet::keyboardEvent event;
-    std::memmove(&event, &_packet[sizeof(header)], sizeof(event));
-    std::string uuid (uuidSize, 0);
-    std::memmove(uuid.data(), &event.uuid, uuidSize);
-    _game.affectControllable(uuid, event.keyCode);
-}
+//void net::Network::handleKeyboardEvent()
+//{
+    // packet::keyboardEvent event;
+    // std::memmove(&event, &_packet[sizeof(header)], sizeof(event));
+    // std::string uuid (uuidSize, 0);
+    // std::memmove(uuid.data(), &event.uuid, uuidSize);
+    // _game.affectControllable(uuid, event.keyCode);
+//}
 
-void net::Network::handleRequestStatus()
-{
-    packet::packetHeader header = *reinterpret_cast<packet::packetHeader*>(_packet.data());
+// void net::Network::handleRequestStatus()
+// {
+//     packet::packetHeader header = *reinterpret_cast<packet::packetHeader*>(_packet.data());
 
-    std::unordered_map<uint16_t, std::function<void()>> packetHandlers = {
-        {packet::CONNECTION_REQUEST, [&]{ handleConnectionRequest(); }},
-        {packet::DISCONNECTION_REQUEST, [&]{ handleDisconnectionRequest(header); }},
-        {packet::KEYBOARD_EVENT, [&] {handleKeyboardEvent(header);}}
-    };
+//     std::unordered_map<uint16_t, std::function<void()>> packetHandlers = {
+//         {packet::CONNECTION_REQUEST, [&]{ handleConnectionRequest(); }},
+//         {packet::DISCONNECTION_REQUEST, [&]{ handleDisconnectionRequest(); }},
+//         {packet::KEYBOARD_EVENT, [&] {handleKeyboardEvent();}}
+//     };
 
-    auto handlerIt = packetHandlers.find(header.type);
-    if (handlerIt != packetHandlers.end()) {
-        handlerIt->second();
-    } else {
-        _logs.logTo(logWarn.data(), "Unknown packet");
-    }
-}
+//     auto handlerIt = packetHandlers.find(header.type);
+//     if (handlerIt != packetHandlers.end()) {
+//         handlerIt->second();
+//     } else {
+//         _logs.logTo(logWarn.data(), "Unknown packet");
+//     }
+// }
 
 void net::Network::receiveCallback(const asio::error_code &errCode, std::size_t bytesReceived)
 {
-    if (!errCode) {
-        handleRequestStatus();
-    } else if (bytesReceived == 0UL) {
+    if (bytesReceived == 0UL) {
         _logs.logTo(logInfo.data(), "The received packet was empty. " + errCode.message());
-    } else {
+    } else if (errCode)
         _logs.logTo(logErr.data(), "Error receiving packet: " + errCode.message());
-    }
     receive();
 }
 
 void net::Network::receive()
 {
+    _packet.fill(0);
     _socket.async_receive_from(
         asio::buffer(_packet, _packet.size()),
         _serverEndpoint,

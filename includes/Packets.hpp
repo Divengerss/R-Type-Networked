@@ -13,6 +13,7 @@ namespace packet
 {
     enum packetTypes : std::uint8_t
     {
+        NONE,
         PLACEHOLDER,
         CONNECTION_REQUEST,
         DISCONNECTION_REQUEST,

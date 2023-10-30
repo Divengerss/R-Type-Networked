@@ -52,8 +52,7 @@ namespace net
     class Network
     {
         public:
-            Network() = delete;
-            Network(Registry &ecs);
+            Network();
             ~Network();
 
             const asio::io_context &getIoContext() const noexcept {return _ioContext;}
@@ -64,11 +63,17 @@ namespace net
             const asio::ip::udp::socket &getSocket() const noexcept {return _socket;}
             const asio::error_code &getAsioErrorCode() const noexcept {return _errCode;}
             const std::vector<Client> &getClients() const noexcept {return _clients;}
+            const std::array<std::uint8_t, packetSize> &getPacket() const noexcept {return _packet;}
 
             void setHost(const std::string &host) {_host = host;}
             void setPort(std::uint16_t port) {_port = port;}
             void setConnection(const std::string &host, std::uint16_t port) {_host = host; _port = port;}
             static void setServerInstance(Network* instance) {serverInstance = instance;}
+
+            void writeToLogs(const std::string_view &status, const std::string &msg)
+            {
+                _logs.logTo(status.data(), msg.c_str());
+            }
 
             bool isSocketOpen() const noexcept { return _socket.is_open(); }
 
@@ -86,12 +91,12 @@ namespace net
             }
 
             template<typename T>
-            void sendResponse(const packet::packetTypes &type, T &packet, const std::string cliUuid = "", bool toServerEndpoint = false)
+            void sendResponse(const packet::packetTypes &type, T &data, const std::string cliUuid = "", bool toServerEndpoint = false)
             {
-                packet::packetHeader header(type, sizeof(packet));
-                std::array<std::uint8_t, sizeof(header) + sizeof(packet)> buffer;
+                packet::packetHeader header(type, sizeof(data));
+                std::array<std::uint8_t, sizeof(header) + sizeof(data)> buffer;
                 std::memmove(&buffer, &header, sizeof(header));
-                std::memmove(&buffer[sizeof(header)], &packet, header.dataSize);
+                std::memmove(&buffer[sizeof(header)], &data, header.dataSize);
                 if (toServerEndpoint)
                     _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
                 else if (cliUuid.empty() && !_clients.empty())
@@ -148,10 +153,10 @@ namespace net
                 }
             }
 
-            void handleConnectionRequest();
-            void handleDisconnectionRequest(packet::packetHeader &header);
-            void handleKeyboardEvent(packet::packetHeader &header);
-            void handleRequestStatus();
+            // void handleConnectionRequest();
+            // void handleDisconnectionRequest();
+            // void handleKeyboardEvent();
+            // void handleRequestStatus();
             void receiveCallback(const asio::error_code &errCode, std::size_t bytesReceived);
             void receive();
             void startServer();
@@ -190,7 +195,6 @@ namespace net
             std::array<std::uint8_t, packetSize> _packet;
             Log _logs;
             std::vector<Client> _clients;
-            core::Engine _game;
             static Network* serverInstance;
     };
 
