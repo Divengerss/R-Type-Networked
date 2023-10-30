@@ -155,10 +155,6 @@ namespace net
                 }
             }
 
-            // void handleConnectionRequest();
-            // void handleDisconnectionRequest();
-            // void handleKeyboardEvent();
-            // void handleRequestStatus();
             void receiveCallback(const asio::error_code &errCode, std::size_t bytesReceived);
             void receive();
             void startServer();
