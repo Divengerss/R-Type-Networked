@@ -11,8 +11,9 @@
 #include <optional>
 #include <vector>
 #include <any>
-
+#include <cstdint>
 #include <iostream>
+#include <limits>
 
 template <class Component> // You can also mirror the definition of std :: vector ,that takes an additional allocator.
 class sparse_array
@@ -136,7 +137,7 @@ public:
         for (size_type i = 0UL; i < _data.size(); ++i)
             if (std::addressof(value) == std::addressof(_data[i]))
                 return i;
-        return std::numeric_limits<uint64_t>::max();
+        return std::numeric_limits<std::uint64_t>::max();
     };
 
     bool has_value(size_type pos) const

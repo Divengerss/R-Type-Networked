@@ -6,7 +6,7 @@
 #include <string>
 #include <cstring>
 
-static constexpr std::size_t uuidSize = 0x24UL;
+#include "Uuid.hpp"
 
 #pragma pack(push, 1)
 
@@ -26,7 +26,8 @@ namespace packet
         KEYBOARD_EVENT,
         ECS_DAMAGES,
         ECS_DESTROYABLE,
-        ECS_MOVEMENTPATTERN
+        ECS_MOVEMENTPATTERN,
+        ECS_SCORE
     };
 
     enum packetStatus : std::uint8_t

@@ -7,6 +7,8 @@
 #include <sstream>
 #include <string>
 
+static constexpr std::size_t uuidSize = 0x24UL;
+
 namespace uuid
 {
     std::uint32_t generateRandomInt() {
