@@ -13,6 +13,7 @@
 #include "Velocity.hpp"
 #include "Destroyable.hpp"
 #include "Uuid.hpp"
+#include "ZLib.hpp"
 
 net::Network::Network() :
     _ioContext(asio::io_context()), _ioService(asio::io_service()),
@@ -115,7 +116,7 @@ std::string net::Network::addClient()
     return cliUuid;
 }
 
-void net::Network::removeClient(const std::string &uuid)
+bool net::Network::removeClient(const std::string &uuid)
 {
     std::vector<Client>::iterator it = std::remove_if(_clients.begin(), _clients.end(),
         [&](const Client &client) {
@@ -125,5 +126,7 @@ void net::Network::removeClient(const std::string &uuid)
 
     if (it != _clients.end()) {
         _clients.erase(it, _clients.end());
+        return true;
     }
+    return false;
 }

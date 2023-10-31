@@ -101,7 +101,14 @@ namespace rtype
                 std::memmove(&request, &packet[sizeof(header)], sizeof(request));
                 std::string clientUUID(uuidSize, 0);
                 std::memmove(clientUUID.data(), &request.uuid, uuidSize);
-                _net.removeClient(clientUUID);
+                if (!std::strncmp(clientUUID.data(), "\0", 1UL)) {
+                    _net.writeToLogs(logErr, "Could not disconnect the client, no UUID provided.");
+                    return;
+                }
+                if (!_net.removeClient(clientUUID)) {
+                    _net.writeToLogs(logErr, "Could not disconnect the client, UUID is unknown.");
+                    return;
+                }
                 removePlayer(ecs, clientUUID);
                 _net.writeToLogs(logInfo, "Lost connection: Disconnected " + clientUUID);
                 packet::clientStatus cliStatus(clientUUID, packet::LOSE_CLIENT, 0.0f, 0.0f, getConnectedNb());

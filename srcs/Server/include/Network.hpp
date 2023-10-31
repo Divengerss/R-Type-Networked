@@ -121,21 +121,24 @@ namespace net
             {
                 const std::size_t componentSize = sizeof(T);
                 const std::size_t componentsSize = (sizeof(bool) + componentSize) * sparseArray.size();
+                const std::size_t headerSize = sizeof(packet::packetHeader);
+                const std::size_t totalSize = headerSize + componentsSize;
+
                 packet::packetHeader header(type, componentsSize);
-                const std::size_t headerSize = sizeof(header);
-                std::array<std::uint8_t, packetSize> buffer;
+                std::vector<std::uint8_t> buffer(totalSize);
                 std::size_t offset = 0UL;
 
-                std::memmove(&buffer, &header, headerSize);
+                std::memmove(buffer.data(), &header, headerSize);
+                offset += headerSize;
                 for (auto &component : sparseArray) {
                     if (component.has_value()) {
                         bool isNullOpt = false;
-                        std::memmove(&buffer[headerSize + offset], &isNullOpt, sizeof(bool));
+                        std::memmove(buffer.data() + offset, &isNullOpt, sizeof(bool));
                         offset += sizeof(bool);
-                        std::memmove(&buffer[headerSize + offset], &component.value(), componentSize);
+                        std::memmove(buffer.data() + offset, &component.value(), componentSize);
                     } else {
                         bool isNullOpt = true;
-                        std::memmove(&buffer[headerSize + offset], &isNullOpt, sizeof(bool));
+                        std::memmove(buffer.data() + offset, &isNullOpt, sizeof(bool));
                         offset += sizeof(bool);
                     }
                     offset += componentSize;
@@ -145,11 +148,11 @@ namespace net
                 for (Client &client : _clients) {
                     if (!cliUuid.empty()) {
                         if (cliUuid == client.getUuid()) {
-                            _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client.getEndpoint());
+                            _socket.send_to(asio::buffer(buffer.data(), totalSize), client.getEndpoint());
                             _logs.logTo(logInfo.data(), "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
                         }
                     } else {
-                        _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client.getEndpoint());
+                        _socket.send_to(asio::buffer(buffer.data(), totalSize), client.getEndpoint());
                         _logs.logTo(logInfo.data(), "    Sent to [" + client.getUuid() + "]");
                     }
                 }
@@ -179,7 +182,7 @@ namespace net
 
             std::string addClient();
 
-            void removeClient(const std::string &uuid);
+            bool removeClient(const std::string &uuid);
 
         private:
             asio::io_context _ioContext;
