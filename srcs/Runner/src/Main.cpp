@@ -30,15 +30,15 @@ int main() {
     reg.register_component<Hitbox>();
 
     Entity Space_background = reg.spawn_entity();
-    reg.add_component<Texture>(Space_background, {"./assets/sprites/Space.png", 0, 0, 950, 200});
-    reg.add_component<Scale>(Space_background, {5, 5});
+    reg.add_component<Texture>(Space_background, {"./assets/sprites/Beep_Background.png", 0, -0, 514, 160});
+    reg.add_component<Scale>(Space_background, {7, 7});
     reg.add_component<Position>(Space_background, {0, 0});
     reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
     reg.add_component<Velocity>(Space_background, {1});
 
     Entity Player = reg.spawn_entity();
-    reg.add_component<Texture>(Player, {"./assets/sprites/r-typesheet42.gif", 66, 0, 33, 17});
-    reg.add_component<Position>(Player, {10, 10});
+    reg.add_component<Texture>(Player, {"./assets/sprites/Beep.png", 0, 0, 45, 75});
+    reg.add_component<Position>(Player, {100, 700});
     reg.add_component<Scale>(Player, {3, 3});
     reg.add_component<Velocity>(Player, {10});
     reg.add_component<MovementPattern>(Player, {NONE});
