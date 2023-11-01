@@ -35,7 +35,7 @@ namespace rtype
             ISystem * ibs = &bs;
             ISystem * ids = &ds;
             ISystem * ips = &ps;
-            _reg.add_sytems({ibs, ids, ips});
+            _reg.add_systems({ibs, ids, ips});
             _reg.register_component<Position>();
             _reg.register_component<Velocity>();
             _reg.register_component<Hitbox>();

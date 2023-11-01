@@ -19,6 +19,7 @@
 #include "Destroyable.hpp"
 #include "Hitbox.hpp"
 #include "Damaging.hpp"
+#include "Collider.hpp"
 
 #include <SFML/Graphics.hpp>
 
@@ -33,11 +34,16 @@ public:
         auto velocities = r.get_components<Velocity>();
         auto textures = r.get_components<Texture>();
         auto scales = r.get_components<Scale>();
+        auto colliders = r.get_components<Collider>();
+        auto dest = r.get_components<Destroyable>();
+        auto dam = r.get_components<Damaging>();
+
         for (std::size_t i = 0; i < textures.size(); ++i)
         {
             auto &texture = textures[i];
             auto &pos = positions[i];
             auto scale = scales[i];
+            auto col = colliders[i];
             if (texture && pos && _sprites.find(i) == _sprites.end())
             {
                 sf::Sprite sprite;
@@ -51,43 +57,15 @@ public:
             } else if (texture && pos) {
                 sf::Sprite &sprite = _sprites.at(i).first;
                 sprite.setPosition(pos->_x, pos->_y);
+                    if (col)
+                        for (std::size_t j = 0; j < col->_with.size(); j++) {
+                            if (dam[col->_with[j]] && dest[i])
+                                _sprites.erase(i);
+                        }
             }
         }
     };
-    void drawSprites() {
-        //for (auto &sprite : _sprites)
-            //window.draw(sprite.second.first);
-    };
-    void damageSystem(Registry &r)
-    {
-        auto const positions = r.get_components<Position>();
-        auto destroyable = r.get_components<Destroyable>();
-        auto const hitboxes = r.get_components<Hitbox>();
-        auto const damages = r.get_components<Damaging>();
 
-        for (size_t i = 0; i < positions.size(); ++i)
-        {
-            auto const &hb_dest = hitboxes[i];
-            auto const &pos_dest = positions[i];
-            auto &dest = destroyable[i];
-            auto &sprite_dest = _sprites[i].first;
-            if (pos_dest && hb_dest && dest)
-            {
-                for (size_t j = 0; j < positions.size(); ++j)
-                {
-                    if (i == j)
-                        continue;
-                    auto const &sprite_dam = _sprites[j].first;
-                    auto const &dam = damages[j];
-                    if (sprite_dam.getGlobalBounds().intersects(sprite_dest.getGlobalBounds()) && dam)
-                    {
-                        r.kill_entity(Entity(i));
-                        _sprites.erase(i);
-                    }
-                }
-            }
-        }
-    }
     void textureSystem(Registry &r)
     {
         auto positions = r.get_components<Position>();
@@ -134,7 +112,6 @@ public:
     void runSystem(Registry &r) {
         textureSystem(r);
         updateSprites(r);
-        damageSystem(r);
     }
 
     std::map<size_t, std::pair<sf::Sprite, sf::Texture>> _sprites;

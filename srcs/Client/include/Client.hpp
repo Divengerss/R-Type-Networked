@@ -6,7 +6,9 @@
 #endif /* !_WIN32 */
 
 #include "Network.hpp"
+
 #include "Registry.hpp"
+
 #include "Position.hpp"
 #include "Velocity.hpp"
 #include "Texture.hpp"
@@ -14,10 +16,11 @@
 #include "MovementPattern.hpp"
 #include "Destroyable.hpp"
 #include "Hitbox.hpp"
-#include "Screen.hpp"
 #include "Damaging.hpp"
+#include "Collider.hpp"
+
 #include "Screen.hpp"
-#include "Client/PositionSystem.hpp"
+#include "Screen.hpp"
 #include "MainMenu.hpp"
 
 namespace rtype
@@ -37,6 +40,7 @@ namespace rtype
                 _reg.register_component<Destroyable>();
                 _reg.register_component<Hitbox>();
                 _reg.register_component<Damaging>();
+                _reg.register_component<Collider>();
 
                 Entity Space_background = _reg.spawn_entity();
                 #ifdef WIN32

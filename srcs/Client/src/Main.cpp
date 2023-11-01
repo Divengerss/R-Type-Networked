@@ -3,6 +3,9 @@
 #include "Client/GameSystem.hpp"
 #include "Client/PositionSystem.hpp"
 #include "Client/TextureSystem.hpp"
+#include "Client/DamageSystem.hpp"
+#include "Client/CollidingSystem.hpp"
+#include "Client/InputSystem.hpp"
 
 
 int main()
@@ -10,13 +13,19 @@ int main()
     utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
     asio::io_context ioContext;
     Registry reg;
+    DamageSystem ds;
     GameSystem gs;
+    InputSystem is;
     PositionSystem ps;
     TextureSystem ts;
+    CollidingSystem cs;
     ISystem *igs = &gs;
     ISystem *ips = &ps;
+    ISystem *ics = &cs;
+    ISystem *ids = &ds;
+    ISystem *iis = &is;
     ISystem *its = &ts;
-    reg.add_sytems({igs, ips, its});
+    reg.add_systems({igs, ips, its, iis, ics, ids});
     try {
         std::string host = config.getData<std::string>("host");
         std::string port = config.getData<std::string>("port");

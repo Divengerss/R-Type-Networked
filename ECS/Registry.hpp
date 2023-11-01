@@ -108,7 +108,7 @@ class Registry
             array.erase(from());
         }
 
-        void add_sytems(std::initializer_list<ISystem *> systems) {
+        void add_systems(std::initializer_list<ISystem *> systems) {
             for (auto system : systems)
                 _systems.emplace_back(system);
         }
