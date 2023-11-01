@@ -189,7 +189,8 @@ namespace rtype
                 _reg.add_component<Tag>(e, {TagEnum::PLAYER});
 
                 sf::Clock clock;
-                float updateInterval = 1.0f/60;
+
+                //float updateInterval = 1.0f/60;
 
                 mainMenu mainMenu(window.getSize().x, window.getSize().y);
 

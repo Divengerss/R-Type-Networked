@@ -5,7 +5,6 @@
 #include <array>
 #include <string>
 #include <cstring>
-
 #include "Uuid.hpp"
 
 #pragma pack(push, 1)
@@ -14,6 +13,7 @@ namespace packet
 {
     enum packetTypes : std::uint8_t
     {
+        NONE,
         PLACEHOLDER,
         CONNECTION_REQUEST,
         DISCONNECTION_REQUEST,
@@ -44,9 +44,12 @@ namespace packet
     {
         packetTypes type;
         std::uint16_t dataSize;
+        bool compressed;
+        std::size_t compressedSize;
 
-        packetHeader() : type(PLACEHOLDER), dataSize(0U) {}
-        packetHeader(packetTypes type, std::uint16_t dataSize) : type(type), dataSize(dataSize) {}
+        packetHeader() : type(PLACEHOLDER), dataSize(0U), compressed(false), compressedSize(0UL) {}
+        packetHeader(packetTypes type, std::uint16_t dataSize) : type(type), dataSize(dataSize), compressed(false), compressedSize(0UL) {}
+        packetHeader(packetTypes type, std::uint16_t dataSize, bool compressed, std::size_t compressedSize) : type(type), dataSize(dataSize), compressed(compressed), compressedSize(compressedSize) {}
     };
 
     struct connectionRequest
@@ -122,7 +125,8 @@ namespace packet
         }
     };
 
-    struct keyboardEvent {
+    struct keyboardEvent
+    {
         std::uint8_t _status;
         std::array<std::uint8_t, uuidSize> uuid;
         int keyCode;

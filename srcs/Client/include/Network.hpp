@@ -22,6 +22,7 @@
 #include "Damaging.hpp"
 #include "Score.hpp"
 #include "Tag.hpp"
+#include "ZLib.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -43,7 +44,7 @@ namespace net
             Client() = delete;
             Client(asio::io_context &ioContext, const std::string &host, const std::string &port, Registry &reg) :
                 _ioContext(ioContext), _errCode(asio::error_code()), _resolver(ioContext), _endpoint(*_resolver.resolve(asio::ip::udp::v4(), host, port).begin()),
-                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(uuidSize, 0), _packet({}), _reg(reg)
+                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(uuidSize, 0), _packet(localPacketSize), _reg(reg)
             {
                 try {
                     utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
@@ -116,7 +117,7 @@ namespace net
             {
                 try {
                     _socket.async_receive_from(
-                        asio::buffer(&_packet, sizeof(_packet)),
+                        asio::buffer(_packet.data(), _packet.size()),
                         _endpoint,
                         std::bind(&Client::handleReceive, this, std::placeholders::_1));
                 } catch (const asio::system_error &e) {
@@ -156,44 +157,51 @@ namespace net
 
             template<class T, typename U>
             void handleECSComponent(packet::packetHeader &header, U &component) {
-                std::size_t componentSize = sizeof(T);
+                const std::size_t componentSize = sizeof(T);
+                const std::size_t headerSize = sizeof(header);
                 auto &arr = _reg.get_components<T>();
 
                 bool isNullOpt = false;
                 std::size_t sparseArrIndex = 0UL;
-                for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;) {
-                    std::memmove(&isNullOpt, &_packet[sizeof(header) + componentIdx], sizeof(bool));
-                    componentIdx += sizeof(bool);
-                    if (isNullOpt) {
-                        // do nothing
-                    } else {
-                        std::memmove(&component, &_packet[sizeof(header) + componentIdx], componentSize);
-                        if (sparseArrIndex == arr.size()) {
-                            _reg.spawn_entity();
+                if (header.compressed) {
+                    std::vector<std::uint8_t> decompressedData(header.dataSize);
+                    std::vector<std::uint8_t> compressedData(header.compressedSize);
+                    std::memmove(compressedData.data(), _packet.data() + headerSize, header.compressedSize);
+                    zlib::ZLib z;
+                    int result = z.decompress(decompressedData, compressedData, localPacketSize);
+                    if (result == Z_OK) {
+                        for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;) {
+                            std::memmove(&isNullOpt, decompressedData.data() + componentIdx, sizeof(bool));
+                            componentIdx += sizeof(bool);
+                            if (!isNullOpt) {
+                                std::memmove(&component, decompressedData.data() + componentIdx, componentSize);
+                                if (sparseArrIndex == arr.size())
+                                    _reg.spawn_entity();
+                                arr[sparseArrIndex] = component;
+                            }
+                            componentIdx += componentSize;
+                            sparseArrIndex += 1UL;
                         }
-                        arr[sparseArrIndex] = component;
-                        //std::cout << sparseArrIndex << std::endl;
                     }
-                    componentIdx += componentSize;
-                    sparseArrIndex += 1UL;
                 }
             }
 
             void handleReceive(const asio::error_code &errCode) {
                 packet::packetHeader header;
+                std::size_t headerSize = sizeof(header);
 
                 if (!errCode) {
-                    std::memmove(&header, _packet.data(), sizeof(header));
+                    std::memmove(&header, _packet.data(), headerSize);
                     std::unordered_map<std::uint16_t, std::function<void()>> packetHandlers = {
                         {packet::PLACEHOLDER, [&]{ handlePlaceholderPacket(); }},
                         {packet::CONNECTION_REQUEST, [&]{
                             packet::connectionRequest request;
-                            std::memmove(&request, &_packet[sizeof(header)], header.dataSize);
+                            std::memmove(&request, _packet.data() + headerSize, header.dataSize);
                             handleConnectionRequestPacket(request);
                         }},
                         {packet::CLIENT_STATUS, [&]{
                             packet::clientStatus cliStatus;
-                            std::memmove(&cliStatus, &_packet[sizeof(header)], sizeof(cliStatus));
+                            std::memmove(&cliStatus, _packet.data() + headerSize, sizeof(cliStatus));
                             handleClientStatusPacket(cliStatus);
                         }},
                         {packet::FORCE_DISCONNECT, [&]{ handleForceDisconnectPacket(); }},
@@ -296,7 +304,7 @@ namespace net
             asio::steady_timer _timer;
             std::string _uuid;
             std::vector<std::thread> _threadPool;
-            std::array<std::uint8_t, localPacketSize> _packet;
+            std::vector<std::uint8_t> _packet;
             Registry &_reg;
             static Client* clientInstance;
     };

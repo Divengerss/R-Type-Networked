@@ -4,10 +4,8 @@
 #include <filesystem>
 
 int main() {
-    asio::io_context ioContext;
-    asio::io_service ioService;
     try {
-        rtype::loopSystem game(ioContext, ioService);
+        rtype::loopSystem game;
         game.runNetwork();
         game.runGame();
     } catch (const Error &e) {
