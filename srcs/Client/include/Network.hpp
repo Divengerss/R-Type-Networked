@@ -300,7 +300,6 @@ namespace net
             std::string _uuid;
             std::vector<std::thread> _threadPool;
             std::vector<std::uint8_t> _packet;
-            // std::array<std::uint8_t, localPacketSize> _packet;
             Registry &_reg;
             static Client* clientInstance;
     };
