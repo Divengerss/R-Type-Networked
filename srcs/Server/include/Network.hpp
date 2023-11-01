@@ -18,6 +18,7 @@
 #include "Destroyable.hpp"
 #include "MovementPattern.hpp"
 #include "Hitbox.hpp"
+#include "Tag.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -227,6 +228,7 @@ namespace net
                 _reg.add_component<Controllable>(entity, ctrl);
                 _reg.add_component<Hitbox>(entity, hb);
                 _reg.add_component<Destroyable>(entity, 1);
+                _reg.add_component<Tag>(entity, {TagEnum::PLAYER});
 
                 packet::clientStatus cliStatus(cliUuid, packet::NEW_CLIENT, posX, posY, _clients.size());
                 try {

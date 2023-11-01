@@ -27,7 +27,8 @@ namespace packet
         ECS_DAMAGES,
         ECS_DESTROYABLE,
         ECS_MOVEMENTPATTERN,
-        ECS_SCORE
+        ECS_SCORE,
+        ECS_TAG,
     };
 
     enum packetStatus : std::uint8_t

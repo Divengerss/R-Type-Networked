@@ -49,7 +49,7 @@ public:
                     sound.play();
                     r.kill_entity(Entity(i));
                     destroyable_dest._hp = 0;
-                    sprites.erase(i);
+                    //sprites.erase(i);
                 }
             }
         }

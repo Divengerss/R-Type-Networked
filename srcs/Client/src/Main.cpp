@@ -1,7 +1,11 @@
+#include <cstdlib>
+#include <ctime>
+
 #include "Game.hpp"
 
 int main()
 {
+    std::srand(std::time(nullptr));
     utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
     try {
         std::string host = config.getData<std::string>("host");
