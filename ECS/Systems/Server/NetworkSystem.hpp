@@ -130,7 +130,7 @@ namespace rtype
                 affectControllable(ecs, clientUUID, event.keyCode);
             }
 
-            void handleTextMessage(Registry &ecs, const std::array<std::uint8_t, packetSize> &packet, const packet::packetHeader &header)
+            void handleTextMessage(const std::array<std::uint8_t, packetSize> &packet, const packet::packetHeader &header)
             {
                 std::string text(256UL, 0);
                 std::string clientUUID(uuidSize, 0);
@@ -138,13 +138,14 @@ namespace rtype
                 std::memmove(&txtmsg, &packet[sizeof(header)], sizeof(txtmsg));
                 std::memmove(clientUUID.data(), txtmsg.uuid.data(), uuidSize);
                 std::memmove(text.data(), &txtmsg.message, txtmsg.msgSize);
-                if (clientUUID.empty()) {
+                if (clientUUID.empty() || clientUUID[0] == 0) {
                     _net.writeToLogs(logGameErr, "Received a corrupted message. UUID is empty or unknown.");
-                } else if (txtmsg.message.empty())
+                } else if (text.empty() || text[0] == 0)
                     _net.writeToLogs(logGameErr, "Received a corrupted message. Message is empty.");
-                else
+                else {
                     _net.writeToLogs(logGameInfo, clientUUID + ": " + text.data());
-                _net.sendResponse(packet::TEXT_MESSAGE, txtmsg);
+                    _net.sendResponse(packet::TEXT_MESSAGE, txtmsg);
+                }
             }
 
             void networkSystemServer(Registry &ecs)
@@ -156,7 +157,7 @@ namespace rtype
                     {packet::CONNECTION_REQUEST, [&] { handleConnectionRequest(ecs, header.type); }},
                     {packet::DISCONNECTION_REQUEST, [&] { handleDisconnectionRequest(ecs, packet, header); }},
                     {packet::KEYBOARD_EVENT, [&] { handlekeyboardEvent(ecs, packet, header); }},
-                    {packet::TEXT_MESSAGE, [&] { handleTextMessage(ecs, packet, header); }}
+                    {packet::TEXT_MESSAGE, [&] { handleTextMessage(packet, header); }}
                 };
 
                 _net.startServer();
