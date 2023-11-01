@@ -185,6 +185,20 @@ namespace net
                 }
             }
 
+            void handleTextMessage(const packet::packetHeader &header, const packet::textMessage &data)
+            {
+                std::string clientUUID(uuidSize, 0);
+                std::string message(data.msgSize, 0);
+                std::memmove(clientUUID.data(), &data.uuid, uuidSize);
+                std::memmove(message.data(), &data.message, data.msgSize);
+                if (clientUUID.empty()) {
+                    std::cerr << "Got a message from an unknown client UUID or corrupted." << std::endl;
+                } else if (message.empty())
+                    std::cerr << "Got an empty message or corrupted." << std::endl;
+                else
+                    std::cout << clientUUID << ": " << message << std::endl;
+            }
+
             void handleReceive(const asio::error_code &errCode) {
                 packet::packetHeader header;
                 std::size_t headerSize = sizeof(header);
@@ -235,7 +249,12 @@ namespace net
                         {packet::ECS_SCORE, [&]{
                             Score component(0);
                             handleECSComponent<Score>(header, component);
-                        }}
+                        }},
+                        {packet::TEXT_MESSAGE, [&]{
+                            packet::textMessage txtmsg;
+                            std::memmove(&txtmsg, _packet.data() + headerSize, sizeof(txtmsg));
+                            handleTextMessage(header, txtmsg);
+                        }},
                     };
 
                     auto handlerIt = packetHandlers.find(header.type);

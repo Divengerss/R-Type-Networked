@@ -27,7 +27,8 @@ namespace packet
         ECS_DAMAGES,
         ECS_DESTROYABLE,
         ECS_MOVEMENTPATTERN,
-        ECS_SCORE
+        ECS_SCORE,
+        TEXT_MESSAGE
     };
 
     enum packetStatus : std::uint8_t
@@ -135,6 +136,24 @@ namespace packet
             _status = status;
             keyCode = key;
         };
+    };
+
+    struct textMessage
+    {
+        std::array<std::uint8_t, uuidSize> uuid;
+        std::array<std::uint8_t, 256UL> message;
+        std::size_t msgSize;
+
+        textMessage(): uuid({}), msgSize(0UL)
+        {
+            std::memset(&message, 0, 256UL);
+        }
+        textMessage(const std::string &cliUuid, const std::string &msg) : msgSize(msg.length())
+        {
+            std::memset(&message, 0, 256UL);
+            std::memmove(&uuid, cliUuid.data(), uuidSize);
+            std::memmove(&message, msg.data(), msgSize);
+        }
     };
 }
 

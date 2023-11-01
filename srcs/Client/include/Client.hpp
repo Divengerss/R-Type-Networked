@@ -248,6 +248,12 @@ namespace rtype
                                 if (event.key.code == sf::Keyboard::Up)
                                 {
                                     mainMenu.MoveUp();
+                                    // TEST
+                                    std::string txt = "Hello World!";
+                                    packet::packetHeader header(packet::TEXT_MESSAGE, sizeof(packet::textMessage));
+                                    packet::textMessage txtmsg(_client.getUuid(), txt);
+                                    _client.sendPacket(header, txtmsg);
+                                    //
                                     break;
                                 }
                                 if (event.key.code == sf::Keyboard::Down)
