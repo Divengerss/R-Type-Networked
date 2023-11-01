@@ -13,7 +13,6 @@
 #include "Velocity.hpp"
 #include "Destroyable.hpp"
 #include "Uuid.hpp"
-#include "ZLib.hpp"
 
 net::Network::Network() :
     _ioContext(asio::io_context()), _ioService(asio::io_service()),

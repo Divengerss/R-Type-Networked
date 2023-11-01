@@ -13,6 +13,7 @@
 #include <asio.hpp>
 #include <iostream>
 #include <csignal>
+#include "ZLib.hpp"
 
 #include "Packets.hpp"
 #include "Registry.hpp"
@@ -124,12 +125,10 @@ namespace net
                 const std::size_t headerSize = sizeof(packet::packetHeader);
                 const std::size_t totalSize = headerSize + componentsSize;
 
-                packet::packetHeader header(type, componentsSize);
+                packet::packetHeader header(type, componentsSize, true, 0U);
                 std::vector<std::uint8_t> buffer(totalSize);
                 std::size_t offset = 0UL;
 
-                std::memmove(buffer.data(), &header, headerSize);
-                offset += headerSize;
                 for (auto &component : sparseArray) {
                     if (component.has_value()) {
                         bool isNullOpt = false;
@@ -152,8 +151,20 @@ namespace net
                             _logs.logTo(logInfo.data(), "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
                         }
                     } else {
-                        _socket.send_to(asio::buffer(buffer.data(), totalSize), client.getEndpoint());
-                        _logs.logTo(logInfo.data(), "    Sent to [" + client.getUuid() + "]");
+                        zlib::ZLib z;
+                        std::vector<std::uint8_t> compressedBuf;
+                        int result = z.compress(compressedBuf, header.compressedSize, buffer, Z_BEST_COMPRESSION);
+                        if (result == Z_OK) {
+                            const std::size_t compressedDiff = buffer.size() - compressedBuf.size();
+                            _logs.logTo(logInfo.data(), "Packet has been compressed by " + std::to_string(compressedDiff) + " bytes.");
+                            const std::size_t compressedSize = compressedBuf.size();
+                            std::vector<std::uint8_t> packetData(headerSize + compressedSize);
+                            std::memmove(packetData.data(), &header, headerSize);
+                            std::memmove(packetData.data() + headerSize, compressedBuf.data(), compressedSize);
+                            _socket.send_to(asio::buffer(packetData.data(), headerSize + compressedSize), client.getEndpoint());
+                            _logs.logTo(logInfo.data(), "    Sent to [" + client.getUuid() + "]");
+                        } else
+                            std::cerr << "Compression failed with error code: " << result << std::endl;
                     }
                 }
             }

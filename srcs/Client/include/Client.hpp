@@ -228,7 +228,7 @@ namespace rtype
                 reg.add_component<Damaging>(monster, {true});
 
                 sf::Clock clock;
-                float updateInterval = 1.0f/60;
+                //float updateInterval = 1.0f/60;
     
                 mainMenu mainMenu(window.getSize().x, window.getSize().y);
 

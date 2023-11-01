@@ -43,9 +43,12 @@ namespace packet
     {
         packetTypes type;
         std::uint16_t dataSize;
+        bool compressed;
+        std::size_t compressedSize;
 
-        packetHeader() : type(PLACEHOLDER), dataSize(0U) {}
-        packetHeader(packetTypes type, std::uint16_t dataSize) : type(type), dataSize(dataSize) {}
+        packetHeader() : type(PLACEHOLDER), dataSize(0U), compressed(false), compressedSize(0UL) {}
+        packetHeader(packetTypes type, std::uint16_t dataSize) : type(type), dataSize(dataSize), compressed(false), compressedSize(0UL) {}
+        packetHeader(packetTypes type, std::uint16_t dataSize, bool compressed, std::size_t compressedSize) : type(type), dataSize(dataSize), compressed(compressed), compressedSize(compressedSize) {}
     };
 
     struct connectionRequest
