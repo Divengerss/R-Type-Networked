@@ -16,10 +16,9 @@
 #include "Controllable.hpp"
 #include "Destroyable.hpp"
 #include "Hitbox.hpp"
-// #include "PositionSystem.hpp"
+#include "Position_System.hpp"
 
 int main() {
-    // PositionSystem posSys;
     Registry reg;
     reg.register_component<Texture>();
     reg.register_component<Scale>();
@@ -29,7 +28,6 @@ int main() {
     reg.register_component<Controllable>();
     reg.register_component<Destroyable>();
     reg.register_component<Hitbox>();
-
 
     Entity Space_background = reg.spawn_entity();
     reg.add_component<Texture>(Space_background, {"./assets/sprites/Space.png", 0, 0, 950, 200});
@@ -47,25 +45,6 @@ int main() {
     reg.add_component<Controllable>(Player, {" "});
     reg.add_component<Destroyable>(Player, {3});
     reg.add_component<Hitbox>(Player, {33, 17});
-    // reg.add_component<Damaging>(e, {false});
-
-    // auto textures = reg.get_components<Texture>();
-    // auto scales = reg.get_components<Scale>();
-    // auto positions = reg.get_components<Position>();
-    // auto patterns = reg.get_components<MovementPattern>();
-    // auto velocities = reg.get_components<Velocity>();
-    // auto controls = reg.get_components<Controllable>();
-    // auto destroyables = reg.get_components<Destroyable>();
-    // auto hitboxes = reg.get_components<Hitbox>();
-
-    // auto &texture = textures[0];
-    // auto &scale = scales[0];
-    // auto &position = positions[0];
-    // auto &pattern = patterns[0];
-    // auto &velocity = velocities[0];
-    // auto &control = controls[0];
-    // auto &destoyable = destroyables[0];
-    // auto &hitbox = hitboxes[0];
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         SDL_Log("Erreur lors de l'initialisation de SDL : %s", SDL_GetError());
@@ -83,18 +62,9 @@ int main() {
         return 84;
     }
 
-    // SDL_Surface* space = IMG_Load(texture->_path.c_str());
-    // if (space == NULL) {
-    //     SDL_Log("Erreur lors du chargement de l'image : %s", IMG_GetError());
-    //     return 84;
-    // }
-
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    // SDL_Texture* imageTexture = SDL_CreateTextureFromSurface(renderer, space);
-    // SDL_Rect srcRect = { texture->_left, texture->_top, texture->_width, texture->_height };
-    // SDL_Rect destRect = { 0, 0, static_cast<int>(texture->_width * scale->_scaleX), static_cast<int>(texture->_height * scale->_scaleY) };
 
-    // SDL_FreeSurface(space);
+    Position_System posSys;
 
     bool isRunning = true;
     SDL_Event event;
@@ -105,6 +75,7 @@ int main() {
             }
         }
         SDL_RenderClear(renderer);
+        posSys.position_systemRunner(reg);
         auto textures = reg.get_components<Texture>();
         auto scales = reg.get_components<Scale>();
         auto positions = reg.get_components<Position>();
@@ -131,7 +102,7 @@ int main() {
                 }
                 SDL_Texture* imageTexture = SDL_CreateTextureFromSurface(renderer, sprite);
                 SDL_Rect srcRect = { texture->_left, texture->_top, texture->_width, texture->_height };
-                SDL_Rect destRect = { 0, 0, static_cast<int>(texture->_width * scale->_scaleX), static_cast<int>(texture->_height * scale->_scaleY) };
+                SDL_Rect destRect = {position->_x, position->_y, static_cast<int>(texture->_width * scale->_scaleX), static_cast<int>(texture->_height * scale->_scaleY) };
                 SDL_RenderCopy(renderer, imageTexture, &srcRect, &destRect);
                 SDL_FreeSurface(sprite);
             }
@@ -140,8 +111,6 @@ int main() {
 
         SDL_Delay(16);
     }
-    // for (auto tex : texture)
-    // SDL_DestroyTexture(imageTexture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     IMG_Quit();
