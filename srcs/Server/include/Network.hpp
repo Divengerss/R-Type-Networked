@@ -39,15 +39,20 @@ namespace net
     {
         public:
             Client() = delete;
-            Client(const std::string &uuid, asio::ip::udp::endpoint &endpoint) : _uuid(uuid), _endpoint(endpoint) {}
+            Client(const std::string &uuid, asio::ip::udp::endpoint &endpoint) : _uuid(uuid), _endpoint(endpoint), _missedPacket(0UL) {}
             ~Client() = default;
 
             const std::string &getUuid() const noexcept { return _uuid; };
             asio::ip::udp::endpoint &getEndpoint() noexcept { return _endpoint; };
+            std::size_t getMissedPacket() const noexcept { return _missedPacket; };
+
+            void packetMissed() { _missedPacket += 1UL; };
+            void resetMissedPacket() { _missedPacket = 0UL; };
 
         private:
             std::string _uuid;
             asio::ip::udp::endpoint _endpoint;
+            std::size_t _missedPacket;
     };
 
     class Network
@@ -63,7 +68,7 @@ namespace net
             const asio::ip::udp::endpoint &getServerEndpoint() const noexcept {return _serverEndpoint;}
             const asio::ip::udp::socket &getSocket() const noexcept {return _socket;}
             const asio::error_code &getAsioErrorCode() const noexcept {return _errCode;}
-            const std::vector<Client> &getClients() const noexcept {return _clients;}
+            std::vector<Client> &getClients() noexcept {return _clients;}
             const std::array<std::uint8_t, packetSize> &getPacket() const noexcept {return _packet;}
 
             void setHost(const std::string &host) {_host = host;}
@@ -128,6 +133,7 @@ namespace net
                 packet::packetHeader header(type, componentsSize, true, 0U);
                 std::vector<std::uint8_t> buffer(totalSize);
                 std::size_t offset = 0UL;
+                zlib::ZLib z;
 
                 for (auto &component : sparseArray) {
                     if (component.has_value()) {
@@ -142,31 +148,28 @@ namespace net
                     }
                     offset += componentSize;
                 }
-                if (cliUuid.empty() && !_clients.empty())
-                    _logs.logTo(logInfo.data(), "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
-                for (Client &client : _clients) {
-                    if (!cliUuid.empty()) {
-                        if (cliUuid == client.getUuid()) {
-                            _socket.send_to(asio::buffer(buffer.data(), totalSize), client.getEndpoint());
-                            _logs.logTo(logInfo.data(), "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
-                        }
-                    } else {
-                        zlib::ZLib z;
-                        std::vector<std::uint8_t> compressedBuf;
-                        int result = z.compress(compressedBuf, header.compressedSize, buffer, Z_BEST_COMPRESSION);
-                        if (result == Z_OK) {
-                            const std::size_t compressedDiff = buffer.size() - compressedBuf.size();
-                            _logs.logTo(logInfo.data(), "Packet has been compressed by " + std::to_string(compressedDiff) + " bytes.");
-                            const std::size_t compressedSize = compressedBuf.size();
-                            std::vector<std::uint8_t> packetData(headerSize + compressedSize);
-                            std::memmove(packetData.data(), &header, headerSize);
-                            std::memmove(packetData.data() + headerSize, compressedBuf.data(), compressedSize);
+                std::vector<std::uint8_t> compressedBuf;
+                int result = z.compress(compressedBuf, header.compressedSize, buffer, Z_BEST_COMPRESSION);
+                if (result == Z_OK) {
+                    const std::size_t compressedDiff = buffer.size() - compressedBuf.size();
+                    const std::size_t compressedSize = compressedBuf.size();
+                    std::vector<std::uint8_t> packetData(headerSize + compressedSize);
+                    std::memmove(packetData.data(), &header, headerSize);
+                    std::memmove(packetData.data() + headerSize, compressedBuf.data(), compressedSize);
+                    for (Client &client : _clients) {
+                        if (!cliUuid.empty()) {
+                            if (cliUuid == client.getUuid()) {
+                                _socket.send_to(asio::buffer(buffer.data(), totalSize), client.getEndpoint());
+                                return;
+                            }
+                        } else {
                             _socket.send_to(asio::buffer(packetData.data(), headerSize + compressedSize), client.getEndpoint());
-                            _logs.logTo(logInfo.data(), "    Sent to [" + client.getUuid() + "]");
-                        } else
-                            std::cerr << "Compression failed with error code: " << result << std::endl;
+                        }
                     }
-                }
+                    (void)compressedDiff; // Remove if next line used
+                    //_logs.logTo(logInfo.data(), "Game update sent (compressed by " + std::to_string(compressedDiff) + " bytes.)");
+                } else
+                    std::cerr << "Compression failed with error code: " << result << std::endl;
             }
 
             void receiveCallback(const asio::error_code &errCode, std::size_t bytesReceived);

@@ -185,6 +185,13 @@ namespace net
                 }
             }
 
+            void handleKeepConnection()
+            {
+                packet::packetHeader header(packet::KEEP_CONNECTION, uuidSize);
+                packet::keepConnection data(_uuid);
+                sendPacket(header, data);
+            }
+
             void handleReceive(const asio::error_code &errCode) {
                 packet::packetHeader header;
                 std::size_t headerSize = sizeof(header);
@@ -235,6 +242,9 @@ namespace net
                         {packet::ECS_SCORE, [&]{
                             Score component(0);
                             handleECSComponent<Score>(header, component);
+                        }},
+                        {packet::KEEP_CONNECTION, [&]{
+                            handleKeepConnection();
                         }}
                     };
 

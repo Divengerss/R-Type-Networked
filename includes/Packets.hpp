@@ -27,7 +27,8 @@ namespace packet
         ECS_DAMAGES,
         ECS_DESTROYABLE,
         ECS_MOVEMENTPATTERN,
-        ECS_SCORE
+        ECS_SCORE,
+        KEEP_CONNECTION
     };
 
     enum packetStatus : std::uint8_t
@@ -141,6 +142,10 @@ namespace packet
     {
         std::array<std::uint8_t, uuidSize> uuid;
 
+        keepConnection()
+        {
+            std::memset(&uuid, 0, uuidSize);
+        }
         keepConnection(const std::string &clientUUID)
         {
             std::memmove(&uuid, clientUUID.data(), uuidSize);
@@ -152,6 +157,14 @@ namespace packet
     };
 
     struct roomClosed
+    {
+    };
+
+    struct joinedRoom
+    {
+    };
+
+    struct leftRoom
     {
     };
 }

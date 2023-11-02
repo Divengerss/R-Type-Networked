@@ -66,16 +66,16 @@ namespace rtype
 
         void runGame() {
             const std::chrono::duration<double> frameTimeInterval(1.0f / 60.0f);
-            const std::chrono::duration<double> sendSparseArrayInterval(180 * frameTimeInterval.count());
+            const std::chrono::duration<double> sendSparseArrayInterval(280 * frameTimeInterval.count());
             std::chrono::time_point<std::chrono::steady_clock> lastFrameExecutionTime = std::chrono::steady_clock::now();
             std::chrono::time_point<std::chrono::steady_clock> lastPrintTime = std::chrono::steady_clock::now();
             int frameCounter = 0;
             int printMessageCounter = 0;
 
             while (_netSys.isServerAvailable()) {
+                std::chrono::time_point<std::chrono::steady_clock> currentTime = std::chrono::steady_clock::now();
+                std::chrono::duration<double> elapsedTime = currentTime - lastFrameExecutionTime;
                 if (_netSys.getConnectedNb() > 1UL) {
-                    std::chrono::time_point<std::chrono::steady_clock> currentTime = std::chrono::steady_clock::now();
-                    std::chrono::duration<double> elapsedTime = currentTime - lastFrameExecutionTime;
                     frameCounter++;
                     if (elapsedTime >= frameTimeInterval) {
                         _currentCooldown++;
@@ -94,12 +94,12 @@ namespace rtype
                         _dam.damageSystemServer(_reg);
                         lastFrameExecutionTime = currentTime;
                     }
-                    std::chrono::duration<double> timeSinceLastPrint = currentTime - lastPrintTime;
-                    printMessageCounter++;
-                    if (timeSinceLastPrint >= std::chrono::duration<double>(5.0f)) {
-                        std::cout << "Hello World!" << std::endl;
-                        lastPrintTime = currentTime;
-                    }
+                }
+                std::chrono::duration<double> timeSinceLastPrint = currentTime - lastPrintTime;
+                printMessageCounter++;
+                if (timeSinceLastPrint >= std::chrono::duration<double>(5.0f)) {
+                    while (_netSys.removeTimeoutClients(_reg)) {}
+                    lastPrintTime = currentTime;
                 }
             }
         }

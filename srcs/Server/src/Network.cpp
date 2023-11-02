@@ -111,7 +111,7 @@ void net::Network::stopServer()
 std::string net::Network::addClient()
 {
     std::string cliUuid = uuid::generateUUID();
-    _clients.push_back(Client(cliUuid, _serverEndpoint));
+    _clients.emplace_back(Client(cliUuid, _serverEndpoint));
     return cliUuid;
 }
 

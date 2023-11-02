@@ -83,6 +83,40 @@ namespace rtype
                 return _net.getClients().size();
             }
 
+            std::vector<net::Client> &getClients() noexcept
+            {
+                return _net.getClients();
+            }
+
+            void removeClient(const std::string &clientUUID)
+            {
+                _net.removeClient(clientUUID);
+            }
+
+            void writeToLogs(const std::string_view &status, const std::string &msg)
+            {
+                _net.writeToLogs(status, msg);
+            }
+
+            bool removeTimeoutClients(Registry &ecs)
+            {
+                packet::keepConnection data;
+                sendResponse(packet::KEEP_CONNECTION, data);
+                for (auto &client : getClients()) {
+                    client.packetMissed();
+                    std::string clientUUID = client.getUuid();
+                    if (client.getMissedPacket() >= 3) {
+                        writeToLogs(logInfo, "Client " + clientUUID + " connection timeout.");
+                        packet::clientStatus cliStatus(clientUUID, packet::LOSE_CLIENT, 0.0f, 0.0f, getConnectedNb() - 1);
+                        sendResponse(packet::CLIENT_STATUS, data);
+                        removePlayer(ecs, clientUUID);
+                        removeClient(clientUUID);
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             void handleConnectionRequest(Registry &ecs, packet::packetTypes type)
             {
                 std::string clientUUID = _net.addClient();
@@ -136,6 +170,26 @@ namespace rtype
                 affectControllable(ecs, clientUUID, event.keyCode);
             }
 
+            void handleKeepConnection(const std::array<std::uint8_t, packetSize> &packet, const packet::packetHeader &header)
+            {
+                std::string clientUUID(uuidSize, 0);
+                packet::keepConnection data;
+
+                std::memmove(&data, &packet[sizeof(header)], sizeof(data));
+                std::memmove(clientUUID.data(), &data.uuid, uuidSize);
+
+                auto &clients = _net.getClients();
+                
+                for (auto &client : clients) {
+                    if (client.getUuid() == clientUUID.data()) {
+                        client.resetMissedPacket();
+                        _net.writeToLogs(logInfo, "Response to connection check received from " + clientUUID);
+                        return;
+                    }
+                }
+                _net.writeToLogs(logErr, "Connection check failed, did not find UUID " + clientUUID);
+            }
+
             void networkSystemServer(Registry &ecs)
             {
                 std::array<std::uint8_t, packetSize> packet;
@@ -144,7 +198,8 @@ namespace rtype
                     {packet::PLACEHOLDER, [&] { _net.writeToLogs(logInfo, "Placeholder received successfully."); }},
                     {packet::CONNECTION_REQUEST, [&] { handleConnectionRequest(ecs, header.type); }},
                     {packet::DISCONNECTION_REQUEST, [&] { handleDisconnectionRequest(ecs, packet, header); }},
-                    {packet::KEYBOARD_EVENT, [&] { handlekeyboardEvent(ecs, packet, header); }}
+                    {packet::KEYBOARD_EVENT, [&] { handlekeyboardEvent(ecs, packet, header); }},
+                    {packet::KEEP_CONNECTION, [&] { handleKeepConnection(packet, header); }}
                 };
 
                 _net.startServer();
