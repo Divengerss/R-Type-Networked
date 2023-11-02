@@ -27,8 +27,7 @@ namespace rtype
     {
     public:
         loopSystem() :
-            _reg(Registry()), _pos(), _netSys(),
-            _pingCooldown(3), _currentCooldown(3)
+            _reg(Registry()), _pos(), _netSys(), _currentCooldown(3)
         {
             _reg.register_component<Position>();
             _reg.register_component<Velocity>();
@@ -65,23 +64,22 @@ namespace rtype
 
         const Registry &getRegistry() const noexcept { return _reg; }
 
-        void runGame()
-        {
-            const std::chrono::duration<double> timeInterval(1.0f / 60.0);
-            std::chrono::time_point<std::chrono::steady_clock> lastExecutionTime = std::chrono::steady_clock::now();
-            std::chrono::time_point<std::chrono::steady_clock> currentTime;
-            std::chrono::duration<double> elapsedTime;
+        void runGame() {
+            const std::chrono::duration<double> frameTimeInterval(1.0f / 60.0f);
+            const std::chrono::duration<double> sendSparseArrayInterval(180 * frameTimeInterval.count());
+            std::chrono::time_point<std::chrono::steady_clock> lastFrameExecutionTime = std::chrono::steady_clock::now();
+            std::chrono::time_point<std::chrono::steady_clock> lastPrintTime = std::chrono::steady_clock::now();
+            int frameCounter = 0;
+            int printMessageCounter = 0;
 
-            while (_netSys.isServerAvailable())
-            {
-                if (_netSys.getConnectedNb() > 1)
-                {
-                    currentTime = std::chrono::steady_clock::now();
-                    elapsedTime = currentTime - lastExecutionTime;
-                    if (elapsedTime >= timeInterval)
-                    {
-                        _currentCooldown--;
-                        if (_currentCooldown == 0) {
+            while (_netSys.isServerAvailable()) {
+                if (_netSys.getConnectedNb() > 1UL) {
+                    std::chrono::time_point<std::chrono::steady_clock> currentTime = std::chrono::steady_clock::now();
+                    std::chrono::duration<double> elapsedTime = currentTime - lastFrameExecutionTime;
+                    frameCounter++;
+                    if (elapsedTime >= frameTimeInterval) {
+                        _currentCooldown++;
+                        if (_currentCooldown % static_cast<int>(sendSparseArrayInterval.count()) == 0) {
                             _netSys.sendSparseArray<Position>(packet::ECS_POSITION, _reg.get_components<Position>());
                             _netSys.sendSparseArray<Velocity>(packet::ECS_VELOCITY, _reg.get_components<Velocity>());
                             _netSys.sendSparseArray<Hitbox>(packet::ECS_HITBOX, _reg.get_components<Hitbox>());
@@ -90,22 +88,27 @@ namespace rtype
                             _netSys.sendSparseArray<Destroyable>(packet::ECS_DESTROYABLE, _reg.get_components<Destroyable>());
                             _netSys.sendSparseArray<MovementPattern>(packet::ECS_MOVEMENTPATTERN, _reg.get_components<MovementPattern>());
                             _netSys.sendSparseArray<Score>(packet::ECS_SCORE, _reg.get_components<Score>());
-                            _currentCooldown = _pingCooldown;
+                            _currentCooldown = 0;
                         }
                         _pos.positionSystemServer(_reg);
                         _dam.damageSystemServer(_reg);
-                        lastExecutionTime = currentTime;
+                        lastFrameExecutionTime = currentTime;
+                    }
+                    std::chrono::duration<double> timeSinceLastPrint = currentTime - lastPrintTime;
+                    printMessageCounter++;
+                    if (timeSinceLastPrint >= std::chrono::duration<double>(5.0f)) {
+                        std::cout << "Hello World!" << std::endl;
+                        lastPrintTime = currentTime;
                     }
                 }
             }
-        };
+        }
 
         Registry _reg;
         DamageSystem _dam;
         PositionSystem _pos;
         NetworkSystem _netSys;
         std::vector<std::thread> _threadPool;
-        int _pingCooldown;
         int _currentCooldown;
     };
 }

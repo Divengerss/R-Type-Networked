@@ -67,6 +67,12 @@ namespace rtype
                 _net.sendSparseArray<T>(type, sparseArray, cliUuid);
             }
 
+            template<typename T>
+            void sendResponse(const packet::packetTypes &type, T &data, bool toServerEndpoint = false, const std::string cliUuid = "")
+            {
+                _net.sendResponse(type, data, toServerEndpoint, cliUuid);
+            }
+
             bool isServerAvailable()
             {
                 return _net.isSocketOpen();

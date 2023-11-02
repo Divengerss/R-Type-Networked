@@ -18,7 +18,7 @@
 #include "Packets.hpp"
 #include "Registry.hpp"
 #include "Logs.hpp"
-#include "Engine.hpp"
+// #include "Engine.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";

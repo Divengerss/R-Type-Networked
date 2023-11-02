@@ -136,6 +136,24 @@ namespace packet
             keyCode = key;
         };
     };
+
+    struct keepConnection
+    {
+        std::array<std::uint8_t, uuidSize> uuid;
+
+        keepConnection(const std::string &clientUUID)
+        {
+            std::memmove(&uuid, clientUUID.data(), uuidSize);
+        }
+    };
+
+    struct roomAvailable
+    {
+    };
+
+    struct roomClosed
+    {
+    };
 }
 
 #pragma pack(pop)
