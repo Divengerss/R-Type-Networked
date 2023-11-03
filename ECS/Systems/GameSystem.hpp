@@ -26,15 +26,13 @@ public:
         auto hps = r.get_components<Destroyable>();
         auto positions = r.get_components<Position>();
         auto controllables = r.get_components<Controllable>();
-        for (size_t i = 0; i < hps.size(); ++i)
-        {
+        for (size_t i = 0; i < hps.size(); ++i) {
             auto cont = controllables[i];
             auto hp = hps[i];
             if (hp && !cont && hp.value()._hp <= 0)
                 enemiesToKill--;
         }
-        if (enemiesToKill <= 0)
-        {
+        if (enemiesToKill <= 0) {
             currentLevel++;
             enemiesToKill = currentLevel * 10;
             enemySpawnAtOnce++;

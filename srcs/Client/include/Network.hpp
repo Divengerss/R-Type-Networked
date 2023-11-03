@@ -59,29 +59,22 @@ namespace net
 
             void run()
             {
-                try
-                {
+                try {
                     utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
                     std::uint8_t timeout;
-                    try
-                    {
+                    try {
                         timeout = static_cast<std::uint8_t>(std::stoi(config.getData<std::string>("timeout")));
-                        if (timeout < 1U)
-                        {
+                        if (timeout < 1U) {
                             std::cout << "Warning: Timeout value should not be lower than 1 second. " << defaultTimeout << " seconds will be used instead." << std::endl;
                             timeout = defaultTimeout;
                         }
-                    }
-                    catch (const Error &e)
-                    {
+                    } catch (const Error &e) {
                         std::cerr << e.what() << std::endl;
                         timeout = defaultTimeout;
                     }
                     _timer.expires_after(std::chrono::seconds(timeout));
                     _socket.open(asio::ip::udp::v4());
-                }
-                catch (const asio::system_error &sysErr)
-                {
+                } catch (const asio::system_error &sysErr) {
                     std::cerr << "Error opening socket: " << sysErr.what() << std::endl;
                     throw;
                 }
@@ -126,19 +119,14 @@ namespace net
 
             void listenServer()
             {
-                try
-                {
+                try {
                     _socket.async_receive_from(
                         asio::buffer(_packet.data(), _packet.size()),
                         _endpoint,
                         std::bind(&Client::handleReceive, this, std::placeholders::_1));
-                }
-                catch (const asio::system_error &e)
-                {
+                } catch (const asio::system_error &e) {
                     std::cerr << "Failed to receive packet: " << e.what() << std::endl;
-                }
-                catch (const Error &)
-                {
+                } catch (const Error &) {
                     std::cerr << "Server connection closed" << std::endl;
                 }
             }
@@ -151,13 +139,10 @@ namespace net
             void handleClientStatusPacket(packet::clientStatus &cliStatus)
             {
                 std::string cliUuid(reinterpret_cast<char *>(cliStatus.uuid.data()));
-                if (cliStatus.status == packet::LOSE_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str()))
-                {
+                if (cliStatus.status == packet::LOSE_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
                     std::cout << "Client " << cliUuid << " disconnected." << std::endl;
                     std::cout << cliStatus.connectedNb << " clients connected." << std::endl;
-                }
-                else if (cliStatus.status == packet::NEW_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str()))
-                {
+                } else if (cliStatus.status == packet::NEW_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
                     std::cout << "Client " << cliUuid << " connected at X: " << cliStatus.posX << " Y: " << cliStatus.posY << std::endl;
                     std::cout << cliStatus.connectedNb << " clients connected." << std::endl;
                 }
@@ -191,24 +176,19 @@ namespace net
 
                 bool isNullOpt = false;
                 std::size_t sparseArrIndex = 0UL;
-                if (header.compressed)
-                {
+                if (header.compressed) {
                     std::vector<std::uint8_t> decompressedData(header.dataSize);
                     std::vector<std::uint8_t> compressedData(header.compressedSize);
                     std::memmove(compressedData.data(), _packet.data() + headerSize, header.compressedSize);
                     zlib::ZLib z;
                     int result = z.decompress(decompressedData, compressedData, localPacketSize);
-                    if (result == Z_OK)
-                    {
-                        for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;)
-                        {
+                    if (result == Z_OK) {
+                        for (std::size_t componentIdx = 0UL; componentIdx < header.dataSize;) {
                             std::memmove(&isNullOpt, decompressedData.data() + componentIdx, sizeof(bool));
                             componentIdx += sizeof(bool);
-                            if (!isNullOpt)
-                            {
+                            if (!isNullOpt) {
                                 std::memmove(&component, decompressedData.data() + componentIdx, componentSize);
-                                if (sparseArrIndex == arr.size())
-                                {
+                                if (sparseArrIndex == arr.size()) {
                                     _reg.spawn_entity();
                                 }
                                 arr[sparseArrIndex] = component;
@@ -368,8 +348,7 @@ namespace net
             {
                 packet::disconnectionRequest request(_uuid.data(), _roomId);
                 packet::packetHeader header(packet::DISCONNECTION_REQUEST, sizeof(request));
-                if (_socket.is_open())
-                {
+                if (_socket.is_open()) {
                     std::size_t bytesSent = sendPacket(header, request);
                     if (bytesSent == 0UL)
                         std::cerr << "Something went wrong sending the packet disconnection." << std::endl;
