@@ -32,7 +32,9 @@ namespace packet
         ROOM_AVAILABLE,
         ROOM_CLOSED,
         JOINED_ROOM,
-        LEFT_ROOM
+        LEFT_ROOM,
+        ECS_TAG,
+        ENTITY_KILLED,
     };
 
     enum packetStatus : std::uint8_t
@@ -108,6 +110,13 @@ namespace packet
         }
     };
 
+    struct entityKilledStatus
+    {
+        int entity;
+
+        entityKilledStatus(int entity) : entity(entity){};
+    };
+
     struct clientStatus
     {
         std::uint8_t status;
@@ -140,8 +149,9 @@ namespace packet
         std::uint8_t _status;
         std::array<std::uint8_t, uuidSize> uuid;
         int keyCode;
-        keyboardEvent() : _status(0), keyCode(-1) {};
-        keyboardEvent(const std::string &cliUuid, std::uint8_t status, int key) {
+        keyboardEvent() : _status(0), keyCode(-1){};
+        keyboardEvent(const std::string &cliUuid, std::uint8_t status, int key)
+        {
             std::memmove(&uuid, cliUuid.data(), uuidSize);
             _status = status;
             keyCode = key;
@@ -205,4 +215,4 @@ namespace packet
 }
 
 #pragma pack(pop)
-#endif //PACKETS_HPP
+#endif // PACKETS_HPP

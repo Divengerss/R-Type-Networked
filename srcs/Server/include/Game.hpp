@@ -2,7 +2,7 @@
 #define R_TYPE_SERVER_HPP
 
 #ifdef _WIN32
-    #define _WIN32_WINNT 0x0601
+#define _WIN32_WINNT 0x0601
 #endif /* !_WIN32 */
 
 #include "Network.hpp"
@@ -16,8 +16,11 @@
 #include "Server/PositionSystem.hpp"
 #include "Server/DamageSystem.hpp"
 #include "Server/NetworkSystem.hpp"
+#include "Server/WaveSystem.hpp"
+#include "Both/HealthSystem.hpp"
 #include "Destroyable.hpp"
 #include "Score.hpp"
+#include "Tag.hpp"
 #include <thread>
 #include <chrono>
 
@@ -37,15 +40,8 @@ namespace rtype
             _reg.register_component<Destroyable>();
             _reg.register_component<Damaging>();
             _reg.register_component<Score>();
+            _reg.register_component<Tag>();
             _reg.spawn_entity(); // Background index
-            Entity monster = _reg.spawn_entity();
-            _reg.add_component<Position>(monster, {1920, 500});
-            _reg.add_component<Velocity>(monster, {2});
-            _reg.add_component<MovementPattern>(monster, {STRAIGHTLEFT});
-            _reg.add_component<Destroyable>(monster, {2});
-            _reg.add_component<Hitbox>(monster, {99, 51});
-            _reg.add_component<Damaging>(monster, {true});
-            _reg.add_component<Score>(monster, {10});
         };
 
         ~loopSystem()
@@ -57,9 +53,8 @@ namespace rtype
 
         void runNetwork()
         {
-            _threadPool.emplace_back([&]() {
-                _netSys.networkSystemServer(_reg);
-            });
+            _threadPool.emplace_back([&]()
+                                     { _netSys.networkSystemServer(_reg); });
         }
 
         const Registry &getRegistry() const noexcept { return _reg; }
@@ -92,6 +87,8 @@ namespace rtype
                         }
                         _pos.positionSystemServer(_reg);
                         _dam.damageSystemServer(_reg);
+                        _waveSystem.run(_reg);
+                        _healthSystem.run(_reg, _netSys);
                         lastFrameExecutionTime = currentTime;
                     }
                 }
@@ -108,6 +105,8 @@ namespace rtype
         DamageSystem _dam;
         PositionSystem _pos;
         NetworkSystem _netSys;
+        WaveSystem _waveSystem;
+        HealthSystem _healthSystem;
         std::vector<std::thread> _threadPool;
         int _currentCooldown;
     };
