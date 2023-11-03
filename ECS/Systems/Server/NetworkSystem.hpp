@@ -233,16 +233,10 @@ namespace rtype
 
         void handleEntityKilled(Entity entity)
         {
-            std::cout << "Handle entity killed" << std::endl;
             packet::entityKilledStatus status(entity());
-            try
-            {
-                std::cout << "Send kill packet" << std::endl;
+            try {
                 _net.sendResponse(packet::ENTITY_KILLED, status);
-                std::cout << "Send kill packet after" << std::endl;
-            }
-            catch (const std::system_error &e)
-            {
+            } catch (const std::system_error &e) {
                 std::string err = e.what();
                 _net.writeToLogs(logWarn, "    " + err);
             }

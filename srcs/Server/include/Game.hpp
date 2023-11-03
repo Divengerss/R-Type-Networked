@@ -83,6 +83,7 @@ namespace rtype
                             _netSys.sendSparseArray<Destroyable>(packet::ECS_DESTROYABLE, _reg.get_components<Destroyable>());
                             _netSys.sendSparseArray<MovementPattern>(packet::ECS_MOVEMENTPATTERN, _reg.get_components<MovementPattern>());
                             _netSys.sendSparseArray<Score>(packet::ECS_SCORE, _reg.get_components<Score>());
+                            _netSys.sendSparseArray<Tag>(packet::ECS_TAG, _reg.get_components<Tag>());
                             _currentCooldown = 0;
                         }
                         _pos.positionSystemServer(_reg);
