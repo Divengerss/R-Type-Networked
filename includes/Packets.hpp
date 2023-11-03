@@ -28,7 +28,11 @@ namespace packet
         ECS_DESTROYABLE,
         ECS_MOVEMENTPATTERN,
         ECS_SCORE,
-        KEEP_CONNECTION
+        KEEP_CONNECTION,
+        ROOM_AVAILABLE,
+        ROOM_CLOSE,
+        JOINED_ROOM,
+        LEFT_ROOM
     };
 
     enum packetStatus : std::uint8_t
@@ -160,18 +164,42 @@ namespace packet
 
     struct roomAvailable
     {
+        std::uint64_t roomId;
+        std::uint8_t maxSlots;
+
+        roomAvailable() : roomId(0UL), maxSlots(0UL) {}
+        roomAvailable(std::uint64_t roomId, std::uint8_t maxSlots) : roomId(roomId), maxSlots(maxSlots) {}
     };
 
     struct roomClosed
     {
+        std::uint64_t roomId;
+
+        roomClosed(std::uint64_t roomId) : roomId(roomId) {}
     };
 
     struct joinedRoom
     {
+        std::array<std::uint8_t, uuidSize> uuid;
+        std::uint64_t roomId;
+
+        joinedRoom() : uuid({}), roomId(0UL) {}
+        joinedRoom(const std::string &clientUUID, std::uint64_t roomId) : roomId(roomId)
+        {
+            std::memmove(&uuid, clientUUID.data(), uuidSize);
+        }
     };
 
     struct leftRoom
     {
+        std::array<std::uint8_t, uuidSize> uuid;
+        std::uint64_t roomId;
+
+        leftRoom() : uuid({}), roomId(0UL) {}
+        leftRoom(const std::string &clientUUID, std::uint64_t roomId) : roomId(roomId)
+        {
+            std::memmove(&uuid, clientUUID.data(), uuidSize);
+        }
     };
 }
 

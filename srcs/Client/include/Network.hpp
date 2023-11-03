@@ -197,6 +197,27 @@ namespace net
                 sendPacket(header, data);
             }
 
+            void handleRoomAvailable(const packet::roomAvailable &data)
+            {
+                std::cout << "New room available for " << std::to_string(data.maxSlots) << " players with ID " << std::to_string(data.roomId) << std::endl;
+            }
+
+            void handleNewClientInRoom(const packet::joinedRoom &data)
+            {
+                std::string clientUUID(uuidSize, 0);
+                std::memmove(clientUUID.data(), &data.uuid, uuidSize);
+                std::cout << "New client in room " << data.roomId << std::endl;
+                std::cout << "UUID of player is " << clientUUID << std::endl;
+            }
+            
+            void handleClientLeftRoom(const packet::leftRoom &data)
+            {
+                std::string clientUUID(uuidSize, 0);
+                std::memmove(clientUUID.data(), &data.uuid, uuidSize);
+                std::cout << "Client left room " << data.roomId << std::endl;
+                std::cout << "UUID of player who left is " << clientUUID << std::endl;
+            }
+
             void handleReceive(const asio::error_code &errCode) {
                 packet::packetHeader header;
                 std::size_t headerSize = sizeof(header);
@@ -250,6 +271,21 @@ namespace net
                         }},
                         {packet::KEEP_CONNECTION, [&]{
                             handleKeepConnection();
+                        }},
+                        {packet::ROOM_AVAILABLE, [&]{
+                            packet::roomAvailable roomAvailable;
+                            std::memmove(&roomAvailable, _packet.data() + headerSize, sizeof(roomAvailable));
+                            handleRoomAvailable(roomAvailable);
+                        }},
+                        {packet::JOINED_ROOM, [&]{
+                            packet::joinedRoom joinedRoom;
+                            std::memmove(&joinedRoom, _packet.data() + headerSize, sizeof(joinedRoom));
+                            handleNewClientInRoom(joinedRoom);
+                        }},
+                        {packet::LEFT_ROOM, [&]{
+                            packet::leftRoom leftRoom;
+                            std::memmove(&leftRoom, _packet.data() + headerSize, sizeof(leftRoom));
+                            handleClientLeftRoom(leftRoom);
                         }}
                     };
 

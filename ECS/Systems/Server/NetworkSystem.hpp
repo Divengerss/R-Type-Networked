@@ -91,6 +91,8 @@ namespace rtype
                         if (_rooms[roomId].getClients().size() == 0UL) {
                             deleteRoom(roomId);
                             _net.writeToLogs(logInfo, "Room " + std::to_string(roomId) + " closed: Empty");
+                            packet::roomClosed roomClosed(roomId);
+                            _net.sendResponse(packet::ROOM_CLOSE, roomClosed);
                         }
                         return true;
                     }
@@ -207,7 +209,11 @@ namespace rtype
                         _net.sendResponse(packet::CONNECTION_REQUEST, data, true);
                         return;
                     }
+                    packet::roomAvailable roomAvailable(roomId, 4UL);
+                    _net.sendResponse(packet::ROOM_AVAILABLE, roomAvailable);
                 }
+                packet::joinedRoom joinedRoom(clientUUID, request.roomId);
+                _net.sendResponse(packet::JOINED_ROOM, joinedRoom);
                 packet::connectionRequest data(packet::ACCEPTED, clientUUID, getConnectedNb());
                 std::pair<float, float> pos = newPlayer(ecs, clientUUID);
                 _net.writeToLogs(logInfo, "UUID of player is " + clientUUID);
@@ -239,6 +245,8 @@ namespace rtype
                 }
                 removePlayer(ecs, clientUUID);
                 removeClientFromRoom(clientUUID, request.roomId);
+                packet::leftRoom leftRoom(clientUUID, request.roomId);
+                _net.sendResponse(packet::LEFT_ROOM, leftRoom);
                 _net.writeToLogs(logInfo, "Lost connection: Disconnected " + clientUUID);
                 packet::clientStatus cliStatus(clientUUID, packet::LOSE_CLIENT, 0.0f, 0.0f, getConnectedNb());
                 try {
