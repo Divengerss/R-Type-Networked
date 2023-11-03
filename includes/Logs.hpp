@@ -6,11 +6,11 @@
 #include <iostream>
 #include <ctime>
 
-static constexpr std::string_view logInfo = "Server Thread/Info";
-static constexpr std::string_view logWarn = "Server Thread/Warn";
+static constexpr std::string_view logInfo = "Server Thread/Info ";
+static constexpr std::string_view logWarn = "Server Thread/Warn ";
 static constexpr std::string_view logErr = "Server Thread/Error";
-static constexpr std::string_view logGameInfo = "Game Thread/Info  ";
-static constexpr std::string_view logGameWarn = "Game Thread/Warn  ";
+static constexpr std::string_view logGameInfo = "Game Thread/Info   ";
+static constexpr std::string_view logGameWarn = "Game Thread/Warn   ";
 static constexpr std::string_view logGameErr = "Game Thread/Error  ";
 
 namespace net

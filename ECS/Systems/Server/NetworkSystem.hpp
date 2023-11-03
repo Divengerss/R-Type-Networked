@@ -160,6 +160,24 @@ namespace rtype
             affectControllable(ecs, clientUUID, event.keyCode);
         }
 
+        void handleTextMessage(const std::array<std::uint8_t, packetSize> &packet, const packet::packetHeader &header)
+        {
+            std::string text(256UL, 0);
+            std::string clientUUID(uuidSize, 0);
+            packet::textMessage txtmsg;
+            std::memmove(&txtmsg, &packet[sizeof(header)], sizeof(txtmsg));
+            std::memmove(clientUUID.data(), txtmsg.uuid.data(), uuidSize);
+            std::memmove(text.data(), &txtmsg.message, txtmsg.msgSize);
+            if (clientUUID.empty() || clientUUID[0] == 0) {
+                _net.writeToLogs(logGameErr, "Received a corrupted message. UUID is empty or unknown.");
+            } else if (text.empty() || text[0] == 0)
+                _net.writeToLogs(logGameErr, "Received a corrupted message. Message is empty.");
+            else {
+                _net.writeToLogs(logGameInfo, clientUUID + ": " + text.data());
+                _net.sendResponse(packet::TEXT_MESSAGE, txtmsg);
+            }
+        }
+
         void networkSystemServer(Registry &ecs)
         {
             std::array<std::uint8_t, packetSize> packet;
