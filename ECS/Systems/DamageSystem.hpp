@@ -14,55 +14,61 @@
 #include "Damaging.hpp"
 #include "Destroyable.hpp"
 #include "Score.hpp"
+#include "Sprite.hpp"
+#include "Tag.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/Audio.hpp>
+#include <iostream>
 
 class DamageSystem
 {
 public:
-    DamageSystem() {
+    DamageSystem()
+    {
         sound.setBuffer(buffer);
         buffer.loadFromFile("assets/All SFX/SND.DAT_00027.wav");
     }
     ~DamageSystem() = default;
 
-    void damageSystem(Registry &r, std::map<size_t, std::pair<sf::Sprite, sf::Texture>> &sprites)
+    void damageSystem(Registry &r)
     {
-        auto const positions = r.get_components<Position>();
-        auto destroyable = r.get_components<Destroyable>();
-        auto const hitboxes = r.get_components<Hitbox>();
-        auto const damages = r.get_components<Damaging>();
-        auto const scores = r.get_components<Score>();
-
-        // std::cout << "positions.size(): " << positions.size() << std::endl;
-        for (size_t i = 0; i < positions.size(); ++i)
+        for (int i = 0; i < r.get_entity_number(); i++)
         {
-            // std::cout << "positions.size(): " << positions.size() << std::endl;
-            // std::cout << "i: " << i << std::endl;
-            auto const &hb_dest = hitboxes[i];
-            auto const &pos_dest = positions[i];
-            auto &dest = destroyable[i];
-            auto &sprite_dest = sprites[i].first;
-            auto &score = scores[i];
+            if (!r.entity_has_component<Tag>(Entity(i)) ||
+                !r.entity_has_component<Destroyable>(Entity(i)) ||
+                !r.entity_has_component<Sprite>(Entity(i)))
+                continue;
 
-            if (pos_dest && hb_dest && dest)
+            auto &a_hp = r.get_component<Destroyable>(Entity(i));
+            auto &a_sprite = r.get_component<Sprite>(Entity(i))._sprite;
+            auto &a_tag = r.get_component<Tag>(Entity(i))._tag;
+
+            for (int j = 0; j < r.get_entity_number(); j++)
             {
-                for (size_t j = 0; j < positions.size(); ++j)
+                if (i == j)
+                    continue;
+
+                if (!r.entity_has_component<Tag>(Entity(i)) ||
+                    !r.entity_has_component<Destroyable>(Entity(i)) ||
+                    !r.entity_has_component<Sprite>(Entity(i)))
+                    continue;
+
+                auto &b_hp = r.get_component<Destroyable>(Entity(j));
+                auto &b_sprite = r.get_component<Sprite>(Entity(j))._sprite;
+                auto &b_tag = r.get_component<Tag>(Entity(j))._tag;
+
+                if (b_sprite.getGlobalBounds().intersects(a_sprite.getGlobalBounds()))
                 {
-                    if (i == j)
-                        continue;
-                    auto const &sprite_dam = sprites[j].first;
-                    auto const &dam = damages[j];
-                    if (sprite_dam.getGlobalBounds().intersects(sprite_dest.getGlobalBounds()) && dam)
+                    sound.play();
+                    if (a_tag == TagEnum::PLAYER && b_tag == TagEnum::ENEMY)
                     {
-                        std::cout << "EXPLOSION" << std::endl;
-                        sound.play();
-                        if (score) {
-                            std::cout << "ok" << std::endl;
-                        }
-                            r.kill_entity(Entity(i));
-                        sprites.erase(i);
+                        a_hp._hp = 0;
+                    }
+                    else if (a_tag == TagEnum::BULLET && b_tag == TagEnum::ENEMY)
+                    {
+                        a_hp._hp = 0;
+                        b_hp._hp = 0;
                     }
                 }
             }
