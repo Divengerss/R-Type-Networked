@@ -11,23 +11,26 @@
 #include <string>
 #include <SFML/Graphics.hpp>
 
-class Texture {
-    public:
-        Texture(std::string path, int left, int top, int width, int height) {
-            _path = path;
-            _left = left;
-            _top = top;
-            _width = width;
-            _height = height;
-        };
+class Texture
+{
+public:
+    Texture(std::string path, int left, int top, int width, int height)
+    {
+        _path = path;
+        _left = left;
+        _top = top;
+        _width = width;
+        _height = height;
+    };
 
-        std::string _path;
-        int _left;
-        int _top;
-        int _width;
-        int _height;
-    protected:
-    private:
+    std::string _path;
+    int _left;
+    int _top;
+    int _width;
+    int _height;
+
+protected:
+private:
 };
 
 #endif /* !TEXTURE_HPP_ */

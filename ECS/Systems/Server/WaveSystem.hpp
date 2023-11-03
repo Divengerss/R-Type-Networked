@@ -25,36 +25,36 @@
 class WaveSystem
 {
 public:
-    WaveSystem() {
-        _wave = 0;
-    }
+    WaveSystem() = default;
     ~WaveSystem() = default;
 
     void run(Registry &r)
     {
         _enemy_count = 0;
 
-        for (int i = 0; i < r.get_entity_number(); i++) {
+        for (int i = 0; i < r.get_entity_number(); i++)
+        {
             if (!r.entity_has_component<Tag>(Entity(i)))
                 continue;
             auto const &tag = r.get_component<Tag>(Entity(i));
             if (tag._tag == TagEnum::ENEMY)
                 _enemy_count++;
         }
-        if (_enemy_count == 0) {
+        if (_enemy_count == 0)
+        {
             _wave++;
-            for (int i = 0; i < _wave * 2; i++) {
-                int random = rand() % 4;
+            for (int i = 0; i < _wave * 2; i++)
+            {
+                int random = 0;
                 int random_y = rand() % 1080;
 
-                if (random == 1) random = 0;
+                if (random == 1)
+                    random = 0;
 
                 Entity enemy = r.spawn_entity();
 
                 r.add_component<Tag>(enemy, Tag(TagEnum::ENEMY));
-                r.add_component<Texture>(enemy, {"./Build/bin/assets/sprites/r-typesheet5.gif", 233, 0, 33, 36});
                 r.add_component<Position>(enemy, {1920, static_cast<float>(random_y)});
-                r.add_component<Scale>(enemy, {3, 3});
                 r.add_component<Velocity>(enemy, {2});
                 r.add_component<MovementPattern>(enemy, {static_cast<MovementPatterns>(random)});
                 r.add_component<Destroyable>(enemy, {2});
@@ -66,8 +66,8 @@ public:
 
 protected:
 private:
-    int _wave;
-    int _enemy_count;
+    int _wave = -1;
+    int _enemy_count = 0;
 };
 
 #endif /* !WaveSystem_HPP_ */
