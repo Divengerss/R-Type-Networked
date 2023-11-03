@@ -8,16 +8,23 @@
 #ifndef TAG_HPP_
 #define TAG_HPP_
 
-#include <string>
+enum TagEnum
+{
+    PLAYER,
+    ENEMY,
+    BULLET,
+    NOTAG
+};
 
-class Tag {
-    public:
-        Tag(std::string tag)
-        {
-            _tag = tag;
-        }
+class Tag
+{
+public:
+    Tag(TagEnum tag)
+    {
+        _tag = tag;
+    };
 
-        std::string _tag;
+    int _tag;
 };
 
 #endif /* !TAG_HPP_ */

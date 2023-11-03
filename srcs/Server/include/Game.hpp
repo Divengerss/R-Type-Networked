@@ -2,7 +2,7 @@
 #define R_TYPE_SERVER_HPP
 
 #ifdef _WIN32
-    #define _WIN32_WINNT 0x0601
+#define _WIN32_WINNT 0x0601
 #endif /* !_WIN32 */
 
 #include "Network.hpp"
@@ -16,8 +16,11 @@
 #include "Server/PositionSystem.hpp"
 #include "Server/DamageSystem.hpp"
 #include "Server/NetworkSystem.hpp"
+#include "Server/WaveSystem.hpp"
+#include "Both/HealthSystem.hpp"
 #include "Destroyable.hpp"
 #include "Score.hpp"
+#include "Tag.hpp"
 #include <thread>
 #include <chrono>
 
@@ -26,9 +29,8 @@ namespace rtype
     class loopSystem
     {
     public:
-        loopSystem() :
-            _reg(Registry()), _pos(), _netSys(),
-            _pingCooldown(3), _currentCooldown(3)
+        loopSystem() : _reg(Registry()), _pos(), _netSys(),
+                       _pingCooldown(3), _currentCooldown(3)
         {
             _reg.register_component<Position>();
             _reg.register_component<Velocity>();
@@ -38,15 +40,8 @@ namespace rtype
             _reg.register_component<Destroyable>();
             _reg.register_component<Damaging>();
             _reg.register_component<Score>();
+            _reg.register_component<Tag>();
             _reg.spawn_entity(); // Background index
-            Entity monster = _reg.spawn_entity();
-            _reg.add_component<Position>(monster, {1920, 500});
-            _reg.add_component<Velocity>(monster, {2});
-            _reg.add_component<MovementPattern>(monster, {STRAIGHTLEFT});
-            _reg.add_component<Destroyable>(monster, {2});
-            _reg.add_component<Hitbox>(monster, {99, 51});
-            _reg.add_component<Damaging>(monster, {true});
-            _reg.add_component<Score>(monster, {10});
         };
 
         ~loopSystem()
@@ -58,9 +53,8 @@ namespace rtype
 
         void runNetwork()
         {
-            _threadPool.emplace_back([&]() {
-                _netSys.networkSystemServer(_reg);
-            });
+            _threadPool.emplace_back([&]()
+                                     { _netSys.networkSystemServer(_reg); });
         }
 
         const Registry &getRegistry() const noexcept { return _reg; }
@@ -80,8 +74,10 @@ namespace rtype
                     elapsedTime = currentTime - lastExecutionTime;
                     if (elapsedTime >= timeInterval)
                     {
+
                         _currentCooldown--;
-                        if (_currentCooldown == 0) {
+                        if (_currentCooldown == 0)
+                        {
                             _netSys.sendSparseArray<Position>(packet::ECS_POSITION, _reg.get_components<Position>());
                             _netSys.sendSparseArray<Velocity>(packet::ECS_VELOCITY, _reg.get_components<Velocity>());
                             _netSys.sendSparseArray<Hitbox>(packet::ECS_HITBOX, _reg.get_components<Hitbox>());
@@ -90,10 +86,13 @@ namespace rtype
                             _netSys.sendSparseArray<Destroyable>(packet::ECS_DESTROYABLE, _reg.get_components<Destroyable>());
                             _netSys.sendSparseArray<MovementPattern>(packet::ECS_MOVEMENTPATTERN, _reg.get_components<MovementPattern>());
                             _netSys.sendSparseArray<Score>(packet::ECS_SCORE, _reg.get_components<Score>());
+                            _netSys.sendSparseArray<Tag>(packet::ECS_TAG, _reg.get_components<Tag>());
                             _currentCooldown = _pingCooldown;
                         }
                         _pos.positionSystemServer(_reg);
                         _dam.damageSystemServer(_reg);
+                        _waveSystem.run(_reg);
+                        _healthSystem.run(_reg, _netSys);
                         lastExecutionTime = currentTime;
                     }
                 }
@@ -104,6 +103,8 @@ namespace rtype
         DamageSystem _dam;
         PositionSystem _pos;
         NetworkSystem _netSys;
+        WaveSystem _waveSystem;
+        HealthSystem _healthSystem;
         std::vector<std::thread> _threadPool;
         int _pingCooldown;
         int _currentCooldown;
