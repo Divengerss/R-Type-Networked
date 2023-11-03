@@ -190,7 +190,9 @@ namespace rtype
                 {packet::DISCONNECTION_REQUEST, [&]
                  { handleDisconnectionRequest(ecs, packet, header); }},
                 {packet::KEYBOARD_EVENT, [&]
-                 { handlekeyboardEvent(ecs, packet, header); }}};
+                 { handlekeyboardEvent(ecs, packet, header); }},
+                {packet::TEXT_MESSAGE, [&]
+                 { handleTextMessage(packet, header); }}};
 
             _net.startServer();
             while (_net.isSocketOpen())

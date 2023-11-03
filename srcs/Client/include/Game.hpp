@@ -28,6 +28,7 @@
 #include "Assets.hpp"
 #include "Button.hpp"
 #include "ButtonSystem.hpp"
+#include "ChatBox.hpp"
 
 namespace rtype
 {
@@ -53,6 +54,7 @@ namespace rtype
             _reg.register_component<Score>();
             _reg.register_component<Sprite>();
             _reg.register_component<Button>();
+            _reg.register_component<ChatBox>();
         }
 
         ~Game() = default;
@@ -209,6 +211,48 @@ namespace rtype
                 {
                     if (event.type == sf::Event::Closed)
                         window.close();
+                    if (event.type == sf::Event::KeyReleased)
+                    {
+                        if (event.key.code == sf::Keyboard::Escape)
+                        {
+                            for (int i = 0; i < _reg.get_entity_number(); ++i)
+                            {
+                                if (_reg.entity_has_component<ChatBox>(Entity(i)) == false) continue;
+
+                                auto &chatbox = _reg.get_component<ChatBox>(Entity(i));
+                                chatbox._isInputSelected = !chatbox._isInputSelected;
+                            }
+                        }
+                    }
+                    if (event.type == sf::Event::TextEntered)
+                    {
+                        for (int i = 0; i < _reg.get_entity_number(); ++i)
+                        {
+                            if (_reg.entity_has_component<ChatBox>(Entity(i)) == false) continue;
+
+                            auto &chatbox = _reg.get_component<ChatBox>(Entity(i));
+
+                            if (chatbox._isInputSelected == false) continue;
+
+                            if (event.text.unicode < 128 && event.text.unicode != 36)
+                            {
+                                if (event.text.unicode == 13)
+                                {
+                                    packet::packetHeader header(packet::TEXT_MESSAGE, sizeof(packet::textMessage));
+                                    packet::textMessage textMessage(client.getUuid(), chatbox._inputString);
+                                    client.sendPacket(header, textMessage);
+                                    chatbox._inputString = "";
+                                    chatbox._inputText.setString("");
+                                } else if (event.text.unicode == 8)
+                                {
+                                    chatbox.removeChar();
+                                } else {
+                                    chatbox.addChar(event.text.unicode);
+                                }
+                            }
+
+                        }
+                    }
                 }
 
                 // Update
@@ -218,6 +262,15 @@ namespace rtype
                 window.clear();
 
                 drawSprite(window);
+
+                for (int i = 0; i < _reg.get_entity_number(); ++i)
+                {
+                    if (_reg.entity_has_component<ChatBox>(Entity(i)))
+                    {
+                        auto &chatbox = _reg.get_component<ChatBox>(Entity(i));
+                        chatbox.draw(window, _assets.getFont("arial"));
+                    }
+                }
 
                 window.display();
 
@@ -404,6 +457,9 @@ namespace rtype
             _reg.add_component<Scale>(Space_background, {5, 5});
             _reg.add_component<Velocity>(Space_background, {1});
             _reg.add_component<MovementPattern>(Space_background, {STRAIGHTLEFT});
+
+            Entity chatbox = _reg.spawn_entity();
+            _reg.add_component<ChatBox>(chatbox, {0, 0, 600, 200 });
 
             mainMenu mainMenu(window.getSize().x, window.getSize().y);
 

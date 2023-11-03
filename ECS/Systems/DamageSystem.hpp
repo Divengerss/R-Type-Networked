@@ -49,9 +49,9 @@ public:
                 if (i == j)
                     continue;
 
-                if (!r.entity_has_component<Tag>(Entity(i)) ||
-                    !r.entity_has_component<Destroyable>(Entity(i)) ||
-                    !r.entity_has_component<Sprite>(Entity(i)))
+                if (!r.entity_has_component<Tag>(Entity(j)) ||
+                    !r.entity_has_component<Destroyable>(Entity(j)) ||
+                    !r.entity_has_component<Sprite>(Entity(j)))
                     continue;
 
                 auto &b_hp = r.get_component<Destroyable>(Entity(j));
