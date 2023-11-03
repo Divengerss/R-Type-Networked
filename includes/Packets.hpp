@@ -57,16 +57,21 @@ namespace packet
         std::uint8_t status;
         std::array<std::uint8_t, uuidSize> uuid;
         std::size_t connectedNb;
+        std::uint64_t roomId;
 
-        connectionRequest() : status(REQUEST), connectedNb(0)
+        connectionRequest() : status(REQUEST), connectedNb(0UL), roomId(0UL)
         {
             std::memset(&uuid, 0, uuidSize);
         }
-        connectionRequest(uint8_t status, const std::string &cliUuid) : status(status), connectedNb(0)
+        connectionRequest(std::uint64_t roomId) : status(REQUEST), connectedNb(0UL), roomId(roomId)
+        {
+            std::memset(&uuid, 0, uuidSize);
+        }
+        connectionRequest(uint8_t status, const std::string &cliUuid) : status(status), connectedNb(0UL), roomId(0UL)
         {
             std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
-        connectionRequest(uint8_t status, const std::string &cliUuid, std::size_t connectedCount) : status(status), connectedNb(connectedCount)
+        connectionRequest(uint8_t status, const std::string &cliUuid, std::size_t connectedCount) : status(status), connectedNb(connectedCount), roomId(0UL)
         {
             std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
@@ -77,22 +82,23 @@ namespace packet
         std::uint8_t status;
         std::array<std::uint8_t, uuidSize> uuid;
         std::size_t connectedNb;
+        std::uint64_t roomId;
 
-        disconnectionRequest(const std::string &cliUuid) : status(REQUEST)
+        disconnectionRequest(const std::string &cliUuid, std::uint64_t roomId) : status(REQUEST), roomId(roomId)
         {
             std::memmove(&uuid, cliUuid.data(), uuidSize);
             connectedNb = 0UL;
         }
-        disconnectionRequest(uint8_t status) : status(status), uuid({})
+        disconnectionRequest(uint8_t status) : status(status), uuid({}), roomId(0UL)
         {
             connectedNb = 0UL;
         }
-        disconnectionRequest(const std::string &cliUuid, std::size_t connectedCount) : status(REQUEST)
+        disconnectionRequest(const std::string &cliUuid, std::size_t connectedCount, std::uint64_t roomId) : status(REQUEST), roomId(roomId)
         {
             std::memmove(&uuid, cliUuid.data(), uuidSize);
             connectedNb = connectedCount;
         }
-        disconnectionRequest(uint8_t status, std::size_t connectedCount) : status(status), uuid({})
+        disconnectionRequest(uint8_t status, std::size_t connectedCount) : status(status), uuid({}), roomId(0UL)
         {
             connectedNb = connectedCount;
         }

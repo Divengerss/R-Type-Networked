@@ -43,7 +43,7 @@ namespace net
             Client() = delete;
             Client(asio::io_context &ioContext, const std::string &host, const std::string &port, Registry &reg) :
                 _ioContext(ioContext), _errCode(asio::error_code()), _resolver(ioContext), _endpoint(*_resolver.resolve(asio::ip::udp::v4(), host, port).begin()),
-                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(uuidSize, 0), _packet(localPacketSize), _reg(reg)
+                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(uuidSize, 0), _roomId(0UL), _packet(localPacketSize), _reg(reg)
             {
                 try {
                     utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
@@ -131,9 +131,14 @@ namespace net
             }
 
             void handleConnectionRequestPacket(const packet::connectionRequest &request) {
-                std::memmove(_uuid.data(), &request.uuid, uuidSize);
-                std::cout << "Got uuid = " << _uuid << std::endl;
-                std::cout << request.connectedNb << " client connected." << std::endl;
+                if (request.status == packet::ACCEPTED) {
+                    std::memmove(_uuid.data(), &request.uuid, uuidSize);
+                    _roomId = request.roomId;
+                    std::cout << "Got uuid = " << _uuid << std::endl;
+                    std::cout << request.connectedNb << " client connected." << std::endl;
+                } else {
+                    std::cout << "rejected" << std::endl;
+                }
             }
 
             void handleClientStatusPacket(packet::clientStatus &cliStatus) {
@@ -266,7 +271,7 @@ namespace net
 
             void connect()
             {
-                packet::connectionRequest request;
+                packet::connectionRequest request(0UL); // ROOM ID (change when available in UI)
                 packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(request));
                 std::size_t bytesSent = sendPacket(header, request);
                 if (bytesSent == 0UL)
@@ -275,7 +280,7 @@ namespace net
 
             void disconnect()
             {
-                packet::disconnectionRequest request(_uuid.data());
+                packet::disconnectionRequest request(_uuid.data(), _roomId);
                 packet::packetHeader header(packet::DISCONNECTION_REQUEST, sizeof(request));
                 if (_socket.is_open()) {
                     std::size_t bytesSent = sendPacket(header, request);
@@ -308,6 +313,7 @@ namespace net
             asio::ip::udp::socket _socket;
             asio::steady_timer _timer;
             std::string _uuid;
+            std::uint64_t _roomId;
             std::vector<std::thread> _threadPool;
             std::vector<std::uint8_t> _packet;
             Registry &_reg;
