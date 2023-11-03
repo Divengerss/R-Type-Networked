@@ -287,18 +287,22 @@ namespace net
                         std::memmove(&txtmsg, _packet.data() + headerSize, sizeof(txtmsg));
                         handleTextMessage(header, txtmsg);
                     }},
-                    {packet::ECS_TAG, [&]
-                    {
+                    {packet::ECS_TAG, [&]{
                         Tag component(TagEnum::NOTAG);
                         handleECSComponent<Tag>(header, component);
-                    }}
+                    }},
+                    {packet::ENTITY_KILLED, [&]{
+                        std::uint32_t entityId;
+                        std::memmove(&entityId, _packet.data() + headerSize, sizeof(entityId));
+                        _reg.kill_entity(Entity(entityId));
+                    }},
                 };
 
                 auto handlerIt = packetHandlers.find(header.type);
                 if (handlerIt != packetHandlers.end()) {
                     handlerIt->second();
                 } else {
-                    std::cerr << "Unknown packet" << std::endl;
+                    std::cerr << "Unknown packet " << std::to_string(header.type) << std::endl;
                 }
             }
 
