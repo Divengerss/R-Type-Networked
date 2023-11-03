@@ -30,7 +30,7 @@ namespace packet
         ECS_SCORE,
         KEEP_CONNECTION,
         ROOM_AVAILABLE,
-        ROOM_CLOSE,
+        ROOM_CLOSED,
         JOINED_ROOM,
         LEFT_ROOM
     };
@@ -175,6 +175,7 @@ namespace packet
     {
         std::uint64_t roomId;
 
+        roomClosed() : roomId(0UL) {}
         roomClosed(std::uint64_t roomId) : roomId(roomId) {}
     };
 

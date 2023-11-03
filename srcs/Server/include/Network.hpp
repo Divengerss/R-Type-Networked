@@ -40,19 +40,23 @@ namespace net
         public:
             Client() = delete;
             Client(const std::string &uuid, asio::ip::udp::endpoint &endpoint) : _uuid(uuid), _endpoint(endpoint), _missedPacket(0UL) {}
+            Client(const std::string &uuid, asio::ip::udp::endpoint &endpoint, std::uint64_t roomId) : _uuid(uuid), _endpoint(endpoint), _missedPacket(0UL), _roomId(roomId) {}
             ~Client() = default;
 
             const std::string &getUuid() const noexcept { return _uuid; };
             asio::ip::udp::endpoint &getEndpoint() noexcept { return _endpoint; };
             std::size_t getMissedPacket() const noexcept { return _missedPacket; };
+            std::uint64_t getRoomId() const noexcept { return _roomId; };
 
             void packetMissed() { _missedPacket += 1UL; };
             void resetMissedPacket() { _missedPacket = 0UL; };
+            void setRoomId(std::uint64_t roomId) { _roomId = roomId; };
 
         private:
             std::string _uuid;
             asio::ip::udp::endpoint _endpoint;
             std::size_t _missedPacket;
+            std::uint64_t _roomId;
     };
 
     class Network
@@ -194,7 +198,7 @@ namespace net
                 std::exit(EXIT_SUCCESS);
             }
 
-            std::string addClient();
+            std::string addClient(std::uint64_t roomId);
 
             bool removeClient(const std::string &uuid);
 

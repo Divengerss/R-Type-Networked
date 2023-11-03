@@ -92,7 +92,7 @@ namespace rtype
                             deleteRoom(roomId);
                             _net.writeToLogs(logInfo, "Room " + std::to_string(roomId) + " closed: Empty");
                             packet::roomClosed roomClosed(roomId);
-                            _net.sendResponse(packet::ROOM_CLOSE, roomClosed);
+                            _net.sendResponse(packet::ROOM_CLOSED, roomClosed);
                         }
                         return true;
                     }
@@ -195,11 +195,12 @@ namespace rtype
             {
                 packet::connectionRequest request;
                 std::memmove(&request, &packet[sizeof(packet::packetHeader)], sizeof(request));
-                std::string clientUUID = _net.addClient();
+                std::string clientUUID = _net.addClient(request.roomId);
                 if (roomExist(request.roomId)) {
                     if (!addClientToRoom(clientUUID, request.roomId)) {
                         packet::connectionRequest data(packet::REJECTED);
                         _net.sendResponse(packet::CONNECTION_REQUEST, data, true);
+                        removeClient(clientUUID);
                         return;
                     }
                 } else {
@@ -207,6 +208,7 @@ namespace rtype
                     if (!addClientToRoom(clientUUID, roomId)) {
                         packet::connectionRequest data(packet::REJECTED);
                         _net.sendResponse(packet::CONNECTION_REQUEST, data, true);
+                        removeClient(clientUUID);
                         return;
                     }
                     packet::roomAvailable roomAvailable(roomId, 4UL);

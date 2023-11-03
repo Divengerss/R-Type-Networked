@@ -209,13 +209,18 @@ namespace net
                 std::cout << "New client in room " << data.roomId << std::endl;
                 std::cout << "UUID of player is " << clientUUID << std::endl;
             }
-            
+
             void handleClientLeftRoom(const packet::leftRoom &data)
             {
                 std::string clientUUID(uuidSize, 0);
                 std::memmove(clientUUID.data(), &data.uuid, uuidSize);
                 std::cout << "Client left room " << data.roomId << std::endl;
                 std::cout << "UUID of player who left is " << clientUUID << std::endl;
+            }
+
+            void handleClientRoomClosed(const packet::roomClosed &data)
+            {
+                std::cout << "Room " << std::to_string(data.roomId) << " has been closed" << std::endl;
             }
 
             void handleReceive(const asio::error_code &errCode) {
@@ -286,6 +291,11 @@ namespace net
                             packet::leftRoom leftRoom;
                             std::memmove(&leftRoom, _packet.data() + headerSize, sizeof(leftRoom));
                             handleClientLeftRoom(leftRoom);
+                        }},
+                        {packet::ROOM_CLOSED, [&]{
+                            packet::roomClosed roomClosed;
+                            std::memmove(&roomClosed, _packet.data() + headerSize, sizeof(roomClosed));
+                            handleClientRoomClosed(roomClosed);
                         }}
                     };
 
