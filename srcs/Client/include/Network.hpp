@@ -45,6 +45,21 @@ namespace net
         Client(asio::io_context &ioContext, const std::string &host, const std::string &port, Registry &reg) : _ioContext(ioContext), _errCode(asio::error_code()), _resolver(ioContext), _endpoint(*_resolver.resolve(asio::ip::udp::v4(), host, port).begin()),
                                                                                                                _socket(asio::ip::udp::socket(ioContext)), _timer(ioContext), _uuid(uuidSize, 0), _packet(localPacketSize), _reg(reg)
         {
+        }
+        ~Client()
+        {
+            for (auto &thread : clientInstance->_threadPool)
+            {
+                if (thread.joinable())
+                {
+                    thread.join();
+                }
+            }
+            _socket.close();
+        };
+
+        void run()
+        {
             try
             {
                 utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
@@ -71,34 +86,23 @@ namespace net
                 std::cerr << "Error opening socket: " << sysErr.what() << std::endl;
                 throw;
             }
-            _threadPool.emplace_back([&]()
-                                     {
-                    std::signal(SIGINT, signalHandler);
-                    setClientInstance(this);
-                    _timer.async_wait([&](const asio::error_code &error) {
-                        if (!error) {
-                            _socket.cancel();
-                            if (!std::strncmp(_uuid.data(), std::string(uuidSize, 0).data(), uuidSize)) {
-                                std::cerr << "Connection timeout. Could not connect to server." << std::endl;
-                                std::exit(EXIT_SUCCESS);
-                            }
+            _threadPool.emplace_back([&]() {
+                std::signal(SIGINT, signalHandler);
+                setClientInstance(this);
+                _timer.async_wait([&](const asio::error_code &error) {
+                    if (!error) {
+                        _socket.cancel();
+                        if (!std::strncmp(_uuid.data(), std::string(uuidSize, 0).data(), uuidSize)) {
+                            std::cerr << "Connection timeout. Could not connect to server." << std::endl;
+                            std::exit(EXIT_SUCCESS);
                         }
-                    });
-                    listenServer();
-                    connect();
-                    _ioContext.run(); });
+                    }
+                });
+                listenServer();
+                connect();
+                _ioContext.run();
+            });
         }
-        ~Client()
-        {
-            for (auto &thread : clientInstance->_threadPool)
-            {
-                if (thread.joinable())
-                {
-                    thread.join();
-                }
-            }
-            _socket.close();
-        };
 
         bool isSocketOpen() const noexcept
         {

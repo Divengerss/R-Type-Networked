@@ -67,8 +67,6 @@ public:
                     damTop > destBottom || damBottom < destTop)
                     continue;
 
-                std::cout << "HERE---------------------------" << std::endl;
-
                 if (a_tag == TagEnum::PLAYER && b_tag == TagEnum::ENEMY)
                 {
                     a_hp._hp = 0;
