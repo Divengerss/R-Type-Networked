@@ -355,7 +355,8 @@ namespace net
 
                     auto handlerIt = packetHandlers.find(header.type);
                     if (handlerIt != packetHandlers.end()) {
-                        handlerIt->second();
+                        if (header.roomId == std::numeric_limits<std::uint64_t>::max() || header.roomId == _roomId)
+                            handlerIt->second();
                     } else {
                         std::cerr << "Unknown packet" << std::endl;
                     }
@@ -370,7 +371,7 @@ namespace net
 
             void connect()
             {
-                packet::connectionRequest request;
+                packet::connectionRequest request(0UL, true); // ROOM ID (change when available in UI) True if the room has to be created or the server or it will refuse the connection if it doesn't exist.
                 packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(request));
                 std::size_t bytesSent = sendPacket(header, request);
                 if (bytesSent == 0UL)
@@ -379,8 +380,8 @@ namespace net
 
             void disconnect()
             {
-                packet::connectionRequest request(0UL); // ROOM ID (change when available in UI)
-                    packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(request));
+                packet::disconnectionRequest request(_uuid, _roomId);
+                packet::packetHeader header(packet::DISCONNECTION_REQUEST, sizeof(request));
                 if (_socket.is_open())
                 {
                     std::size_t bytesSent = sendPacket(header, request);
@@ -403,6 +404,8 @@ namespace net
             }
 
             const std::string getUuid() const { return _uuid; }
+
+            std::uint64_t getRoomId() const noexcept { return _roomId; }
 
         private:
             asio::io_context &_ioContext;

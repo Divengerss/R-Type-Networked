@@ -29,7 +29,7 @@ public:
     HealthSystem() = default;
     ~HealthSystem() = default;
 
-    void run(Registry &r, rtype::NetworkSystem &networkSystem)
+    void run(std::uint64_t roomId, Registry &r, rtype::NetworkSystem &networkSystem)
     {
         for (int i = 0; i < r.get_entity_number(); i++)
         {
@@ -40,7 +40,7 @@ public:
                 if (hp._hp <= 0)
                 {
                     r.kill_entity(Entity(i));
-                    networkSystem.handleEntityKilled(Entity(i));
+                    networkSystem.handleEntityKilled(Entity(i), roomId);
                 }
             }
             if (r.entity_has_component<MovementPattern>(Entity(i)) &&
@@ -53,7 +53,7 @@ public:
                 if (pos._x > 2000 || pos._x < -100)
                 {
                     r.kill_entity(Entity(i));
-                    networkSystem.handleEntityKilled(Entity(i));
+                    networkSystem.handleEntityKilled(Entity(i), roomId);
                 }
             }
         }

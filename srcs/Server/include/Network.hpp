@@ -101,9 +101,9 @@ namespace net
             }
 
             template<typename T>
-            void sendResponse(const packet::packetTypes &type, T &data, bool toServerEndpoint = false, const std::string cliUuid = "")
+            void sendResponse(const packet::packetTypes &type, T &data, std::uint64_t roomId = std::numeric_limits<std::uint64_t>::max(), bool toServerEndpoint = false, const std::string cliUuid = "")
             {
-                packet::packetHeader header(type, sizeof(data));
+                packet::packetHeader header(type, sizeof(data), false, 0UL, roomId);
                 std::array<std::uint8_t, sizeof(header) + sizeof(data)> buffer;
                 std::memmove(&buffer, &header, sizeof(header));
                 std::memmove(&buffer[sizeof(header)], &data, header.dataSize);
@@ -127,14 +127,14 @@ namespace net
             }
 
             template<class T>
-            void sendSparseArray(const packet::packetTypes &type, sparse_array<T> &sparseArray, const std::string cliUuid = "")
+            void sendSparseArray(const packet::packetTypes &type, sparse_array<T> &sparseArray, std::uint64_t roomId, const std::string cliUuid = "")
             {
                 const std::size_t componentSize = sizeof(T);
                 const std::size_t componentsSize = (sizeof(bool) + componentSize) * sparseArray.size();
                 const std::size_t headerSize = sizeof(packet::packetHeader);
                 const std::size_t totalSize = headerSize + componentsSize;
 
-                packet::packetHeader header(type, componentsSize, true, 0U);
+                packet::packetHeader header(type, componentsSize, true, 0U, roomId);
                 std::vector<std::uint8_t> buffer(totalSize);
                 std::size_t offset = 0UL;
                 zlib::ZLib z;

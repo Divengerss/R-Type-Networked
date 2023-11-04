@@ -29,6 +29,7 @@ namespace packet
         ECS_MOVEMENTPATTERN,
         ECS_SCORE,
         KEEP_CONNECTION,
+        CREATE_ROOM,
         ROOM_AVAILABLE,
         ROOM_CLOSED,
         JOINED_ROOM,
@@ -53,10 +54,11 @@ namespace packet
         std::uint16_t dataSize;
         bool compressed;
         std::size_t compressedSize;
+        std::uint64_t roomId;
 
-        packetHeader() : type(PLACEHOLDER), dataSize(0U), compressed(false), compressedSize(0UL) {}
-        packetHeader(packetTypes type, std::uint16_t dataSize) : type(type), dataSize(dataSize), compressed(false), compressedSize(0UL) {}
-        packetHeader(packetTypes type, std::uint16_t dataSize, bool compressed, std::size_t compressedSize) : type(type), dataSize(dataSize), compressed(compressed), compressedSize(compressedSize) {}
+        packetHeader() : type(PLACEHOLDER), dataSize(0U), compressed(false), compressedSize(0UL), roomId(0UL) {}
+        packetHeader(packetTypes type, std::uint16_t dataSize) : type(type), dataSize(dataSize), compressed(false), compressedSize(0UL), roomId(0UL) {}
+        packetHeader(packetTypes type, std::uint16_t dataSize, bool compressed, std::size_t compressedSize, std::uint64_t roomId) : type(type), dataSize(dataSize), compressed(compressed), compressedSize(compressedSize), roomId(roomId) {}
     };
 
     struct connectionRequest
@@ -65,20 +67,25 @@ namespace packet
         std::array<std::uint8_t, uuidSize> uuid;
         std::size_t connectedNb;
         std::uint64_t roomId;
+        bool createRoom;
 
-        connectionRequest() : status(REQUEST), connectedNb(0UL), roomId(0UL)
+        connectionRequest() : status(REQUEST), connectedNb(0UL), roomId(0UL), createRoom(false)
         {
             std::memset(&uuid, 0, uuidSize);
         }
-        connectionRequest(std::uint64_t roomId) : status(REQUEST), connectedNb(0UL), roomId(roomId)
+        connectionRequest(std::uint64_t roomId) : status(REQUEST), connectedNb(0UL), roomId(roomId), createRoom(false)
         {
             std::memset(&uuid, 0, uuidSize);
         }
-        connectionRequest(uint8_t status, const std::string &cliUuid) : status(status), connectedNb(0UL), roomId(0UL)
+        connectionRequest(std::uint64_t roomId, bool createRoom) : status(REQUEST), connectedNb(0UL), roomId(roomId), createRoom(createRoom)
+        {
+            std::memset(&uuid, 0, uuidSize);
+        }
+        connectionRequest(uint8_t status, const std::string &cliUuid) : status(status), connectedNb(0UL), roomId(0UL), createRoom(false)
         {
             std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
-        connectionRequest(uint8_t status, const std::string &cliUuid, std::size_t connectedCount) : status(status), connectedNb(connectedCount), roomId(0UL)
+        connectionRequest(uint8_t status, const std::string &cliUuid, std::size_t connectedCount) : status(status), connectedNb(connectedCount), roomId(0UL), createRoom(false)
         {
             std::memmove(&uuid, cliUuid.data(), uuidSize);
         }
@@ -150,12 +157,12 @@ namespace packet
         std::uint8_t _status;
         std::array<std::uint8_t, uuidSize> uuid;
         int keyCode;
-        keyboardEvent() : _status(0), keyCode(-1){};
-        keyboardEvent(const std::string &cliUuid, std::uint8_t status, int key)
+        std::uint64_t roomId;
+
+        keyboardEvent() : _status(0), keyCode(-1), roomId(0UL) {};
+        keyboardEvent(const std::string &cliUuid, std::uint8_t status, int key, std::uint64_t roomId) : _status(status), keyCode(key), roomId(roomId)
         {
             std::memmove(&uuid, cliUuid.data(), uuidSize);
-            _status = status;
-            keyCode = key;
         };
     };
 
@@ -171,6 +178,15 @@ namespace packet
         {
             std::memmove(&uuid, clientUUID.data(), uuidSize);
         }
+    };
+
+    struct createRoom
+    {
+        std::uint64_t roomId;
+        std::uint8_t maxSlots;
+
+        createRoom(std::uint8_t maxSlots) : roomId(0UL), maxSlots(maxSlots) {}
+        createRoom(std::uint64_t roomId, std::uint8_t maxSlots) : roomId(roomId), maxSlots(maxSlots) {}
     };
 
     struct roomAvailable

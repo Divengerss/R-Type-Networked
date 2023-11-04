@@ -12,6 +12,7 @@
 #include "Registry.hpp"
 #include "Network.hpp"
 #include "Room.hpp"
+#include "Score.hpp"
 
 namespace rtype
 {
@@ -21,10 +22,10 @@ namespace rtype
         NetworkSystem() : _net() {}
         ~NetworkSystem() = default;
 
-        std::pair<float, float> newPlayer(Registry &ecs, const std::string &clientUUID)
+        std::pair<float, float> newPlayer(std::uint64_t roomId, Registry &ecs, const std::string &clientUUID)
         {
             float posX = 30.0f;
-            float posY = 250.0f * getConnectedNb();
+            float posY = 250.0f * getConnectedNb(roomId);
             Position position(posX, posY);
             Controllable ctrl(clientUUID);
             Hitbox hb(99, 51);
@@ -121,7 +122,7 @@ namespace rtype
                 _net.writeToLogs(logGameErr, "Received a corrupted message. Message is empty.");
             else {
                 _net.writeToLogs(logGameInfo, clientUUID + ": " + text.data());
-                _net.sendResponse(packet::TEXT_MESSAGE, txtmsg);
+                _net.sendResponse(packet::TEXT_MESSAGE, txtmsg, header.roomId);
             }
         }
 
@@ -159,15 +160,15 @@ namespace rtype
         }
 
         template<typename T>
-        void sendResponse(const packet::packetTypes &type, T &data, bool toServerEndpoint = false, const std::string cliUuid = "")
+        void sendResponse(const packet::packetTypes &type, T &data, std::uint64_t roomId = std::numeric_limits<std::uint64_t>::max(), bool toServerEndpoint = false, const std::string cliUuid = "")
         {
-            _net.sendResponse(type, data, toServerEndpoint, cliUuid);
+            _net.sendResponse(type, data, roomId, toServerEndpoint, cliUuid);
         }
 
         template <class T>
-        void sendSparseArray(const packet::packetTypes &type, sparse_array<T> &sparseArray, const std::string &cliUuid = "")
+        void sendSparseArray(const packet::packetTypes &type, sparse_array<T> &sparseArray, std::uint64_t roomId, const std::string &cliUuid = "")
         {
-            _net.sendSparseArray<T>(type, sparseArray, cliUuid);
+            _net.sendSparseArray<T>(type, sparseArray, roomId, cliUuid);
         }
 
         bool isServerAvailable()
@@ -175,44 +176,76 @@ namespace rtype
             return _net.isSocketOpen();
         }
 
-        std::size_t getConnectedNb()
+        std::size_t getConnectedNb(std::uint64_t roomId)
         {
-            return _net.getClients().size();
+            for (auto &room : _rooms) {
+                if (room.getId() == roomId)
+                    return room.getClients().size();
+            }
+            return 0UL;
         }
 
-        void handleConnectionRequest(Registry &ecs, packet::packetTypes type, std::array<std::uint8_t, packetSize> &packet)
+        std::vector<Room> &getRooms() noexcept
+        {
+            return _rooms;
+        }
+
+        void initRoom(std::uint64_t roomId, std::unordered_map<std::uint64_t, Registry> &regs)
+        {
+            regs[roomId] = Registry();
+            regs[roomId].register_component<Position>();
+            regs[roomId].register_component<Velocity>();
+            regs[roomId].register_component<Hitbox>();
+            regs[roomId].register_component<Controllable>();
+            regs[roomId].register_component<MovementPattern>();
+            regs[roomId].register_component<Destroyable>();
+            regs[roomId].register_component<Damaging>();
+            regs[roomId].register_component<Score>();
+            regs[roomId].register_component<Tag>();
+            regs[roomId].spawn_entity(); // Background index
+            regs[roomId].spawn_entity(); // ChatBox index
+        }
+
+        void handleConnectionRequest(std::unordered_map<std::uint64_t, Registry> &regs, packet::packetTypes type, std::array<std::uint8_t, packetSize> &packet)
         {
             packet::connectionRequest request;
+            std::uint64_t roomId = request.roomId;
             std::memmove(&request, &packet[sizeof(packet::packetHeader)], sizeof(request));
-            std::string clientUUID = _net.addClient(request.roomId);
-            if (roomExist(request.roomId)) {
-                if (!addClientToRoom(clientUUID, request.roomId)) {
+            std::string clientUUID = _net.addClient(roomId);
+            if (roomExist(roomId)) {
+                if (!addClientToRoom(clientUUID, roomId)) {
                     packet::connectionRequest data(packet::REJECTED);
-                    _net.sendResponse(packet::CONNECTION_REQUEST, data, true);
+                    _net.sendResponse(packet::CONNECTION_REQUEST, data, roomId, true);
                     removeClient(clientUUID);
                     return;
                 }
             } else {
-                std::uint64_t roomId = createNewRoom(4U);
-                if (!addClientToRoom(clientUUID, roomId)) {
+                if (request.createRoom) {
+                    roomId = createNewRoom(5UL);
+                    initRoom(roomId, regs);
+                    if (!addClientToRoom(clientUUID, roomId)) {
+                        packet::connectionRequest data(packet::REJECTED);
+                        _net.sendResponse(packet::CONNECTION_REQUEST, data, roomId, true);
+                        removeClient(clientUUID);
+                        return;
+                    }
+                } else {
                     packet::connectionRequest data(packet::REJECTED);
-                    _net.sendResponse(packet::CONNECTION_REQUEST, data, true);
+                    _net.sendResponse(packet::CONNECTION_REQUEST, data, roomId, true);
                     removeClient(clientUUID);
                     return;
                 }
-                packet::roomAvailable roomAvailable(roomId, 4UL);
-                _net.sendResponse(packet::ROOM_AVAILABLE, roomAvailable);
             }
-            packet::joinedRoom joinedRoom(clientUUID, request.roomId);
-            _net.sendResponse(packet::JOINED_ROOM, joinedRoom);
-            packet::connectionRequest data(packet::ACCEPTED, clientUUID, getConnectedNb());
-            std::pair<float, float> pos = newPlayer(ecs, clientUUID);
+            packet::joinedRoom joinedRoom(clientUUID, roomId);
+            _net.sendResponse(packet::JOINED_ROOM, joinedRoom, roomId);
+            packet::connectionRequest data(packet::ACCEPTED, clientUUID, getConnectedNb(roomId));
+            std::pair<float, float> pos = newPlayer(roomId, regs[roomId], clientUUID);
             _net.writeToLogs(logInfo, "UUID of player is " + clientUUID);
             _net.writeToLogs(logInfo, "Connected!");
-            _net.sendResponse(packet::CONNECTION_REQUEST, data, true);
-            packet::clientStatus cliStatus(clientUUID, packet::NEW_CLIENT, pos.first, pos.second, getConnectedNb());
+            _net.sendResponse(packet::CONNECTION_REQUEST, data, roomId, true);
+            packet::clientStatus cliStatus(clientUUID, packet::NEW_CLIENT, pos.first, pos.second, getConnectedNb(roomId));
             try {
-                _net.sendResponse(packet::CLIENT_STATUS, cliStatus);
+                _net.sendResponse(packet::CLIENT_STATUS, cliStatus, roomId);
             } catch (const std::system_error &e) {
                 std::string err = e.what();
                 _net.writeToLogs(logWarn, "Failed to send the response of packet type [" + std::to_string(type) + "]:");
@@ -220,9 +253,9 @@ namespace rtype
             }
         }
 
-        void handleDisconnectionRequest(Registry &ecs, const std::array<std::uint8_t, packetSize> &packet, const packet::packetHeader &header)
+        void handleDisconnectionRequest(std::unordered_map<std::uint64_t, Registry> &regs, const std::array<std::uint8_t, packetSize> &packet, const packet::packetHeader &header)
         {
-            packet::disconnectionRequest request(packet::ACCEPTED, getConnectedNb());
+            packet::disconnectionRequest request(packet::ACCEPTED, 0UL);
             std::memmove(&request, &packet[sizeof(header)], sizeof(request));
             std::string clientUUID(uuidSize, 0);
             std::memmove(clientUUID.data(), &request.uuid, uuidSize);
@@ -234,14 +267,18 @@ namespace rtype
                 _net.writeToLogs(logErr, "Could not disconnect the client, UUID is unknown.");
                 return;
             }
-            removePlayer(ecs, clientUUID);
+            if (!roomExist(request.roomId)) {
+                _net.writeToLogs(logErr, "Could not disconnect the client from unknown room ID: " + std::to_string(request.roomId));
+                return;
+            }
+            removePlayer(regs[request.roomId], clientUUID);
             removeClientFromRoom(clientUUID, request.roomId);
             packet::leftRoom leftRoom(clientUUID, request.roomId);
-            _net.sendResponse(packet::LEFT_ROOM, leftRoom);
+            _net.sendResponse(packet::LEFT_ROOM, leftRoom, request.roomId);
             _net.writeToLogs(logInfo, "Lost connection: Disconnected " + clientUUID);
-            packet::clientStatus cliStatus(clientUUID, packet::LOSE_CLIENT, 0.0f, 0.0f, getConnectedNb());
+            packet::clientStatus cliStatus(clientUUID, packet::LOSE_CLIENT, 0.0f, 0.0f, getConnectedNb(request.roomId));
             try {
-                _net.sendResponse(packet::CLIENT_STATUS, cliStatus);
+                _net.sendResponse(packet::CLIENT_STATUS, cliStatus, request.roomId);
             } catch (const std::system_error &e) {
                 std::string err = e.what();
                 _net.writeToLogs(logWarn, "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
@@ -249,37 +286,48 @@ namespace rtype
             }
         }
 
-        void handleEntityKilled(Entity entity)
+        void handleEntityKilled(Entity entity, std::uint64_t roomId)
         {
             packet::entityKilledStatus status(entity());
             try {
-                _net.sendResponse(packet::ENTITY_KILLED, status);
+                _net.sendResponse(packet::ENTITY_KILLED, status, roomId);
             } catch (const std::system_error &e) {
                 std::string err = e.what();
                 _net.writeToLogs(logWarn, "    " + err);
             }
         }
 
-        void handlekeyboardEvent(Registry &ecs, const std::array<std::uint8_t, packetSize> &packet, const packet::packetHeader &header)
+        void handlekeyboardEvent(std::unordered_map<std::uint64_t, Registry> &regs, const std::array<std::uint8_t, packetSize> &packet, const packet::packetHeader &header)
         {
             packet::keyboardEvent event;
             std::memmove(&event, &packet[sizeof(header)], sizeof(event));
             std::string clientUUID(uuidSize, 0);
             std::memmove(clientUUID.data(), &event.uuid, uuidSize);
-            affectControllable(ecs, clientUUID, event.keyCode);
+            affectControllable(regs[event.roomId], clientUUID, event.keyCode);
         }
 
-        void networkSystemServer(Registry &ecs)
+        void handleCreateRoom(std::unordered_map<std::uint64_t, Registry> &regs, const std::array<std::uint8_t, packetSize> &packet)
+        {
+            packet::createRoom createRoom(0UL);
+            std::memmove(&createRoom, &packet[sizeof(packet::packetHeader)], sizeof(createRoom));
+            std::uint64_t roomId = createNewRoom(createRoom.maxSlots);
+            initRoom(roomId, regs);
+            packet::roomAvailable roomAvailable(roomId, _rooms[roomId].getMaxSlots());
+            _net.sendResponse(packet::ROOM_AVAILABLE, roomAvailable);
+        }
+
+        void networkSystemServer(std::unordered_map<std::uint64_t, Registry> &regs)
         {
             std::array<std::uint8_t, packetSize> packet;
             packet::packetHeader header;
             std::unordered_map<packet::packetTypes, std::function<void()>> dataHandlers = {
                 {packet::PLACEHOLDER, [&] { _net.writeToLogs(logInfo, "Placeholder received successfully."); }},
-                {packet::CONNECTION_REQUEST, [&] { handleConnectionRequest(ecs, header.type, packet); }},
-                {packet::DISCONNECTION_REQUEST, [&] { handleDisconnectionRequest(ecs, packet, header); }},
-                {packet::KEYBOARD_EVENT, [&] { handlekeyboardEvent(ecs, packet, header); }},
+                {packet::CONNECTION_REQUEST, [&] { handleConnectionRequest(regs, header.type, packet); }},
+                {packet::DISCONNECTION_REQUEST, [&] { handleDisconnectionRequest(regs, packet, header); }},
+                {packet::KEYBOARD_EVENT, [&] { handlekeyboardEvent(regs, packet, header); }},
                 {packet::KEEP_CONNECTION, [&] { handleKeepConnection(packet, header); }},
-                {packet::TEXT_MESSAGE, [&] { handleTextMessage(packet, header); }}
+                {packet::TEXT_MESSAGE, [&] { handleTextMessage(packet, header); }},
+                {packet::CREATE_ROOM, [&] { handleCreateRoom(regs, packet); }},
             };
 
             _net.startServer();
@@ -312,17 +360,17 @@ namespace rtype
             _net.writeToLogs(status, msg);
         }
 
-        bool removeTimeoutClients(Registry &ecs)
+        bool removeTimeoutClients(std::uint64_t roomId, Registry &ecs)
         {
             packet::keepConnection data;
-            sendResponse(packet::KEEP_CONNECTION, data);
+            sendResponse(packet::KEEP_CONNECTION, data, roomId);
             for (auto &client : getClients()) {
                 client.packetMissed();
                 std::string clientUUID = client.getUuid();
                 if (client.getMissedPacket() >= 5UL) {
                     writeToLogs(logInfo, "Client " + clientUUID + " connection timeout.");
-                    packet::clientStatus cliStatus(clientUUID, packet::LOSE_CLIENT, 0.0f, 0.0f, getConnectedNb() - 1);
-                    sendResponse(packet::CLIENT_STATUS, data);
+                    packet::clientStatus cliStatus(clientUUID, packet::LOSE_CLIENT, 0.0f, 0.0f, getConnectedNb(roomId) - 1);
+                    sendResponse(packet::CLIENT_STATUS, data, roomId);
                     removePlayer(ecs, clientUUID);
                     removeClient(clientUUID);
                     return true;
