@@ -23,6 +23,7 @@
 #include "Score.hpp"
 #include "Tag.hpp"
 #include "ZLib.hpp"
+#include "ChatBox.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -227,8 +228,14 @@ namespace net
                 std::cerr << "Got a message from an unknown client UUID or corrupted." << std::endl;
             } else if (message.empty())
                 std::cerr << "Got an empty message or corrupted." << std::endl;
-            else
-                std::cout << clientUUID << ": " << message << std::endl;
+            else {
+                for (int i = 0; i < _reg.get_entity_number(); i++) {
+                    if (_reg.entity_has_component<ChatBox>(Entity(i))) {
+                        auto &chatBox = _reg.get_component<ChatBox>(Entity(i));
+                        chatBox.addMessage(message);
+                    }
+                }
+            }
         }
 
         void handleReceive(const asio::error_code &errCode) {
