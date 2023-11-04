@@ -16,7 +16,7 @@
 #include "Controllable.hpp"
 #include "Destroyable.hpp"
 #include "Hitbox.hpp"
-#include "Position_System.hpp"
+#include "./../ECS/Systems/Server/PositionSystem.hpp"
 
 int main() {
     Registry reg;
@@ -64,7 +64,7 @@ int main() {
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-    Position_System posSys;
+    PositionSystem posSys;
 
     bool isRunning = true;
     SDL_Event event;
@@ -75,7 +75,7 @@ int main() {
             }
         }
         SDL_RenderClear(renderer);
-        posSys.position_systemRunner(reg);
+        posSys.runSystem(reg);
         auto textures = reg.get_components<Texture>();
         auto scales = reg.get_components<Scale>();
         auto positions = reg.get_components<Position>();
