@@ -2,6 +2,7 @@
     "dependencies": [
       "asio",
       "sfml",
-      "sdl2"
+      "sdl2",
+      "sdl2-image"
     ]
 }
