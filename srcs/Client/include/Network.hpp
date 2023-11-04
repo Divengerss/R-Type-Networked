@@ -23,6 +23,7 @@
 #include "Score.hpp"
 #include "Tag.hpp"
 #include "ZLib.hpp"
+#include "ChatBox.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -119,14 +120,19 @@ namespace net
 
             void listenServer()
             {
-                try {
+                try
+                {
                     _socket.async_receive_from(
                         asio::buffer(_packet.data(), _packet.size()),
                         _endpoint,
                         std::bind(&Client::handleReceive, this, std::placeholders::_1));
-                } catch (const asio::system_error &e) {
+                }
+                catch (const asio::system_error &e)
+                {
                     std::cerr << "Failed to receive packet: " << e.what() << std::endl;
-                } catch (const Error &) {
+                }
+                catch (const Error &)
+                {
                     std::cerr << "Server connection closed" << std::endl;
                 }
             }
@@ -134,18 +140,6 @@ namespace net
             void handlePlaceholderPacket()
             {
                 std::cout << "Received a placeholder packet from server" << std::endl;
-            }
-
-            void handleClientStatusPacket(packet::clientStatus &cliStatus)
-            {
-                std::string cliUuid(reinterpret_cast<char *>(cliStatus.uuid.data()));
-                if (cliStatus.status == packet::LOSE_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
-                    std::cout << "Client " << cliUuid << " disconnected." << std::endl;
-                    std::cout << cliStatus.connectedNb << " clients connected." << std::endl;
-                } else if (cliStatus.status == packet::NEW_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str())) {
-                    std::cout << "Client " << cliUuid << " connected at X: " << cliStatus.posX << " Y: " << cliStatus.posY << std::endl;
-                    std::cout << cliStatus.connectedNb << " clients connected." << std::endl;
-                }
             }
 
             void handleConnectionRequestPacket(const packet::connectionRequest &request) {
@@ -156,6 +150,21 @@ namespace net
                     std::cout << request.connectedNb << " client connected." << std::endl;
                 } else {
                     std::cout << "rejected" << std::endl;
+                }
+            }
+
+            void handleClientStatusPacket(packet::clientStatus &cliStatus)
+            {
+                std::string cliUuid(reinterpret_cast<char *>(cliStatus.uuid.data()));
+                if (cliStatus.status == packet::LOSE_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str()))
+                {
+                    std::cout << "Client " << cliUuid << " disconnected." << std::endl;
+                    std::cout << cliStatus.connectedNb << " clients connected." << std::endl;
+                }
+                else if (cliStatus.status == packet::NEW_CLIENT && std::strcmp(cliUuid.c_str(), _uuid.c_str()))
+                {
+                    std::cout << "Client " << cliUuid << " connected at X: " << cliStatus.posX << " Y: " << cliStatus.posY << std::endl;
+                    std::cout << cliStatus.connectedNb << " clients connected." << std::endl;
                 }
             }
 
@@ -233,6 +242,26 @@ namespace net
                 std::cout << "Room " << std::to_string(data.roomId) << " has been closed" << std::endl;
             }
 
+            void handleTextMessage(const packet::textMessage &data)
+            {
+                std::string clientUUID(uuidSize, 0);
+                std::string message(data.msgSize, 0);
+                std::memmove(clientUUID.data(), &data.uuid, uuidSize);
+                std::memmove(message.data(), &data.message, data.msgSize);
+                if (clientUUID.empty()) {
+                    std::cerr << "Got a message from an unknown client UUID or corrupted." << std::endl;
+                } else if (message.empty())
+                    std::cerr << "Got an empty message or corrupted." << std::endl;
+                else {
+                    for (int i = 0; i < _reg.get_entity_number(); i++) {
+                        if (_reg.entity_has_component<ChatBox>(Entity(i))) {
+                            auto &chatBox = _reg.get_component<ChatBox>(Entity(i));
+                            chatBox.addMessage(message);
+                        }
+                    }
+                }
+            }
+
             void handleReceive(const asio::error_code &errCode)
             {
                 packet::packetHeader header;
@@ -285,6 +314,11 @@ namespace net
                             Score component(0);
                             handleECSComponent<Score>(header, component);
                         }},
+                        {packet::TEXT_MESSAGE, [&]{
+                            packet::textMessage txtmsg;
+                            std::memmove(&txtmsg, _packet.data() + headerSize, sizeof(txtmsg));
+                            handleTextMessage(txtmsg);
+                        }},
                         {packet::KEEP_CONNECTION, [&]{
                             handleKeepConnection();
                         }},
@@ -326,7 +360,6 @@ namespace net
                         std::cerr << "Unknown packet" << std::endl;
                     }
                 }
-
                 _timer.cancel();
                 if (!errCode && header.type != packet::FORCE_DISCONNECT) {
                     listenServer();
@@ -337,7 +370,7 @@ namespace net
 
             void connect()
             {
-                packet::connectionRequest request(0UL); // ROOM ID (change when available in UI)
+                packet::connectionRequest request;
                 packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(request));
                 std::size_t bytesSent = sendPacket(header, request);
                 if (bytesSent == 0UL)
@@ -346,9 +379,10 @@ namespace net
 
             void disconnect()
             {
-                packet::disconnectionRequest request(_uuid.data(), _roomId);
-                packet::packetHeader header(packet::DISCONNECTION_REQUEST, sizeof(request));
-                if (_socket.is_open()) {
+                packet::connectionRequest request(0UL); // ROOM ID (change when available in UI)
+                    packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(request));
+                if (_socket.is_open())
+                {
                     std::size_t bytesSent = sendPacket(header, request);
                     if (bytesSent == 0UL)
                         std::cerr << "Something went wrong sending the packet disconnection." << std::endl;

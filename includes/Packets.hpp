@@ -33,6 +33,7 @@ namespace packet
         ROOM_CLOSED,
         JOINED_ROOM,
         LEFT_ROOM,
+        TEXT_MESSAGE,
         ECS_TAG,
         ENTITY_KILLED,
     };
@@ -210,6 +211,24 @@ namespace packet
         leftRoom(const std::string &clientUUID, std::uint64_t roomId) : roomId(roomId)
         {
             std::memmove(&uuid, clientUUID.data(), uuidSize);
+        }
+    };
+
+    struct textMessage
+    {
+        std::array<std::uint8_t, uuidSize> uuid;
+        std::array<std::uint8_t, 256UL> message;
+        std::size_t msgSize;
+
+        textMessage(): uuid({}), msgSize(0UL)
+        {
+            std::memset(&message, 0, 256UL);
+        }
+        textMessage(const std::string &cliUuid, const std::string &msg) : msgSize(msg.length())
+        {
+            std::memset(&message, 0, 256UL);
+            std::memmove(&uuid, cliUuid.data(), uuidSize);
+            std::memmove(&message, msg.data(), msgSize);
         }
     };
 }

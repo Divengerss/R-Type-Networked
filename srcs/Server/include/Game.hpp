@@ -42,6 +42,7 @@ namespace rtype
             _reg.register_component<Score>();
             _reg.register_component<Tag>();
             _reg.spawn_entity(); // Background index
+            _reg.spawn_entity(); // ChatBox index
         };
 
         ~loopSystem()
