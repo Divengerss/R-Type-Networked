@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(r-type_server)
 
-
 if(WIN32)
   set(CPACK_GENERATOR "ZIP")
 else()
@@ -26,12 +25,16 @@ set(CPACK_SOURCE_IGNORE_FILES*
 )
 set(CPACK_COMPONENTS_ALL ON)
 
-add_executable(${PROJECT_NAME} src/Server/Main.cpp)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)
-install(FILES
-    ${CMAKE_SOURCE_DIR}/Release/server.cfg
-    DESTINATION .)
+add_executable(${PROJECT_NAME}
+    src/Main.cpp
+    src/Network.cpp
+)
+
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/bin
+)
 
 include(CPack)
 
@@ -48,13 +51,11 @@ endif (APPLE)
 include_directories(
     include
     ${PATH_ASIO}
-    ${CMAKE_SOURCE_DIR}/srcs/Netcode
-    include/Server
     ${CMAKE_SOURCE_DIR}/includes
     ${CMAKE_SOURCE_DIR}/ECS
     ${CMAKE_SOURCE_DIR}/ECS/Components
     ${CMAKE_SOURCE_DIR}/ECS/Systems
-
+    ${CMAKE_SOURCE_DIR}/srcs/Engine/include
 )
 
 if(MSVC)
@@ -63,5 +64,7 @@ else()
   target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+find_package(ZLIB REQUIRED)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PATH_ASIO})
-target_link_libraries(${PROJECT_NAME} -pthread)
+link_directories(${CMAKE_BINARY_DIR}/lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB -pthread)

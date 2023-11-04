@@ -16,6 +16,7 @@
 #include "Hitbox.hpp"
 #include "Damaging.hpp"
 #include "Packets.hpp"
+#include "Tag.hpp"
 #include <cmath>
 
 class PositionSystem
@@ -26,72 +27,74 @@ public:
 
     void positionSystemServer(Registry &r)
     {
-        auto &positions = r.get_components<Position>();
-        auto &velocities = r.get_components<Velocity>();
-        auto &patterns = r.get_components<MovementPattern>();
-        auto &controllables = r.get_components<Controllable>();
-        for (size_t i = 0; i < positions.size(); ++i)
+        for (int i = 0; i < r.get_entity_number(); i++)
         {
-            auto &pos = positions[i];
-            auto const &vel = velocities[i];
-            auto const &pat = patterns[i];
-            auto const &cont = controllables[i];
-            if (pos && vel && cont)
+            if (r.entity_has_component<Position>(Entity(i)) && r.entity_has_component<Velocity>(Entity(i)))
             {
-                if (cont->latestInput == 71)
+                auto &pos = r.get_component<Position>(Entity(i));
+                auto &vel = r.get_component<Velocity>(Entity(i));
+
+                if (r.entity_has_component<Controllable>(Entity(i)))
                 {
-                    if (pos->_x > 10)
-                        pos->_x -= vel.value()._velocity;
+                    auto &cont = r.get_component<Controllable>(Entity(i));
+
+                    if (cont.latestInput == 71)
+                    {
+                        if (pos._x > 10)
+                            pos._x -= vel._velocity;
+                    }
+                    if (cont.latestInput == 72)
+                    {
+                        if (pos._x < 1900)
+                            pos._x += vel._velocity;
+                    }
+                    if (cont.latestInput == 73)
+                    {
+                        if (pos._y > 10)
+                            pos._y -= vel._velocity;
+                    }
+                    if (cont.latestInput == 74)
+                    {
+                        if (pos._y < 1050)
+                            pos._y += vel._velocity;
+                    }
+                    if (_spacePressed <= 0 && cont.latestInput == 57)
+                    {
+                        Entity bullet = r.spawn_entity();
+                        r.add_component<Position>(bullet, {pos._x + 100, pos._y});
+                        r.add_component<Velocity>(bullet, {20});
+                        r.add_component<MovementPattern>(bullet, {STRAIGHTRIGHT});
+                        r.add_component<Damaging>(bullet, 4);
+                        r.add_component<Tag>(bullet, {TagEnum::BULLET});
+                        r.add_component<Destroyable>(bullet, {1});
+                        r.add_component<Hitbox>(bullet, {25, 25});
+                        _spacePressed = 20;
+                    }
+                    _spacePressed--;
                 }
-                if (cont->latestInput == 72)
+                else if (r.entity_has_component<MovementPattern>(Entity(i)))
                 {
-                    if (pos->_x < 1900)
-                        pos->_x += vel.value()._velocity;
-                }
-                if (cont->latestInput == 73)
-                {
-                    if (pos->_y > 10)
-                        pos->_y -= vel.value()._velocity;
-                }
-                if (cont->latestInput == 74)
-                {
-                    if (pos->_y < 1050)
-                        pos->_y += vel.value()._velocity;
-                }
-                if (_spacePressed <= 0 && cont->latestInput == 57)
-                {
-                    Entity bullet = r.spawn_entity();
-                    r.add_component<Position>(bullet, {pos->_x + 100, pos->_y});
-                    r.add_component<Velocity>(bullet, {20});
-                    r.add_component<MovementPattern>(bullet, {STRAIGHTRIGHT});
-                    r.add_component<Damaging>(bullet, 4);
-                    _spacePressed = 20;
-                }
-                _spacePressed--;
-            }
-            else if (pos && vel && pat)
-            {
-                switch (pat.value()._movementPattern)
-                {
-                case (MovementPatterns::STRAIGHTLEFT):
-                    pos->_y = pos->_y;
-                    pos->_x -= vel.value()._velocity;
-                    break;
-                case (MovementPatterns::STRAIGHTRIGHT):
-                    pos->_y = pos->_y;
-                    pos->_x += vel.value()._velocity;
-                    break;
-                case (MovementPatterns::SINUS):
-                    pos->_y = sin(pos->_x) + pat.value()._baseHeight;
-                    break;
-                case (MovementPatterns::CIRCLE):
-                    pos->_y = 0;
-                    break;
-                case (MovementPatterns::NONE):
-                    break;
-                }
-                if (pos->_x > 2000 || pos->_x < -100) {
-                    r.kill_entity(Entity(i));
+                    auto &pat = r.get_component<MovementPattern>(Entity(i));
+
+                    switch (pat._movementPattern)
+                    {
+                    case (MovementPatterns::STRAIGHTLEFT):
+                        pos._y = pos._y;
+                        pos._x -= vel._velocity;
+                        break;
+                    case (MovementPatterns::STRAIGHTRIGHT):
+                        pos._y = pos._y;
+                        pos._x += vel._velocity;
+                        break;
+                    case (MovementPatterns::SINUS):
+                        pos._y = sin(pos._x) + pat._baseHeight;
+                        break;
+                    case (MovementPatterns::CIRCLE):
+                        pos._y = 0;
+                        break;
+                    case (MovementPatterns::NONE):
+                        break;
+                    }
                 }
             }
         }
