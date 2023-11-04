@@ -5,7 +5,6 @@
 #include <array>
 #include <string>
 #include <cstring>
-
 #include "Uuid.hpp"
 
 #pragma pack(push, 1)
@@ -14,6 +13,7 @@ namespace packet
 {
     enum packetTypes : std::uint8_t
     {
+        NONE,
         PLACEHOLDER,
         CONNECTION_REQUEST,
         DISCONNECTION_REQUEST,
@@ -27,7 +27,10 @@ namespace packet
         ECS_DAMAGES,
         ECS_DESTROYABLE,
         ECS_MOVEMENTPATTERN,
-        ECS_SCORE
+        ECS_SCORE,
+        TEXT_MESSAGE,
+        ECS_TAG,
+        ENTITY_KILLED,
     };
 
     enum packetStatus : std::uint8_t
@@ -43,9 +46,12 @@ namespace packet
     {
         packetTypes type;
         std::uint16_t dataSize;
+        bool compressed;
+        std::size_t compressedSize;
 
-        packetHeader() : type(PLACEHOLDER), dataSize(0U) {}
-        packetHeader(packetTypes type, std::uint16_t dataSize) : type(type), dataSize(dataSize) {}
+        packetHeader() : type(PLACEHOLDER), dataSize(0U), compressed(false), compressedSize(0UL) {}
+        packetHeader(packetTypes type, std::uint16_t dataSize) : type(type), dataSize(dataSize), compressed(false), compressedSize(0UL) {}
+        packetHeader(packetTypes type, std::uint16_t dataSize, bool compressed, std::size_t compressedSize) : type(type), dataSize(dataSize), compressed(compressed), compressedSize(compressedSize) {}
     };
 
     struct connectionRequest
@@ -94,6 +100,13 @@ namespace packet
         }
     };
 
+    struct entityKilledStatus
+    {
+        int entity;
+
+        entityKilledStatus(int entity) : entity(entity){};
+    };
+
     struct clientStatus
     {
         std::uint8_t status;
@@ -121,18 +134,38 @@ namespace packet
         }
     };
 
-    struct keyboardEvent {
+    struct keyboardEvent
+    {
         std::uint8_t _status;
         std::array<std::uint8_t, uuidSize> uuid;
         int keyCode;
-        keyboardEvent() : _status(0), keyCode(-1) {};
-        keyboardEvent(const std::string &cliUuid, std::uint8_t status, int key) {
+        keyboardEvent() : _status(0), keyCode(-1){};
+        keyboardEvent(const std::string &cliUuid, std::uint8_t status, int key)
+        {
             std::memmove(&uuid, cliUuid.data(), uuidSize);
             _status = status;
             keyCode = key;
         };
     };
+
+    struct textMessage
+    {
+        std::array<std::uint8_t, uuidSize> uuid;
+        std::array<std::uint8_t, 256UL> message;
+        std::size_t msgSize;
+
+        textMessage(): uuid({}), msgSize(0UL)
+        {
+            std::memset(&message, 0, 256UL);
+        }
+        textMessage(const std::string &cliUuid, const std::string &msg) : msgSize(msg.length())
+        {
+            std::memset(&message, 0, 256UL);
+            std::memmove(&uuid, cliUuid.data(), uuidSize);
+            std::memmove(&message, msg.data(), msgSize);
+        }
+    };
 }
 
 #pragma pack(pop)
-#endif //PACKETS_HPP
+#endif // PACKETS_HPP
