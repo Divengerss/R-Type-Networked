@@ -108,10 +108,10 @@ void net::Network::stopServer()
     _ioService.stop();
 }
 
-std::string net::Network::addClient()
+std::string net::Network::addClient(std::uint64_t roomId)
 {
     std::string cliUuid = uuid::generateUUID();
-    _clients.push_back(Client(cliUuid, _serverEndpoint));
+    _clients.emplace_back(Client(cliUuid, _serverEndpoint, roomId));
     return cliUuid;
 }
 
