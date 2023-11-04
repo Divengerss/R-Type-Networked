@@ -9,7 +9,6 @@
 #define TEXTURE_HPP_
 
 #include <string>
-#include <SFML/Graphics.hpp>
 
 class Texture
 {

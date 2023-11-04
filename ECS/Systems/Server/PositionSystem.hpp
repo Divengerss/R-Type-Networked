@@ -16,16 +16,20 @@
 #include "Hitbox.hpp"
 #include "Damaging.hpp"
 #include "Packets.hpp"
+<<<<<<< HEAD
 #include "Tag.hpp"
+=======
+#include "ISystem.hpp"
+>>>>>>> origin/refacto-ECS
 #include <cmath>
 
-class PositionSystem
+class PositionSystem : public ISystem
 {
 public:
     PositionSystem() = default;
     ~PositionSystem() = default;
 
-    void positionSystemServer(Registry &r)
+    void runSystem(Registry &r)
     {
         for (int i = 0; i < r.get_entity_number(); i++)
         {

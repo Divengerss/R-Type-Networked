@@ -10,10 +10,14 @@
 
 #include "SparseArray.hpp"
 #include "Entity.hpp"
+#include "ISystem.hpp"
+#include "Packets.hpp"
 #include <unordered_map>
 #include <functional>
 #include <typeindex>
 #include <list>
+#include <queue>
+
 
 #include <iostream>
 #include <optional>
@@ -125,6 +129,7 @@ public:
         return array[to()];
     }
 
+<<<<<<< HEAD
     template <typename Component, typename... Params>
     typename sparse_array<Component>::reference_type emplace_component(Entity const &to, Params &&...p)
     {
@@ -146,6 +151,27 @@ private:
     std::unordered_map<std::type_index, std::function<void(Registry &)>> _add_functions;
     std::list<int> _empty_entities;
     int entity_number = 0;
+=======
+        void add_systems(std::initializer_list<ISystem *> systems) {
+            for (auto system : systems)
+                _systems.emplace_back(system);
+        }
+
+        void run_systems() {
+            for (auto system: _systems) {
+                [&system, this]() { system->runSystem(*this); }();
+            }
+        };
+
+        std::queue<std::pair<packet::packetHeader, packet::keyboardEvent>> queueToSend;
+    private:
+        std::vector<ISystem *> _systems;
+        std::unordered_map<std::type_index, std::any> _components_arrays;
+        std::unordered_map<std::type_index, std::function<void(Registry &, Entity const &)>> _erase_functions;
+        std::unordered_map<std::type_index, std::function<void(Registry &)>> _add_functions;
+        std::list<int> _empty_entities;
+        int entity_number = 0;
+>>>>>>> origin/refacto-ECS
 };
 
 #endif /* !REGISTRY_HPP_ */

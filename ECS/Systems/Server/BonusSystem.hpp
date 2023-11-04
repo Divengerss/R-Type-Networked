@@ -14,14 +14,12 @@
 #include "Pickup.hpp"
 #include "Destroyable.hpp"
 #include "ActiveBonus.hpp"
+#include "ISystem.hpp"
 
-class BonusSystem
+class BonusSystem : public ISystem
 {
 public:
-    BonusSystem();
-    ~BonusSystem();
-
-    void bonusSystem(Registry &r)
+    void runSystem(Registry &r)
     {
         auto const hitboxes = r.get_components<Hitbox>();
         auto const positions = r.get_components<Position>();
@@ -38,7 +36,7 @@ public:
             {
                 for (size_t j = 0; j < positions.size(); ++j)
                 {
-                    if (i = j)
+                    if (i == j)
                         continue;
                     auto const &hb_bonus = hitboxes[j];
                     auto const &pos_bonus = positions[j];
@@ -52,16 +50,19 @@ public:
                             pos_player.value()._y + hb_player.value()._height > pos_bonus.value()._y)
                         {
                             // COLLISION
-                            if (pickup.value().positive == true)
+                            if (pickup.value()._positive == true)
                             {
                                 switch (pickup.value()._bonusType)
                                 {
                                 case (BonusType::ForceBoost):
                                     bonus.value()._fb = ForceBoost::FORCEUP;
+                                    break;
                                 case (BonusType::SpeedBoost):
                                     bonus.value()._fb = SpeedBoost::SPEEDUP;
+                                    break;
                                 case (BonusType::ShootStyle):
                                     bonus.value()._ss = ShootStyle::THREEBULLET;
+                                    break;
                                 }
                             }
                             else
@@ -70,10 +71,13 @@ public:
                                 {
                                 case (BonusType::ForceBoost):
                                     bonus.value()._fb = ForceBoost::FORCEDOWN;
+                                    break;
                                 case (BonusType::SpeedBoost):
                                     bonus.value()._fb = SpeedBoost::SPEEDDOWN;
+                                    break;
                                 case (BonusType::ShootStyle):
                                     bonus.value()._ss = ShootStyle::ONEBULLET;
+                                    break;
                                 }
                             }
                             dest.value()._hp = 0;
