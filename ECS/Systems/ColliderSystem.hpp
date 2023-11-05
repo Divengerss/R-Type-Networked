@@ -20,7 +20,7 @@ class ColliderSystem
 public:
     void colliderSystem(Registry &r)
     {
-        for (size_t i = 0; i < r.get_entity_number(); i++)
+        for (int i = 0; i < r.get_entity_number(); i++)
         {
             if (!r.entity_has_component<Hitbox>(Entity(i)) ||
                 !r.entity_has_component<Position>(Entity(i)))
@@ -29,7 +29,7 @@ public:
             auto const &hb_fir = r.get_component<Hitbox>(Entity(i));
             auto const &pos_fir = r.get_component<Position>(Entity(i));
             auto &col_fir = r.get_components<Collider>()[i];
-            for (size_t j = 0; j < r.get_entity_number(); ++j)
+            for (int j = 0; j < r.get_entity_number(); ++j)
             {
                 if (i == j)
                     continue;
@@ -48,11 +48,11 @@ public:
                     pos_fir._y <= pos_sec._y + hb_sec._height)
                 {
                     if (!col_fir)
-                        r.add_component<Collider>(Entity(i), {{j}});
+                        r.add_component<Collider>(Entity(i), {{std::size_t(j)}});
                     else
                         col_fir->_collisions.push_back(j);
                     if (!col_sec)
-                        r.add_component<Collider>(Entity(j), {{i}});
+                        r.add_component<Collider>(Entity(j), {{std::size_t(i)}});
                     else
                         col_sec->_collisions.push_back(i);
                 }
