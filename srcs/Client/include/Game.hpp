@@ -142,7 +142,7 @@ namespace rtype
                     _regRoom.kill_entity(Entity(i));
                 }
 
-                std::vector<std::pair<std::uint64_t, std::uint8_t>> rooms = client.getRooms();
+                std::vector<std::pair<int, int>> rooms = client.getRooms();
 
                 Entity buttonCreateRoom = _regRoom.spawn_entity();
                 _regRoom.add_component<Button>(buttonCreateRoom,
@@ -161,9 +161,9 @@ namespace rtype
                         {
                             static_cast<float>(window.getSize().x / 2), static_cast<float>(window.getSize().y / 5 * (i + 1)),
                             100.f, 100.f,
-                            std::string("Room " + std::to_string(rooms[i].first) + " (max " + std::to_string(rooms[i].second) + ")"),
+                            std::string("Room " + std::to_string(i) + " (max " + std::to_string(rooms[i].second) + ")"),
                             _assets.getFont("arial"),
-                            std::function<void()>([&]() { client.connect(rooms[i].first, false); _scene = 1; std::cout << "Room " << rooms[i].first << std::endl; })
+                            std::function<void()>([&]() { client.connect(i - 1, false); _scene = 1; std::cout << "Room " << i - 1 << std::endl; })
                         }
                     );
                 }
@@ -233,7 +233,7 @@ namespace rtype
 
                     if (client.isSocketOpen() == false || checkLoseCondition()) {
                         _scene = 4;
-                        client.disconnect();
+                        //client.disconnect();
                     }
                 }
             }

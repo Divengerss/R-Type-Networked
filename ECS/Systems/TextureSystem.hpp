@@ -11,7 +11,7 @@ public:
     TextureSystem() = default;
     ~TextureSystem() = default;
 
-    void run(Registry& reg, int createdPlayers)
+    void run(Registry& reg, int &createdPlayers)
     {
         for (int i = 0; i < reg.get_entity_number(); ++i) {
             if (reg.entity_has_component<Texture>(Entity(i)))

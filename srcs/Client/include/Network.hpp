@@ -51,7 +51,7 @@ namespace net
             };
             ~Client()
             {
-                if (!clientInstance) {
+                if (!clientInstance) { 
                     return;
                 }
                 for (auto &thread : clientInstance->_threadPool) {
@@ -59,7 +59,8 @@ namespace net
                         thread.join();
                     }
                 }
-                _socket.close();
+                if (_socket.is_open())
+                    _socket.close();
             };
 
             void run()
@@ -153,7 +154,6 @@ namespace net
             void handleConnectionRequestPacket(const packet::connectionRequest &request) {
                 if (request.status == packet::ACCEPTED) {
                     std::memmove(_uuid.data(), &request.uuid, uuidSize);
-                    _roomId = request.roomId;
                     std::cout << "Got uuid = " << _uuid << std::endl;
                     std::cout << request.connectedNb << " client connected." << std::endl;
                 } else {
@@ -178,10 +178,12 @@ namespace net
 
             void handleForceDisconnectPacket()
             {
-                _socket.cancel();
-                _ioContext.stop();
-                _socket.close();
-                _uuid.clear();
+                if (_socket.is_open()) {
+                    _socket.cancel();
+                    _ioContext.stop();
+                    _socket.close();
+                    _uuid.clear();
+                }
             }
 
             template <class T, typename U>
@@ -386,13 +388,14 @@ namespace net
                     std::cerr << "Something went wrong sending the packet room list." << std::endl;
             }
 
-            std::vector<std::pair<std::uint64_t, std::uint8_t>> getRooms() const noexcept
+            std::vector<std::pair<int, int>> getRooms() const noexcept
             {
                 return _rooms;
             }
 
-            void connect(int roomId, bool createRoom)
+            void connect(std::uint64_t roomId, bool createRoom)
             {
+                _roomId = roomId;
                 packet::connectionRequest request(roomId, createRoom);
                 packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(request));
                 std::size_t bytesSent = sendPacket(header, request);
@@ -442,7 +445,7 @@ namespace net
             std::vector<std::uint8_t> _packet;
             Registry &_reg;
             static Client* clientInstance;
-            std::vector<std::pair<std::uint64_t, std::uint8_t>> _rooms;
+            std::vector<std::pair<int, int>> _rooms;
     };
 
     Client *Client::clientInstance = nullptr;

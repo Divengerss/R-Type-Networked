@@ -238,15 +238,15 @@ namespace rtype
                 }
             }
             packet::joinedRoom joinedRoom(clientUUID, roomId);
-            _net.sendResponse(packet::JOINED_ROOM, joinedRoom, roomId);
+            _net.sendResponse(packet::JOINED_ROOM, joinedRoom, roomId, false, clientUUID);
             packet::connectionRequest data(packet::ACCEPTED, clientUUID, getConnectedNb(roomId));
             std::pair<float, float> pos = newPlayer(roomId, regs[roomId], clientUUID);
             _net.writeToLogs(logInfo, "UUID of player is " + clientUUID);
             _net.writeToLogs(logInfo, "Connected!");
-            _net.sendResponse(packet::CONNECTION_REQUEST, data, roomId, true);
+            _net.sendResponse(packet::CONNECTION_REQUEST, data, roomId, false, clientUUID);
             packet::clientStatus cliStatus(clientUUID, packet::NEW_CLIENT, pos.first, pos.second, getConnectedNb(roomId));
             try {
-                _net.sendResponse(packet::CLIENT_STATUS, cliStatus, roomId);
+                _net.sendResponse(packet::CLIENT_STATUS, cliStatus, roomId, false, clientUUID);
             } catch (const std::system_error &e) {
                 std::string err = e.what();
                 _net.writeToLogs(logWarn, "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
@@ -332,13 +332,12 @@ namespace rtype
                 {packet::ROOM_LIST_REQUEST, [&] {
                     for (auto &room : _rooms) {
                         packet::roomAvailable roomAvailable(room.getId(), room.getMaxSlots());
-                        _net.sendResponse(packet::ROOM_AVAILABLE, roomAvailable);
+                        _net.sendResponse(packet::ROOM_AVAILABLE, roomAvailable, std::numeric_limits<std::uint64_t>::max(), true);
                     }
                 }},
                 {packet::PING_REQUEST, [&] {
-                    std::string clientUUID = _net.addClient(0UL);
                     packet::connectionRequest data(packet::REJECTED);
-                    _net.sendResponse(packet::CONNECTION_REQUEST, data);
+                    _net.sendResponse(packet::CONNECTION_REQUEST, data, std::numeric_limits<std::uint64_t>::max(), true);
                 }},
             };
 
