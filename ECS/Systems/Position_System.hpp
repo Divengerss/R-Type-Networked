@@ -38,35 +38,14 @@ class Position_System {
             auto const &cont = controllables[i];
             if (pos && vel && cont)
             {
-                // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-                // {
-                //     pos->_x -= vel->_velocity;
-                //     keyPressed = sf::Keyboard::Left;
-                // }
-                // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-                // {
-                //     pos->_x += vel->_velocity;
-                //     keyPressed = sf::Keyboard::Right;
-                // }
                 if (state[SDL_SCANCODE_UP])
                 {
                     pos->_y -= vel->_velocity;
-                    // keyPressed = sf::Keyboard::Up;
                 }
-                // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-                // {
-                //     pos->_y += vel->_velocity;
-                //     keyPressed = sf::Keyboard::Down;
-                // }
-                // if (_spacePressed <= 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-                // {
-                //     _spacePressed = 20;
-                //     keyPressed = sf::Keyboard::Space;
-                // }
-                // if (keyPressed != sf::Keyboard::Key::Unknown && !sf::Keyboard::isKeyPressed(keyPressed)) {
-                //     keyPressed = sf::Keyboard::Key::Unknown;
-                // }
-                // _spacePressed--;
+                if (state[SDL_SCANCODE_DOWN])
+                {
+                    pos->_y += vel->_velocity;
+                }
             }
             else if (pos && vel && pat)
             {
