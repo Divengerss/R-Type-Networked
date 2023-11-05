@@ -51,6 +51,17 @@ public:
                 auto &b_hb = r.get_component<Hitbox>(Entity(j));
                 auto &b_tag = r.get_component<Tag>(Entity(j))._tag;
 
+                if (a_hp._invincibleTime >= a_hp._invincibleTimeInSec)
+                {
+                    a_hp._invincible = false;
+                    a_hp._invincibleTime = 0;
+                }
+                if (b_hp._invincibleTime >= b_hp._invincibleTimeInSec)
+                {
+                    b_hp._invincible = false;
+                    b_hp._invincibleTime = 0;
+                }
+
                 // hitbox 1
                 float damLeft = a_pos._x;
                 float damTop = a_pos._y;
@@ -67,9 +78,10 @@ public:
                     damTop > destBottom || damBottom < destTop)
                     continue;
 
-                if (a_tag == TagEnum::PLAYER && b_tag == TagEnum::ENEMY)
+                if (a_tag == TagEnum::PLAYER && b_tag == TagEnum::ENEMY && a_hp._invincible == false)
                 {
-                    a_hp._hp = 0;
+                    a_hp._hp -= 1;
+                    a_hp._invincible = true;
                 }
                 else if (a_tag == TagEnum::BULLET && b_tag == TagEnum::ENEMY)
                 {

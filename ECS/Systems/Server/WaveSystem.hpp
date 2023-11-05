@@ -58,7 +58,7 @@ public:
                 r.add_component<Velocity>(enemy, {2});
                 r.add_component<MovementPattern>(enemy, {static_cast<MovementPatterns>(random)});
                 r.add_component<Destroyable>(enemy, {2});
-                r.add_component<Hitbox>(enemy, {33, 17});
+                r.add_component<Hitbox>(enemy, {33, 36});
                 r.add_component<Damaging>(enemy, {true});
             }
         }

@@ -28,13 +28,13 @@ namespace rtype
             float posY = 250.0f * getConnectedNb(roomId);
             Position position(posX, posY);
             Controllable ctrl(clientUUID);
-            Hitbox hb(99, 51);
+            Hitbox hb(33, 17);
             Entity entity = ecs.spawn_entity();
             ecs.add_component<Position>(entity, position);
             ecs.add_component<Velocity>(entity, 3);
             ecs.add_component<Controllable>(entity, ctrl);
             ecs.add_component<Hitbox>(entity, hb);
-            ecs.add_component<Destroyable>(entity, 1);
+            ecs.add_component<Destroyable>(entity, 5);
             ecs.add_component<Tag>(entity, {TagEnum::PLAYER});
             _net.writeToLogs(logGameInfo, "Entity has been summoned at " + std::to_string(posX) + "f " + std::to_string(posY) + "f.");
             return std::make_pair(posX, posY);
