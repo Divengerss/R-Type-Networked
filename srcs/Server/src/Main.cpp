@@ -9,7 +9,7 @@ int main()
 {
     try
     {
-        std::srand(std::time(nullptr));
+        std::srand(static_cast<std::uint32_t>(std::time(nullptr)));
         rtype::loopSystem game;
         game.runNetwork();
         game.runGame();

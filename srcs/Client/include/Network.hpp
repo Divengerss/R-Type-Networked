@@ -388,7 +388,7 @@ namespace net
                     std::cerr << "Something went wrong sending the packet room list." << std::endl;
             }
 
-            std::vector<std::pair<int, int>> getRooms() const noexcept
+            std::vector<std::pair<std::uint64_t, std::uint8_t>> getRooms() const noexcept
             {
                 return _rooms;
             }
@@ -445,7 +445,7 @@ namespace net
             std::vector<std::uint8_t> _packet;
             Registry &_reg;
             static Client* clientInstance;
-            std::vector<std::pair<int, int>> _rooms;
+            std::vector<std::pair<std::uint64_t, std::uint8_t>> _rooms;
     };
 
     Client *Client::clientInstance = nullptr;

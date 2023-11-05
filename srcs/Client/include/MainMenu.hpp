@@ -5,7 +5,8 @@
 
 #include "EndMenu.hpp"
 
-#define Max_Main_Menu 4
+static constexpr int Max_Main_Menu = 4;
+
 class mainMenu
 {
     public:
@@ -19,7 +20,7 @@ class mainMenu
         int mainMenuPressed() {
             return mainMenuselected;
         }
-        EndMenu getEndMenu() {
+        const menu::EndMenu &getEndMenu() {
             return endMenu;
         }
         ~mainMenu();
@@ -28,5 +29,5 @@ class mainMenu
         int mainMenuselected;
         sf::Font font;
         sf::Text Main_Menu[Max_Main_Menu];
-        EndMenu endMenu;
+        menu::EndMenu endMenu;
 };
