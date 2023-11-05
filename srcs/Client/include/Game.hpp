@@ -122,7 +122,7 @@ namespace rtype
             {
                 textureSystem();
                 healthBarSystem();
-                posSys.positionSystemClient(_reg, client);
+                posSys.positionSystemClient(_reg);
 
                 for (int i = 0; i < _reg.get_entity_number(); i++) {
                     if (!_reg.entity_has_component<Texture>(Entity(i)))

@@ -23,7 +23,7 @@ class PositionSystem {
     public:
         PositionSystem() = default;
         ~PositionSystem() = default;
-    void positionSystemClient(Registry &r, net::Client &client)
+    void positionSystemClient(Registry &r)
     {
         auto &positions = r.get_components<Position>();
         auto &velocities = r.get_components<Velocity>();
