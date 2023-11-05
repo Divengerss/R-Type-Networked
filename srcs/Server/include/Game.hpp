@@ -69,7 +69,7 @@ namespace rtype
                             if (_currentCooldown % static_cast<int>(sendSparseArrayInterval.count()) == 0) {
                                 _netSys.sendSparseArray<Position>(packet::ECS_POSITION, reg.get_components<Position>(), roomId);
                                 _netSys.sendSparseArray<Velocity>(packet::ECS_VELOCITY, reg.get_components<Velocity>(), roomId);
-                                // _netSys.sendSparseArray<Collider>(packet::ECS_COLLIDER, reg.get_components<Collider>(), roomId);
+                                _netSys.sendSparseArray<Collider>(packet::ECS_COLLIDER, reg.get_components<Collider>(), roomId);
                                 _netSys.sendSparseArray<Hitbox>(packet::ECS_HITBOX, reg.get_components<Hitbox>(), roomId);
                                 _netSys.sendSparseArray<Controllable>(packet::ECS_CONTROLLABLE, reg.get_components<Controllable>(), roomId);
                                 _netSys.sendSparseArray<Damaging>(packet::ECS_DAMAGES, reg.get_components<Damaging>(), roomId);
@@ -89,7 +89,7 @@ namespace rtype
                                     }
                                 }
                             }
-                            // _col.colliderSystem(reg);
+                            _col.colliderSystem(reg);
                             _pos.positionSystemServer(reg);
                             _dam.damageSystemServer(reg);
                             _waveSystem.run(reg);
