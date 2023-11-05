@@ -28,6 +28,7 @@ namespace packet
         ECS_DESTROYABLE,
         ECS_MOVEMENTPATTERN,
         ECS_SCORE,
+        ECS_COLLIDER,
         KEEP_CONNECTION,
         CREATE_ROOM,
         ROOM_LIST_REQUEST,

@@ -24,6 +24,7 @@
 #include "Damaging.hpp"
 #include "Screen.hpp"
 #include "PositionSystem.hpp"
+#include "InputSystem.hpp"
 #include "DamageSystem.hpp"
 #include "MainMenu.hpp"
 #include "Tag.hpp"
@@ -70,6 +71,7 @@ namespace rtype
                 _reg.register_component<Button>();
                 _reg.register_component<ChatBox>();
                 _reg.register_component<HealthBar>();
+                _reg.register_component<Collider>();
             }
 
             ~Game() = default;
@@ -215,7 +217,8 @@ namespace rtype
                     }
 
                     // Update
-                    posSys.positionSystemClient(_reg, client);
+                    inpSys.inputSystem(_reg, client);
+                    posSys.positionSystemClient(_reg);
                     spriteSys.run(_reg, _assets);
                     textureSys.run(_reg, createdPlayers);
                     healthBarSys.run(_reg);
@@ -290,7 +293,7 @@ namespace rtype
                     // Draw
                     window.clear();
 
-                    
+
 
                     window.display();
 
@@ -496,6 +499,7 @@ namespace rtype
             sf::Clock _clock;
             sf::Clock _fetchRoomClock;
             PositionSystem posSys;
+            InputSystem inpSys;
             DamageSystem dmgSys;
             ButtonSystem btnSys;
             DrawSystem drawSys;

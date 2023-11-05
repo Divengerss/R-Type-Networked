@@ -13,6 +13,7 @@
 #include "Network.hpp"
 #include "Room.hpp"
 #include "Score.hpp"
+#include "Collider.hpp"
 
 namespace rtype
 {
@@ -200,6 +201,7 @@ namespace rtype
             regs[roomId].register_component<Destroyable>();
             regs[roomId].register_component<Damaging>();
             regs[roomId].register_component<Score>();
+            regs[roomId].register_component<Collider>();
             regs[roomId].register_component<Tag>();
             regs[roomId].spawn_entity(); // Background index
             regs[roomId].spawn_entity(); // ChatBox index
@@ -209,10 +211,10 @@ namespace rtype
         {
             packet::connectionRequest request;
             std::memmove(&request, &packet[sizeof(header)], sizeof(request));
-            
+
             std::uint64_t roomId = request.roomId;
             std::string clientUUID = _net.addClient(roomId);
-            
+
             if (roomExist(roomId)) {
                 if (!addClientToRoom(clientUUID, roomId)) {
                     packet::connectionRequest data(packet::REJECTED);
@@ -399,7 +401,7 @@ namespace rtype
             std::memmove(clientUUID.data(), &data.uuid, uuidSize);
 
             auto &clients = _net.getClients();
-            
+
             for (auto &client : clients) {
                 if (client.getUuid() == clientUUID.data()) {
                     client.resetMissedPacket();

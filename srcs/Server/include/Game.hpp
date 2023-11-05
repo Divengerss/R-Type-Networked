@@ -18,6 +18,7 @@
 #include "Server/NetworkSystem.hpp"
 #include "Server/WaveSystem.hpp"
 #include "Server/HealthSystem.hpp"
+#include "ColliderSystem.hpp"
 #include "Destroyable.hpp"
 #include "Score.hpp"
 #include "Tag.hpp"
@@ -68,6 +69,7 @@ namespace rtype
                             if (_currentCooldown % static_cast<int>(sendSparseArrayInterval.count()) == 0) {
                                 _netSys.sendSparseArray<Position>(packet::ECS_POSITION, reg.get_components<Position>(), roomId);
                                 _netSys.sendSparseArray<Velocity>(packet::ECS_VELOCITY, reg.get_components<Velocity>(), roomId);
+                                _netSys.sendSparseArray<Collider>(packet::ECS_COLLIDER, reg.get_components<Collider>(), roomId);
                                 _netSys.sendSparseArray<Hitbox>(packet::ECS_HITBOX, reg.get_components<Hitbox>(), roomId);
                                 _netSys.sendSparseArray<Controllable>(packet::ECS_CONTROLLABLE, reg.get_components<Controllable>(), roomId);
                                 _netSys.sendSparseArray<Damaging>(packet::ECS_DAMAGES, reg.get_components<Damaging>(), roomId);
@@ -80,13 +82,14 @@ namespace rtype
                             for (int i = 0; i < reg.get_entity_number(); i++) {
                                 if (reg.entity_has_component<Destroyable>(Entity(i))) {
                                     auto &destroyable = reg.get_component<Destroyable>(Entity(i));
-                                    
+
                                     if (destroyable._invincible && std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - secondCounter).count() >= 1) {
                                         destroyable._invincibleTime += 1;
                                         secondCounter = std::chrono::high_resolution_clock::now();
                                     }
                                 }
                             }
+                            _col.colliderSystem(reg);
                             _pos.positionSystemServer(reg);
                             _dam.damageSystemServer(reg);
                             _waveSystem.run(reg);
@@ -107,6 +110,7 @@ namespace rtype
         }
 
         std::unordered_map<std::uint64_t, Registry> _regs; // roomId | ECS
+        ColliderSystem _col;
         DamageSystem _dam;
         PositionSystem _pos;
         NetworkSystem _netSys;

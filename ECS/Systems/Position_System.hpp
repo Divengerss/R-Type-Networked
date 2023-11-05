@@ -1,12 +1,12 @@
 /*
 ** EPITECH PROJECT, 2023
-** Sans titre(Espace de travail)
+** B-CPP-500-PAR-5-1-rtype-julian.emery
 ** File description:
-** PositionSystem
+** Position_System
 */
 
-#ifndef POSITIONSYSTEM_HPP_
-#define POSITIONSYSTEM_HPP_
+#ifndef POSITION_SYSTEM_HPP_
+#define POSITION_SYSTEM_HPP_
 
 #include <Registry.hpp>
 #include "Position.hpp"
@@ -16,15 +16,16 @@
 #include "Hitbox.hpp"
 #include "Damaging.hpp"
 #include "Packets.hpp"
-#include <SFML/Graphics.hpp>
 #include <cmath>
+#include <SDL.h>
 
-class PositionSystem {
+class Position_System {
     public:
-        PositionSystem() = default;
-        ~PositionSystem() = default;
-    void positionSystemClient(Registry &r)
+        Position_System() = default;
+        ~Position_System() = default;
+    void position_SystemRunner(Registry &r)
     {
+        const Uint8* state = SDL_GetKeyboardState(NULL);
         auto &positions = r.get_components<Position>();
         auto &velocities = r.get_components<Velocity>();
         auto &patterns = r.get_components<MovementPattern>();
@@ -37,35 +38,14 @@ class PositionSystem {
             auto const &cont = controllables[i];
             if (pos && vel && cont)
             {
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-                {
-                    pos->_x -= vel->_velocity;
-                    keyPressed = sf::Keyboard::Left;
-                }
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-                {
-                    pos->_x += vel->_velocity;
-                    keyPressed = sf::Keyboard::Right;
-                }
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+                if (state[SDL_SCANCODE_UP])
                 {
                     pos->_y -= vel->_velocity;
-                    keyPressed = sf::Keyboard::Up;
                 }
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+                if (state[SDL_SCANCODE_DOWN])
                 {
                     pos->_y += vel->_velocity;
-                    keyPressed = sf::Keyboard::Down;
                 }
-                if (_spacePressed <= 0 && sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-                {
-                    _spacePressed = 20;
-                    keyPressed = sf::Keyboard::Space;
-                }
-                if (keyPressed != sf::Keyboard::Key::Unknown && !sf::Keyboard::isKeyPressed(keyPressed)) {
-                    keyPressed = sf::Keyboard::Key::Unknown;
-                }
-                _spacePressed--;
             }
             else if (pos && vel && pat)
             {
@@ -92,10 +72,8 @@ class PositionSystem {
         }
     }
 
-    int _spacePressed = 200;
-    sf::Keyboard::Key keyPressed = sf::Keyboard::Key::Unknown;
     protected:
     private:
 };
 
-#endif /* !POSITIONSYSTEM_HPP_ */
+#endif /* !POSITION_SYSTEM_HPP_ */
