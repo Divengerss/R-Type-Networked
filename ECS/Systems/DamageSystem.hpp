@@ -16,6 +16,7 @@
 #include "Score.hpp"
 #include "Sprite.hpp"
 #include "Tag.hpp"
+#include "Collider.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/Audio.hpp>
@@ -40,37 +41,29 @@ public:
         {
             if (!r.entity_has_component<Tag>(Entity(i)) ||
                 !r.entity_has_component<Destroyable>(Entity(i)) ||
-                !r.entity_has_component<Sprite>(Entity(i)))
+                !r.entity_has_component<Collider>(Entity(i)))
                 continue;
 
             auto &a_hp = r.get_component<Destroyable>(Entity(i));
-            auto &a_sprite = r.get_component<Sprite>(Entity(i))._sprite;
             auto &a_tag = r.get_component<Tag>(Entity(i))._tag;
+            auto &a_col = r.get_component<Collider>(Entity(i));
 
-            for (int j = 0; j < r.get_entity_number(); j++)
+            if (!a_col._collisions.empty())
             {
-                if (i == j)
-                    continue;
-
-                if (!r.entity_has_component<Tag>(Entity(j)) ||
-                    !r.entity_has_component<Destroyable>(Entity(j)) ||
-                    !r.entity_has_component<Sprite>(Entity(j)))
-                    continue;
-
-                auto &b_hp = r.get_component<Destroyable>(Entity(j));
-                auto &b_sprite = r.get_component<Sprite>(Entity(j))._sprite;
-                auto &b_tag = r.get_component<Tag>(Entity(j))._tag;
-
-                if (b_sprite.getGlobalBounds().intersects(a_sprite.getGlobalBounds()))
+                for (size_t k = 0; k < a_col._collisions.size(); k++)
                 {
                     if (a_tag == TagEnum::PLAYER && a_hp._invincible) {
                         nbPlayerInvincible++;
                     }
 
-                    if (a_tag == TagEnum::BULLET && b_tag == TagEnum::ENEMY && b_hp._hp > 0)
+                    if (!r.entity_has_component<Tag>(Entity(a_col._collisions[k])) ||
+                        !r.entity_has_component<Damaging>(Entity(a_col._collisions[k])))
+                        continue;
+
+                    if (a_tag == TagEnum::BULLET && r.get_components<Tag>()[a_col._collisions[k]]->_tag == TagEnum::ENEMY && r.get_components<Destroyable>()[a_col._collisions[k]]->_hp > 0)
                     {
                         a_hp._hp = 0;
-                        b_hp._hp = 0;
+                        r.get_components<Destroyable>()[a_col._collisions[k]]->_hp = 0;
                         sound.play();
                     }
                 }

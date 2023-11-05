@@ -57,6 +57,7 @@ namespace rtype
                 _reg.register_component<Button>();
                 _reg.register_component<ChatBox>();
                 _reg.register_component<HealthBar>();
+                _reg.register_component<Collider>();
             }
 
             ~Game() = default;
@@ -352,7 +353,7 @@ namespace rtype
                     // Draw
                     window.clear();
 
-                    
+
 
                     window.display();
 

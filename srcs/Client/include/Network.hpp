@@ -22,6 +22,7 @@
 #include "Damaging.hpp"
 #include "Score.hpp"
 #include "Tag.hpp"
+#include "Collider.hpp"
 #include "ZLib.hpp"
 #include "ChatBox.hpp"
 
@@ -313,6 +314,10 @@ namespace net
                         {packet::ECS_SCORE, [&]{
                             Score component(0);
                             handleECSComponent<Score>(header, component);
+                        }},
+                        {packet::ECS_COLLIDER, [&]{
+                            Collider component({0});
+                            handleECSComponent<Collider>(header, component);
                         }},
                         {packet::TEXT_MESSAGE, [&]{
                             packet::textMessage txtmsg;
