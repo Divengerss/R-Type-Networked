@@ -53,14 +53,14 @@ namespace packet
     struct packetHeader
     {
         packetTypes type;
-        std::uint16_t dataSize;
+        std::uint64_t dataSize;
         bool compressed;
         std::size_t compressedSize;
         std::uint64_t roomId;
 
         packetHeader() : type(PLACEHOLDER), dataSize(0U), compressed(false), compressedSize(0UL), roomId(0UL) {}
-        packetHeader(packetTypes type, std::uint16_t dataSize) : type(type), dataSize(dataSize), compressed(false), compressedSize(0UL), roomId(0UL) {}
-        packetHeader(packetTypes type, std::uint16_t dataSize, bool compressed, std::size_t compressedSize, std::uint64_t roomId) : type(type), dataSize(dataSize), compressed(compressed), compressedSize(compressedSize), roomId(roomId) {}
+        packetHeader(packetTypes type, std::uint64_t dataSize) : type(type), dataSize(dataSize), compressed(false), compressedSize(0UL), roomId(0UL) {}
+        packetHeader(packetTypes type, std::uint64_t dataSize, bool compressed, std::size_t compressedSize, std::uint64_t roomId) : type(type), dataSize(dataSize), compressed(compressed), compressedSize(compressedSize), roomId(roomId) {}
     };
 
     struct connectionRequest
@@ -161,7 +161,10 @@ namespace packet
         int keyCode;
         std::uint64_t roomId;
 
-        keyboardEvent() : _status(0), keyCode(-1), roomId(0UL) {};
+        keyboardEvent() : _status(0), keyCode(-1), roomId(0UL)
+        {
+            std::memset(&uuid, 0, uuidSize);
+        };
         keyboardEvent(const std::string &cliUuid, std::uint8_t status, int key, std::uint64_t roomId) : _status(status), keyCode(key), roomId(roomId)
         {
             std::memmove(&uuid, cliUuid.data(), uuidSize);

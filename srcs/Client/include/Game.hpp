@@ -142,7 +142,7 @@ namespace rtype
                     _regRoom.kill_entity(Entity(i));
                 }
 
-                std::vector<std::pair<int, int>> rooms = client.getRooms();
+                std::vector<std::pair<std::uint64_t, std::uint8_t>> rooms = client.getRooms();
 
                 Entity buttonCreateRoom = _regRoom.spawn_entity();
                 _regRoom.add_component<Button>(buttonCreateRoom,

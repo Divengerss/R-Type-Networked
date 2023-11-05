@@ -31,7 +31,7 @@ namespace zlib
 
                 if (result == Z_OK) {
                     dest.resize(compressedDataSize);
-                    destSize = reinterpret_cast<std::size_t>(compressedDataSize);
+                    destSize = static_cast<std::size_t>(compressedDataSize);
                 }
                 return result;
             }
@@ -39,7 +39,7 @@ namespace zlib
             template<typename T, typename U>
             int decompress(T &dest, const U &src, std::size_t maxSize)
             {
-                uLong decompressedSize = maxSize;
+                uLong decompressedSize = static_cast<uLong>(maxSize);
                 dest.resize(decompressedSize);
                 int result = uncompress(dest.data(), &decompressedSize, src.data(), static_cast<uLong>(src.size()));
 

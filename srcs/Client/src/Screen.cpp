@@ -7,7 +7,7 @@ Screen::Screen()
 {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Main Menu");
     mainMenu mainMenu(window.getSize().x, window.getSize().y);
-    EndMenu endMenu(window.getSize().x, window.getSize().y);
+    menu::EndMenu endMenu(window.getSize().x, window.getSize().y);
 
     while (window.isOpen())
     {
@@ -102,7 +102,6 @@ Screen::Screen()
                     }
                     if (x == 3)
                         window.close();
-                    break;
                     if (y == 0)
                     {
                         while (Play.isOpen())
