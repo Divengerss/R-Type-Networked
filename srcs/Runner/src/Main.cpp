@@ -18,6 +18,7 @@
 #include "Hitbox.hpp"
 #include "Collider.hpp"
 #include "./../ECS/Systems/Position_System.hpp"
+#undef main
 
 int main() {
     Registry reg;

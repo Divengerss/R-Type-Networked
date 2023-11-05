@@ -51,7 +51,7 @@ public:
                     {
                         chatbox.removeChar();
                     } else {
-                        chatbox.addChar(event.text.unicode);
+                        chatbox.addChar(static_cast<char>(event.text.unicode));
                     }
                 }
             }

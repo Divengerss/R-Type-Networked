@@ -289,7 +289,7 @@ namespace rtype
 
         void handleEntityKilled(Entity entity, std::uint64_t roomId)
         {
-            packet::entityKilledStatus status(entity());
+            packet::entityKilledStatus status(static_cast<int>(entity()));
             try {
                 _net.sendResponse(packet::ENTITY_KILLED, status, roomId);
             } catch (const std::system_error &e) {
