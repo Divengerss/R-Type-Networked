@@ -31,6 +31,7 @@ namespace packet
         ECS_COLLIDER,
         KEEP_CONNECTION,
         CREATE_ROOM,
+        ROOM_LIST_REQUEST,
         ROOM_AVAILABLE,
         ROOM_CLOSED,
         JOINED_ROOM,
@@ -38,6 +39,7 @@ namespace packet
         TEXT_MESSAGE,
         ECS_TAG,
         ENTITY_KILLED,
+        PING_REQUEST,
     };
 
     enum packetStatus : std::uint8_t
@@ -188,6 +190,16 @@ namespace packet
 
         createRoom(std::uint8_t maxSlots) : roomId(0UL), maxSlots(maxSlots) {}
         createRoom(std::uint64_t roomId, std::uint8_t maxSlots) : roomId(roomId), maxSlots(maxSlots) {}
+    };
+
+    struct roomListRequest
+    {
+        roomListRequest() {}
+    };
+
+    struct pingRequest
+    {
+        pingRequest() {}
     };
 
     struct roomAvailable

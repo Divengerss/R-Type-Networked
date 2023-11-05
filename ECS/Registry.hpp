@@ -111,6 +111,12 @@ public:
 
     void kill_entity(Entity const &e)
     {
+        if (static_cast<int>(e()) >= entity_number || static_cast<int>(e()) < 0)
+            return;
+        for (int i : _empty_entities)
+            if (i == static_cast<int>(e()))
+                return;
+
         for (auto it : _erase_functions)
             it.second(*this, e);
         _empty_entities.push_back(static_cast<int>(e()));
