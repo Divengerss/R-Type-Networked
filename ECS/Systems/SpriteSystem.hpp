@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Registry.hpp"
+#include "Assets.hpp"
 #include "Texture.hpp"
 #include "Position.hpp"
 #include "Scale.hpp"
@@ -12,7 +13,7 @@ public:
     SpriteSystem() = default;
     ~SpriteSystem() = default;
 
-    void run(Registry& reg)
+    void run(Registry& reg, rtype::Assets& _assets)
     {
         for (int i = 0; i < reg.get_entity_number(); i++) {
             if (!reg.entity_has_component<Texture>(Entity(i)))
