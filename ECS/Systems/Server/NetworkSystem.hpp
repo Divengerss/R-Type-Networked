@@ -367,7 +367,7 @@ namespace rtype
             for (auto &client : getClients()) {
                 client.packetMissed();
                 std::string clientUUID = client.getUuid();
-                if (client.getMissedPacket() >= 5UL) {
+                if (client.getMissedPacket() >= 10UL) {
                     writeToLogs(logInfo, "Client " + clientUUID + " connection timeout.");
                     packet::clientStatus cliStatus(clientUUID, packet::LOSE_CLIENT, 0.0f, 0.0f, getConnectedNb(roomId) - 1);
                     sendResponse(packet::CLIENT_STATUS, data, roomId);

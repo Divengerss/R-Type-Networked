@@ -364,8 +364,6 @@ namespace net
                 _timer.cancel();
                 if (!errCode && header.type != packet::FORCE_DISCONNECT) {
                     listenServer();
-                } else {
-                    listenServer();
                 }
             }
 
