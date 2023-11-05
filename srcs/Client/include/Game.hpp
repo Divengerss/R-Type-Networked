@@ -6,6 +6,10 @@
 #endif /* !_WIN32 */
 
 #include <iostream>
+#include <string>
+#include <vector>
+#include <functional>
+#include <utility>
 
 #include "Network.hpp"
 #include "Registry.hpp"
@@ -125,6 +129,41 @@ namespace rtype
             {
                 sf::Event event;
                 sf::Time elapsedTime = _clock.getElapsedTime();
+                bool mouse_clicked = false;
+
+                if (_fetchRoomClock.getElapsedTime().asSeconds() >= 1) {
+                    client.roomList();
+                    _fetchRoomClock.restart();
+                }
+
+                for (int i = 0; i < _regRoom.get_entity_number(); ++i) {
+                    _regRoom.kill_entity(Entity(i));
+                }
+
+                Entity buttonCreateRoom = _regRoom.spawn_entity();
+                _regRoom.add_component<Button>(buttonCreateRoom,
+                    {
+                        static_cast<float>(window.getSize().x / 2), static_cast<float>(window.getSize().y / 5 * 4),
+                        100.f, 100.f,
+                        std::string("Create Room"),
+                        _assets.getFont("arial"),
+                        std::function<void()>([&]() { client.connect(0, true); _scene = 1; std::cout << "Create Room" << std::endl; })
+                    }
+                );
+
+                std::vector<std::pair<std::uint64_t, std::uint8_t>> rooms = client.getRooms();
+                for (int i = 0; i < rooms.size(); ++i) {
+                    Entity buttonRoom = _regRoom.spawn_entity();
+                    _regRoom.add_component<Button>(buttonRoom,
+                        {
+                            static_cast<float>(window.getSize().x / 2), static_cast<float>(window.getSize().y / 5 * (i + 1)),
+                            100.f, 100.f,
+                            std::string("Room " + std::to_string(rooms[i].first) + " (max " + std::to_string(rooms[i].second) + ")"),
+                            _assets.getFont("arial"),
+                            std::function<void()>([&]() { client.connect(rooms[i].first, false); _scene = 1; std::cout << "Room " << rooms[i].first << std::endl; })
+                        }
+                    );
+                }
 
                 if (elapsedTime.asSeconds() >= _updateInterval)
                 {
@@ -133,15 +172,23 @@ namespace rtype
                     {
                         if (event.type == sf::Event::Closed)
                             window.close();
+                        if (event.type == sf::Event::MouseButtonPressed)
+                            if (event.mouseButton.button == sf::Mouse::Left)
+                                mouse_clicked = true;
                     }
 
                     // Update
-                   
+                    btnSys.run(_regRoom, window, mouse_clicked);
 
                     // Draw
                     window.clear();
 
-
+                    for (int i = 0; i < _regRoom.get_entity_number(); ++i) {
+                        if (_regRoom.entity_has_component<Button>(Entity(i))) {
+                            auto &button = _regRoom.get_component<Button>(Entity(i));
+                            button.draw(window);
+                        }
+                    }
 
                     window.display();
 
@@ -289,7 +336,7 @@ namespace rtype
                         100.f, 100.f,
                         std::string("Play"),
                         _assets.getFont("arial"),
-                        std::function<void()>([&]() { _scene = 1; client.run(); std::cout << "Play" << std::endl; })
+                        std::function<void()>([&]() { _scene = 5; client.run(); std::cout << "Play" << std::endl; })
                     }
                 );
                 Entity buttonOptions = _regMenu.spawn_entity();
@@ -392,6 +439,7 @@ namespace rtype
             std::string _host;
             std::string _port;
             sf::Clock _clock;
+            sf::Clock _fetchRoomClock;
             PositionSystem posSys;
             DamageSystem dmgSys;
             ButtonSystem btnSys;

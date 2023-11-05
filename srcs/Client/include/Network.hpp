@@ -7,6 +7,7 @@
 #include <iostream>
 #include <csignal>
 #include <functional>
+#include <utility>
 #include "CFGParser.hpp"
 #include "Packets.hpp"
 #include "SparseArray.hpp"
@@ -92,6 +93,11 @@ namespace net
                         }
                     });
                     listenServer();
+                    packet::pingRequest request;
+                    packet::packetHeader header(packet::PING_REQUEST, sizeof(request));
+                    std::size_t bytesSent = sendPacket(header, request);
+                    if (bytesSent == 0UL)
+                        std::cerr << "Something went wrong sending the packet ping." << std::endl;
                     _ioContext.run();
                 });
             }
@@ -217,6 +223,7 @@ namespace net
 
             void handleRoomAvailable(const packet::roomAvailable &data)
             {
+                _rooms.emplace_back(std::make_pair(data.roomId, data.maxSlots));
                 std::cout << "New room available for " << std::to_string(data.maxSlots) << " players with ID " << std::to_string(data.roomId) << std::endl;
             }
 
@@ -366,6 +373,21 @@ namespace net
                 }
             }
 
+            void roomList()
+            {
+                _rooms.clear();
+                packet::roomListRequest request;
+                packet::packetHeader header(packet::ROOM_LIST_REQUEST, sizeof(request));
+                std::size_t bytesSent = sendPacket(header, request);
+                if (bytesSent == 0UL)
+                    std::cerr << "Something went wrong sending the packet room list." << std::endl;
+            }
+
+            std::vector<std::pair<std::uint64_t, std::uint8_t>> getRooms() const noexcept
+            {
+                return _rooms;
+            }
+
             void connect(int roomId, bool createRoom)
             {
                 packet::connectionRequest request(roomId, createRoom);
@@ -417,6 +439,7 @@ namespace net
             std::vector<std::uint8_t> _packet;
             Registry &_reg;
             static Client* clientInstance;
+            std::vector<std::pair<std::uint64_t, std::uint8_t>> _rooms;
     };
 
     Client *Client::clientInstance = nullptr;

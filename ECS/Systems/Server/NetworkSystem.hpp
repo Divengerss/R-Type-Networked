@@ -328,6 +328,18 @@ namespace rtype
                 {packet::KEEP_CONNECTION, [&] { handleKeepConnection(packet, header); }},
                 {packet::TEXT_MESSAGE, [&] { handleTextMessage(packet, header); }},
                 {packet::CREATE_ROOM, [&] { handleCreateRoom(regs, packet); }},
+                {packet::ROOM_LIST_REQUEST, [&] {
+                    for (auto &room : _rooms) {
+                        packet::roomAvailable roomAvailable(room.getId(), room.getMaxSlots());
+                        _net.sendResponse(packet::ROOM_AVAILABLE, roomAvailable);
+                    }
+                }},
+                {packet::PING_REQUEST, [&] {
+                    std::string clientUUID = _net.addClient(0UL);
+                    std::cout << "Ping request received" << std::endl;
+                    packet::connectionRequest data(packet::REJECTED);
+                    _net.sendResponse(packet::CONNECTION_REQUEST, data);
+                }},
             };
 
             _net.startServer();
