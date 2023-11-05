@@ -166,7 +166,7 @@ namespace rtype
 
                     // Update
                     posSys.positionSystemClient(_reg, client);
-                    spriteSys.run(_reg);
+                    spriteSys.run(_reg, _assets);
                     textureSys.run(_reg, createdPlayers);
                     healthBarSys.run(_reg);
                     dmgSys.damageSystem(_reg);

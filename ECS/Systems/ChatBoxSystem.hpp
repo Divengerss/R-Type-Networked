@@ -23,7 +23,7 @@ public:
                 {
                     if (reg.entity_has_component<ChatBox>(Entity(i)) == false) continue;
 
-                    auto &chatbox = _reg.get_component<ChatBox>(Entity(i));
+                    auto &chatbox = reg.get_component<ChatBox>(Entity(i));
                     chatbox._isInputSelected = !chatbox._isInputSelected;
                 }
             }
