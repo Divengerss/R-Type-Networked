@@ -29,6 +29,7 @@
 #include "Button.hpp"
 #include "ButtonSystem.hpp"
 #include "ChatBox.hpp"
+#include "HealthBar.hpp"
 
 namespace rtype
 {
@@ -55,6 +56,7 @@ namespace rtype
                 _reg.register_component<Sprite>();
                 _reg.register_component<Button>();
                 _reg.register_component<ChatBox>();
+                _reg.register_component<HealthBar>();
             }
 
             ~Game() = default;
@@ -87,9 +89,38 @@ namespace rtype
                 }
             }
 
+            void healthBarSystem()
+            {
+                for (int i = 0; i < _reg.get_entity_number(); ++i) {
+                    if (_reg.entity_has_component<HealthBar>(Entity(i))) {
+                        auto &healthBar = _reg.get_component<HealthBar>(Entity(i));
+                        auto &destroyable = _reg.get_component<Destroyable>(Entity(i));
+                        auto &pos = _reg.get_component<Position>(Entity(i));
+
+                        healthBar.update(destroyable._hp, pos._x, pos._y - 20);
+
+                        continue;
+                    }
+
+                    if (_reg.entity_has_component<HealthBar>(Entity(i))) continue;
+                    if (_reg.entity_has_component<Destroyable>(Entity(i)) == false || _reg.entity_has_component<Tag>(Entity(i)) == false) continue;
+
+
+                    auto &destroyable = _reg.get_component<Destroyable>(Entity(i));
+                    auto &tag = _reg.get_component<Tag>(Entity(i));
+
+                    if (tag._tag == TagEnum::PLAYER) {
+                        _reg.add_component<HealthBar>(Entity(i), {90, 20, destroyable._hp, sf::Color::Green});
+                    } else if (tag._tag == TagEnum::ENEMY) {
+                        _reg.add_component<HealthBar>(Entity(i), {90, 20, destroyable._hp, sf::Color::Red});
+                    }
+                }
+            }
+
             void updateSprite(net::Client &client)
             {
                 textureSystem();
+                healthBarSystem();
                 posSys.positionSystemClient(_reg, client);
 
                 for (int i = 0; i < _reg.get_entity_number(); i++) {
@@ -249,6 +280,11 @@ namespace rtype
                         {
                             auto &chatbox = _reg.get_component<ChatBox>(Entity(i));
                             chatbox.draw(window, _assets.getFont("arial"));
+                        }
+                        if (_reg.entity_has_component<HealthBar>(Entity(i)))
+                        {
+                            auto &healthBar = _reg.get_component<HealthBar>(Entity(i));
+                            healthBar.draw(window);
                         }
                     }
 

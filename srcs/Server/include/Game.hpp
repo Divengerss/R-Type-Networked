@@ -17,7 +17,7 @@
 #include "Server/DamageSystem.hpp"
 #include "Server/NetworkSystem.hpp"
 #include "Server/WaveSystem.hpp"
-#include "Both/HealthSystem.hpp"
+#include "Server/HealthSystem.hpp"
 #include "Destroyable.hpp"
 #include "Score.hpp"
 #include "Tag.hpp"
@@ -55,6 +55,7 @@ namespace rtype
             std::chrono::time_point<std::chrono::steady_clock> lastPrintTime = std::chrono::steady_clock::now();
             int frameCounter = 0;
             int printMessageCounter = 0;
+            std::chrono::high_resolution_clock::time_point secondCounter = std::chrono::high_resolution_clock::now();
 
             while (_netSys.isServerAvailable()) {
                 std::chrono::time_point<std::chrono::steady_clock> currentTime = std::chrono::steady_clock::now();
@@ -75,6 +76,16 @@ namespace rtype
                                 _netSys.sendSparseArray<Score>(packet::ECS_SCORE, reg.get_components<Score>(), roomId);
                                 _netSys.sendSparseArray<Tag>(packet::ECS_TAG, reg.get_components<Tag>(), roomId);
                                 _currentCooldown = 0;
+                            }
+                            for (int i = 0; i < reg.get_entity_number(); i++) {
+                                if (reg.entity_has_component<Destroyable>(Entity(i))) {
+                                    auto &destroyable = reg.get_component<Destroyable>(Entity(i));
+                                    
+                                    if (destroyable._invincible && std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - secondCounter).count() >= 1) {
+                                        destroyable._invincibleTime += 1;
+                                        secondCounter = std::chrono::high_resolution_clock::now();
+                                    }
+                                }
                             }
                             _pos.positionSystemServer(reg);
                             _dam.damageSystemServer(reg);
