@@ -30,6 +30,11 @@
 #include "ButtonSystem.hpp"
 #include "ChatBox.hpp"
 #include "HealthBar.hpp"
+#include "DrawSystem.hpp"
+#include "ChatBoxSystem.hpp"
+#include "HealthBarSystem.hpp"
+#include "SpriteSystem.hpp"
+#include "TextureSystem.hpp"
 
 namespace rtype
 {
@@ -60,104 +65,6 @@ namespace rtype
             }
 
             ~Game() = default;
-
-            void textureSystem()
-            {
-                for (int i = 0; i < _reg.get_entity_number(); ++i) {
-                    if (_reg.entity_has_component<Texture>(Entity(i)))
-                        continue;
-
-                    if (_reg.entity_has_component<Tag>(Entity(i))) {
-                        auto &tag = _reg.get_component<Tag>(Entity(i));
-
-                        switch (tag._tag) {
-                        case TagEnum::PLAYER:
-                            _reg.add_component<Texture>(Entity(i), {"player", 66, createdPlayers * 18, 33, 17});
-                            _reg.add_component<Scale>(Entity(i), {3, 3});
-                            createdPlayers++;
-                            break;
-                        case TagEnum::ENEMY:
-                            _reg.add_component<Texture>(Entity(i), {"enemy", 233, 0, 33, 36});
-                            _reg.add_component<Scale>(Entity(i), {3, 3});
-                            break;
-                        case TagEnum::BULLET:
-                            _reg.add_component<Texture>(Entity(i), {"bullet", 185, 0, 25, 25});
-                            _reg.add_component<Scale>(Entity(i), {3, 3});
-                            break;
-                        }
-                    }
-                }
-            }
-
-            void healthBarSystem()
-            {
-                for (int i = 0; i < _reg.get_entity_number(); ++i) {
-                    if (_reg.entity_has_component<HealthBar>(Entity(i))) {
-                        auto &healthBar = _reg.get_component<HealthBar>(Entity(i));
-                        auto &destroyable = _reg.get_component<Destroyable>(Entity(i));
-                        auto &pos = _reg.get_component<Position>(Entity(i));
-
-                        healthBar.update(destroyable._hp, pos._x, pos._y - 20);
-
-                        continue;
-                    }
-
-                    if (_reg.entity_has_component<HealthBar>(Entity(i))) continue;
-                    if (_reg.entity_has_component<Destroyable>(Entity(i)) == false || _reg.entity_has_component<Tag>(Entity(i)) == false) continue;
-
-
-                    auto &destroyable = _reg.get_component<Destroyable>(Entity(i));
-                    auto &tag = _reg.get_component<Tag>(Entity(i));
-
-                    if (tag._tag == TagEnum::PLAYER) {
-                        _reg.add_component<HealthBar>(Entity(i), {90, 20, destroyable._hp, sf::Color::Green});
-                    } else if (tag._tag == TagEnum::ENEMY) {
-                        _reg.add_component<HealthBar>(Entity(i), {90, 20, destroyable._hp, sf::Color::Red});
-                    }
-                }
-            }
-
-            void updateSprite(net::Client &client)
-            {
-                textureSystem();
-                healthBarSystem();
-                posSys.positionSystemClient(_reg, client);
-
-                for (int i = 0; i < _reg.get_entity_number(); i++) {
-                    if (!_reg.entity_has_component<Texture>(Entity(i)))
-                        continue;
-
-                    auto &texture = _reg.get_component<Texture>(Entity(i));
-                    auto &pos = _reg.get_component<Position>(Entity(i));
-                    auto &scale = _reg.get_component<Scale>(Entity(i));
-
-                    if (!_reg.entity_has_component<Sprite>(Entity(i))) {
-                        sf::Texture &spriteTexture = _assets.getTexture(_reg.get_component<Texture>(Entity(i))._path);
-                        _reg.add_component<Sprite>(Entity(i), {spriteTexture});
-                        auto &sprite = _reg.get_component<Sprite>(Entity(i))._sprite;
-
-                        sprite.setPosition(pos._x, pos._y);
-                        sprite.setTextureRect(sf::IntRect(texture._left, texture._top, texture._width, texture._height));
-                        sprite.setScale(scale._scaleX, scale._scaleY);
-                    } else {
-                        auto &sprite = _reg.get_component<Sprite>(Entity(i))._sprite;
-                        sprite.setPosition(pos._x, pos._y);
-                    }
-                }
-                dmgSys.damageSystem(_reg);
-            }
-
-            void drawSprite(sf::RenderWindow &window)
-            {
-                for (int i = 0; i < _reg.get_entity_number(); i++) {
-                    if (!_reg.entity_has_component<Sprite>(Entity(i)))
-                        continue;
-
-                    auto &sprite = _reg.get_component<Sprite>(Entity(i));
-
-                    window.draw(sprite._sprite);
-                }
-            }
 
             bool checkLoseCondition()
             {
@@ -224,69 +131,20 @@ namespace rtype
                     {
                         if (event.type == sf::Event::Closed)
                             window.close();
-                        if (event.type == sf::Event::KeyReleased)
-                        {
-                            if (event.key.code == sf::Keyboard::Escape)
-                            {
-                                for (int i = 0; i < _reg.get_entity_number(); ++i)
-                                {
-                                    if (_reg.entity_has_component<ChatBox>(Entity(i)) == false) continue;
-
-                                    auto &chatbox = _reg.get_component<ChatBox>(Entity(i));
-                                    chatbox._isInputSelected = !chatbox._isInputSelected;
-                                }
-                            }
-                        }
-                        if (event.type == sf::Event::TextEntered)
-                        {
-                            for (int i = 0; i < _reg.get_entity_number(); ++i)
-                            {
-                                if (_reg.entity_has_component<ChatBox>(Entity(i)) == false) continue;
-
-                                auto &chatbox = _reg.get_component<ChatBox>(Entity(i));
-
-                                if (chatbox._isInputSelected == false) continue;
-
-                                if (event.text.unicode < 128 && event.text.unicode != 36)
-                                {
-                                    if (event.text.unicode == 13)
-                                    {
-                                        packet::packetHeader header(packet::TEXT_MESSAGE, sizeof(packet::textMessage));
-                                        packet::textMessage textMessage(client.getUuid(), chatbox._inputString);
-                                        client.sendPacket(header, textMessage);
-                                        chatbox._inputString = "";
-                                        chatbox._inputText.setString("");
-                                    } else if (event.text.unicode == 8)
-                                    {
-                                        chatbox.removeChar();
-                                    } else {
-                                        chatbox.addChar(event.text.unicode);
-                                    }
-                                }
-                            }
-                        }
+                        chatSys.run(event, _reg, client);
                     }
+
                     // Update
-                    updateSprite(client);
+                    posSys.positionSystemClient(_reg, client);
+                    spriteSys.run(_reg, _assets);
+                    textureSys.run(_reg, createdPlayers);
+                    healthBarSys.run(_reg);
+                    dmgSys.damageSystem(_reg);
 
                     // Draw
                     window.clear();
 
-                    drawSprite(window);
-
-                    for (int i = 0; i < _reg.get_entity_number(); ++i)
-                    {
-                        if (_reg.entity_has_component<ChatBox>(Entity(i)))
-                        {
-                            auto &chatbox = _reg.get_component<ChatBox>(Entity(i));
-                            chatbox.draw(window, _assets.getFont("arial"));
-                        }
-                        if (_reg.entity_has_component<HealthBar>(Entity(i)))
-                        {
-                            auto &healthBar = _reg.get_component<HealthBar>(Entity(i));
-                            healthBar.draw(window);
-                        }
-                    }
+                    drawSys.run(_reg, window, _assets);
 
                     window.display();
 
@@ -504,6 +362,11 @@ namespace rtype
             PositionSystem posSys;
             DamageSystem dmgSys;
             ButtonSystem btnSys;
+            DrawSystem drawSys;
+            ChatBoxSystem chatSys;
+            HealthBarSystem healthBarSys;
+            SpriteSystem spriteSys;
+            TextureSystem textureSys;
             float _updateInterval;
             Registry _reg;
             Registry _regMenu;
