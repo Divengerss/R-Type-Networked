@@ -45,6 +45,8 @@ namespace rtype
             {
                 _regMenu.register_component<Button>();
 
+                _regRoom.register_component<Button>();
+
                 _regEnd.register_component<Button>();
 
                 _reg.register_component<Position>();
@@ -112,6 +114,34 @@ namespace rtype
                             button.draw(window);
                         }
                     }
+
+                    window.display();
+
+                    _clock.restart();
+                }
+            }
+
+            void roomScene(sf::RenderWindow &window, net::Client &client)
+            {
+                sf::Event event;
+                sf::Time elapsedTime = _clock.getElapsedTime();
+
+                if (elapsedTime.asSeconds() >= _updateInterval)
+                {
+                    // Event
+                    while (window.pollEvent(event))
+                    {
+                        if (event.type == sf::Event::Closed)
+                            window.close();
+                    }
+
+                    // Update
+                   
+
+                    // Draw
+                    window.clear();
+
+
 
                     window.display();
 
@@ -348,6 +378,9 @@ namespace rtype
                         case 4:
                             endScene(window);
                             break;
+                        case 5:
+                            roomScene(window, client);
+                            break;
                         default:
                             std::cout << "Error: Scene not found : " << _scene << std::endl;
                             break;
@@ -371,6 +404,7 @@ namespace rtype
             Registry _reg;
             Registry _regMenu;
             Registry _regEnd;
+            Registry _regRoom;
             int createdPlayers = 0;
             rtype::Assets &_assets;
             int _scene = 0;

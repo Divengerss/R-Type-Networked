@@ -92,7 +92,6 @@ namespace net
                         }
                     });
                     listenServer();
-                    connect();
                     _ioContext.run();
                 });
             }
@@ -367,9 +366,9 @@ namespace net
                 }
             }
 
-            void connect()
+            void connect(int roomId, bool createRoom)
             {
-                packet::connectionRequest request(0UL, true); // ROOM ID (change when available in UI) True if the room has to be created or the server or it will refuse the connection if it doesn't exist.
+                packet::connectionRequest request(roomId, createRoom);
                 packet::packetHeader header(packet::CONNECTION_REQUEST, sizeof(request));
                 std::size_t bytesSent = sendPacket(header, request);
                 if (bytesSent == 0UL)
