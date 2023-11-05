@@ -111,17 +111,18 @@ namespace net
                     _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
                     return;
                 }
-                else if (cliUuid.empty() && !_clients.empty())
+                else if (cliUuid.empty() && !_clients.empty() && roomId == std::numeric_limits<std::uint64_t>::max())
                     _logs.logTo(logInfo.data(), "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
                 for (Client &client : _clients) {
                     if (!cliUuid.empty()) {
-                        if (cliUuid == client.getUuid()) {
+                        if (cliUuid == client.getUuid() && client.getRoomId() == roomId) {
                             _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client.getEndpoint());
-                            _logs.logTo(logInfo.data(), "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
+                            _logs.logTo(logInfo.data(), "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "] in room [" + std::to_string(client.getRoomId()) + "]");
+                            return;
                         }
-                    } else {
+                    } else if (client.getRoomId() == roomId) {
                         _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client.getEndpoint());
-                        _logs.logTo(logInfo.data(), "    Sent to [" + client.getUuid() + "]");
+                        _logs.logTo(logInfo.data(), "    Sent packet type [" + std::to_string(header.type) + "] to [" + client.getUuid() + "] in room [" + std::to_string(client.getRoomId()) + "]");
                     }
                 }
             }
@@ -162,11 +163,11 @@ namespace net
                     std::memmove(packetData.data() + headerSize, compressedBuf.data(), compressedSize);
                     for (Client &client : _clients) {
                         if (!cliUuid.empty()) {
-                            if (cliUuid == client.getUuid()) {
+                            if (cliUuid == client.getUuid() && client.getRoomId() == roomId) {
                                 _socket.send_to(asio::buffer(buffer.data(), totalSize), client.getEndpoint());
                                 return;
                             }
-                        } else {
+                        } else if (client.getRoomId() == roomId) {
                             _socket.send_to(asio::buffer(packetData.data(), headerSize + compressedSize), client.getEndpoint());
                         }
                     }
