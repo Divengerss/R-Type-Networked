@@ -24,6 +24,7 @@
 #include "Damaging.hpp"
 #include "Screen.hpp"
 #include "PositionSystem.hpp"
+#include "InputSystem.hpp"
 #include "DamageSystem.hpp"
 #include "MainMenu.hpp"
 #include "Tag.hpp"
@@ -216,6 +217,7 @@ namespace rtype
                     }
 
                     // Update
+                    inpSys.inputSystem(_reg, client);
                     posSys.positionSystemClient(_reg);
                     spriteSys.run(_reg, _assets);
                     textureSys.run(_reg, createdPlayers);
@@ -497,6 +499,7 @@ namespace rtype
             sf::Clock _clock;
             sf::Clock _fetchRoomClock;
             PositionSystem posSys;
+            InputSystem inpSys;
             DamageSystem dmgSys;
             ButtonSystem btnSys;
             DrawSystem drawSys;
