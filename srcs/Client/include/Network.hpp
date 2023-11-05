@@ -51,6 +51,9 @@ namespace net
             };
             ~Client()
             {
+                if (!clientInstance) {
+                    return;
+                }
                 for (auto &thread : clientInstance->_threadPool) {
                     if (thread.joinable()) {
                         thread.join();

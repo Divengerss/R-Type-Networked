@@ -53,6 +53,8 @@ namespace rtype
 
                 _regEnd.register_component<Button>();
 
+                _regCredits.register_component<Button>();
+
                 _reg.register_component<Position>();
                 _reg.register_component<Velocity>();
                 _reg.register_component<Texture>();
@@ -153,7 +155,7 @@ namespace rtype
                     }
                 );
 
-                for (int i = 0; i < rooms.size(); ++i) {
+                for (std::size_t i = 0; i < rooms.size(); ++i) {
                     Entity buttonRoom = _regRoom.spawn_entity();
                     _regRoom.add_component<Button>(buttonRoom,
                         {
@@ -300,20 +302,30 @@ namespace rtype
             {
                 sf::Event event;
                 sf::Time elapsedTime = _clock.getElapsedTime();
+                bool mouse_clicked = false;
 
                 if (elapsedTime.asSeconds() >= _updateInterval) {
                     // Event
                     while (window.pollEvent(event)) {
                         if (event.type == sf::Event::Closed)
                             window.close();
+                        if (event.type == sf::Event::MouseButtonPressed)
+                            if (event.mouseButton.button == sf::Mouse::Left)
+                                mouse_clicked = true;
                     }
 
                     // Update
+                    btnSys.run(_regCredits, window, mouse_clicked);
 
                     // Draw
                     window.clear();
 
-
+                    for (int i = 0; i < _regCredits.get_entity_number(); ++i) {
+                        if (_regCredits.entity_has_component<Button>(Entity(i))) {
+                            auto &button = _regCredits.get_component<Button>(Entity(i));
+                            button.draw(window);
+                        }
+                    }
 
                     window.display();
 
@@ -340,20 +352,10 @@ namespace rtype
                         std::function<void()>([&]() { _scene = 5; client.run(); std::cout << "Play" << std::endl; })
                     }
                 );
-                Entity buttonOptions = _regMenu.spawn_entity();
-                _regMenu.add_component<Button>(buttonOptions,
-                    {
-                        static_cast<float>(width / 2), static_cast<float>(height / 5 * 2),
-                        100.f, 100.f,
-                        std::string("Options"),
-                        _assets.getFont("arial"),
-                        std::function<void()>([&]() { _scene = 2; std::cout << "Options" << std::endl; })
-                    }
-                );
                 Entity buttonCredits = _regMenu.spawn_entity();
                 _regMenu.add_component<Button>(buttonCredits,
                     {
-                        static_cast<float>(width / 2), static_cast<float>(height / 5 * 3),
+                        static_cast<float>(width / 2), static_cast<float>(height / 5 * 2),
                         100.f, 100.f,
                         std::string("Credits"),
                         _assets.getFont("arial"),
@@ -363,11 +365,63 @@ namespace rtype
                 Entity buttonQuit = _regMenu.spawn_entity();
                 _regMenu.add_component<Button>(buttonQuit,
                     {
-                        static_cast<float>(width / 2), static_cast<float>(height / 5 * 4),
+                        static_cast<float>(width / 2), static_cast<float>(height / 5 * 3),
                         100.f, 100.f,
                         std::string("Quit"),
                         _assets.getFont("arial"),
                         std::function<void()>([&]() { window.close(); std::cout << "Quit" << std::endl; })
+                    }
+                );
+
+                // Ecs Credits
+                Entity buttonCreditsJules = _regCredits.spawn_entity();
+                _regCredits.add_component<Button>(buttonCreditsJules,
+                    {
+                        static_cast<float>(width / 2), static_cast<float>(height / 5 * 0),
+                        100.f, 100.f,
+                        std::string("Jules Levi"),
+                        _assets.getFont("arial"),
+                        std::function<void()>([&]() { std::cout << "Jules" << std::endl; })
+                    }
+                );
+                Entity buttonCreditsMaxime = _regCredits.spawn_entity();
+                _regCredits.add_component<Button>(buttonCreditsMaxime,
+                    {
+                        static_cast<float>(width / 2), static_cast<float>(height / 5 * 1),
+                        100.f, 100.f,
+                        std::string("Maxime Eng"),
+                        _assets.getFont("arial"),
+                        std::function<void()>([&]() { std::cout << "Maxime" << std::endl; })
+                    }
+                );
+                Entity buttonCreditsDorvann = _regCredits.spawn_entity();
+                _regCredits.add_component<Button>(buttonCreditsDorvann,
+                    {
+                        static_cast<float>(width / 2), static_cast<float>(height / 5 * 2),
+                        100.f, 100.f,
+                        std::string("Dorvann Ledeux"),
+                        _assets.getFont("arial"),
+                        std::function<void()>([&]() { std::cout << "Dorvann" << std::endl; })
+                    }
+                );
+                Entity buttonCreditsJulian = _regCredits.spawn_entity();
+                _regCredits.add_component<Button>(buttonCreditsJulian,
+                    {
+                        static_cast<float>(width / 2), static_cast<float>(height / 5 * 3),
+                        100.f, 100.f,
+                        std::string("Julian Emery"),
+                        _assets.getFont("arial"),
+                        std::function<void()>([&]() { std::cout << "Julian" << std::endl; })
+                    }
+                );
+                Entity buttonCreditsMenu = _regCredits.spawn_entity();
+                _regCredits.add_component<Button>(buttonCreditsMenu,
+                    {
+                        static_cast<float>(width / 2), static_cast<float>(height / 5 * 4),
+                        100.f, 100.f,
+                        std::string("Menu"),
+                        _assets.getFont("arial"),
+                        std::function<void()>([&]() { _scene = 0; std::cout << "Menu" << std::endl; })
                     }
                 );
 
@@ -454,6 +508,7 @@ namespace rtype
             Registry _regMenu;
             Registry _regEnd;
             Registry _regRoom;
+            Registry _regCredits;
             int createdPlayers = 0;
             rtype::Assets &_assets;
             int _scene = 0;
