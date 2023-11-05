@@ -134,9 +134,8 @@ namespace rtype
             return false;
         }
 
-        std::uint64_t createNewRoom(std::uint8_t maxSlots)
+        std::uint64_t createNewRoom(std::uint64_t roomId, std::uint8_t maxSlots)
         {
-            std::uint64_t roomId = _rooms.size();
             if (maxSlots < 2U) {
                 _net.writeToLogs(logWarn, "Room max slots increased to 3. Got " + std::to_string(maxSlots));
                 maxSlots = 3U;
@@ -206,12 +205,14 @@ namespace rtype
             regs[roomId].spawn_entity(); // ChatBox index
         }
 
-        void handleConnectionRequest(std::unordered_map<std::uint64_t, Registry> &regs, packet::packetTypes type, std::array<std::uint8_t, packetSize> &packet)
+        void handleConnectionRequest(std::unordered_map<std::uint64_t, Registry> &regs, const std::array<std::uint8_t, packetSize> &packet, const packet::packetHeader &header)
         {
             packet::connectionRequest request;
+            std::memmove(&request, &packet[sizeof(header)], sizeof(request));
+            
             std::uint64_t roomId = request.roomId;
-            std::memmove(&request, &packet[sizeof(packet::packetHeader)], sizeof(request));
             std::string clientUUID = _net.addClient(roomId);
+            
             if (roomExist(roomId)) {
                 if (!addClientToRoom(clientUUID, roomId)) {
                     packet::connectionRequest data(packet::REJECTED);
@@ -221,7 +222,7 @@ namespace rtype
                 }
             } else {
                 if (request.createRoom) {
-                    roomId = createNewRoom(5UL);
+                    createNewRoom(roomId, 5UL);
                     initRoom(roomId, regs);
                     if (!addClientToRoom(clientUUID, roomId)) {
                         packet::connectionRequest data(packet::REJECTED);
@@ -248,7 +249,7 @@ namespace rtype
                 _net.sendResponse(packet::CLIENT_STATUS, cliStatus, roomId);
             } catch (const std::system_error &e) {
                 std::string err = e.what();
-                _net.writeToLogs(logWarn, "Failed to send the response of packet type [" + std::to_string(type) + "]:");
+                _net.writeToLogs(logWarn, "Failed to send the response of packet type [" + std::to_string(header.type) + "]:");
                 _net.writeToLogs(logWarn, "    " + err);
             }
         }
@@ -310,7 +311,7 @@ namespace rtype
         {
             packet::createRoom createRoom(0UL);
             std::memmove(&createRoom, &packet[sizeof(packet::packetHeader)], sizeof(createRoom));
-            std::uint64_t roomId = createNewRoom(createRoom.maxSlots);
+            std::uint64_t roomId = createNewRoom(_rooms.size(), createRoom.maxSlots);
             initRoom(roomId, regs);
             packet::roomAvailable roomAvailable(roomId, _rooms[roomId].getMaxSlots());
             _net.sendResponse(packet::ROOM_AVAILABLE, roomAvailable);
@@ -322,7 +323,7 @@ namespace rtype
             packet::packetHeader header;
             std::unordered_map<packet::packetTypes, std::function<void()>> dataHandlers = {
                 {packet::PLACEHOLDER, [&] { _net.writeToLogs(logInfo, "Placeholder received successfully."); }},
-                {packet::CONNECTION_REQUEST, [&] { handleConnectionRequest(regs, header.type, packet); }},
+                {packet::CONNECTION_REQUEST, [&] { handleConnectionRequest(regs, packet, header); }},
                 {packet::DISCONNECTION_REQUEST, [&] { handleDisconnectionRequest(regs, packet, header); }},
                 {packet::KEYBOARD_EVENT, [&] { handlekeyboardEvent(regs, packet, header); }},
                 {packet::KEEP_CONNECTION, [&] { handleKeepConnection(packet, header); }},
@@ -336,7 +337,6 @@ namespace rtype
                 }},
                 {packet::PING_REQUEST, [&] {
                     std::string clientUUID = _net.addClient(0UL);
-                    std::cout << "Ping request received" << std::endl;
                     packet::connectionRequest data(packet::REJECTED);
                     _net.sendResponse(packet::CONNECTION_REQUEST, data);
                 }},

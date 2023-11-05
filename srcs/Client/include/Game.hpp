@@ -140,6 +140,8 @@ namespace rtype
                     _regRoom.kill_entity(Entity(i));
                 }
 
+                std::vector<std::pair<std::uint64_t, std::uint8_t>> rooms = client.getRooms();
+
                 Entity buttonCreateRoom = _regRoom.spawn_entity();
                 _regRoom.add_component<Button>(buttonCreateRoom,
                     {
@@ -147,11 +149,10 @@ namespace rtype
                         100.f, 100.f,
                         std::string("Create Room"),
                         _assets.getFont("arial"),
-                        std::function<void()>([&]() { client.connect(0, true); _scene = 1; std::cout << "Create Room" << std::endl; })
+                        std::function<void()>([&]() { client.connect(rooms.size(), true); _scene = 1; std::cout << "Create Room" << std::endl; })
                     }
                 );
 
-                std::vector<std::pair<std::uint64_t, std::uint8_t>> rooms = client.getRooms();
                 for (int i = 0; i < rooms.size(); ++i) {
                     Entity buttonRoom = _regRoom.spawn_entity();
                     _regRoom.add_component<Button>(buttonRoom,
