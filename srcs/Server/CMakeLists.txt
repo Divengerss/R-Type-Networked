@@ -33,7 +33,7 @@ add_executable(${PROJECT_NAME}
 )
 
 install(TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/bin
+    RUNTIME DESTINATION "."
 )
 
 include(CPack)
