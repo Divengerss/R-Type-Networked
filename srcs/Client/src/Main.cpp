@@ -3,8 +3,7 @@
 int main()
 {
     utils::ParseCFG config(utils::getCurrDir() + clientConfigFilePath.data());
-    try
-    {
+    try {
         std::string host = config.getData<std::string>("host");
         std::string port = config.getData<std::string>("port");
         rtype::Game game(host, port);

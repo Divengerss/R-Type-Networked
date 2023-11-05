@@ -18,7 +18,7 @@
 #include "Packets.hpp"
 #include "Registry.hpp"
 #include "Logs.hpp"
-#include "Engine.hpp"
+// #include "Engine.hpp"
 
 // Default values used if parsing fails or invalid values are set.
 static constexpr std::string_view defaultHost = "127.0.0.1";
@@ -39,15 +39,24 @@ namespace net
     {
         public:
             Client() = delete;
-            Client(const std::string &uuid, asio::ip::udp::endpoint &endpoint) : _uuid(uuid), _endpoint(endpoint) {}
+            Client(const std::string &uuid, asio::ip::udp::endpoint &endpoint) : _uuid(uuid), _endpoint(endpoint), _missedPacket(0UL) {}
+            Client(const std::string &uuid, asio::ip::udp::endpoint &endpoint, std::uint64_t roomId) : _uuid(uuid), _endpoint(endpoint), _missedPacket(0UL), _roomId(roomId) {}
             ~Client() = default;
 
             const std::string &getUuid() const noexcept { return _uuid; };
             asio::ip::udp::endpoint &getEndpoint() noexcept { return _endpoint; };
+            std::size_t getMissedPacket() const noexcept { return _missedPacket; };
+            std::uint64_t getRoomId() const noexcept { return _roomId; };
+
+            void packetMissed() { _missedPacket += 1UL; };
+            void resetMissedPacket() { _missedPacket = 0UL; };
+            void setRoomId(std::uint64_t roomId) { _roomId = roomId; };
 
         private:
             std::string _uuid;
             asio::ip::udp::endpoint _endpoint;
+            std::size_t _missedPacket;
+            std::uint64_t _roomId;
     };
 
     class Network
@@ -63,7 +72,7 @@ namespace net
             const asio::ip::udp::endpoint &getServerEndpoint() const noexcept {return _serverEndpoint;}
             const asio::ip::udp::socket &getSocket() const noexcept {return _socket;}
             const asio::error_code &getAsioErrorCode() const noexcept {return _errCode;}
-            const std::vector<Client> &getClients() const noexcept {return _clients;}
+            std::vector<Client> &getClients() noexcept {return _clients;}
             const std::array<std::uint8_t, packetSize> &getPacket() const noexcept {return _packet;}
 
             void setHost(const std::string &host) {_host = host;}
@@ -92,9 +101,9 @@ namespace net
             }
 
             template<typename T>
-            void sendResponse(const packet::packetTypes &type, T &data, bool toServerEndpoint = false, const std::string cliUuid = "")
+            void sendResponse(const packet::packetTypes &type, T &data, std::uint64_t roomId = std::numeric_limits<std::uint64_t>::max(), bool toServerEndpoint = false, const std::string cliUuid = "")
             {
-                packet::packetHeader header(type, sizeof(data));
+                packet::packetHeader header(type, sizeof(data), false, 0UL, roomId);
                 std::array<std::uint8_t, sizeof(header) + sizeof(data)> buffer;
                 std::memmove(&buffer, &header, sizeof(header));
                 std::memmove(&buffer[sizeof(header)], &data, header.dataSize);
@@ -102,32 +111,34 @@ namespace net
                     _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), _serverEndpoint);
                     return;
                 }
-                else if (cliUuid.empty() && !_clients.empty())
+                else if (cliUuid.empty() && !_clients.empty() && roomId == std::numeric_limits<std::uint64_t>::max())
                     _logs.logTo(logInfo.data(), "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
                 for (Client &client : _clients) {
                     if (!cliUuid.empty()) {
-                        if (cliUuid == client.getUuid()) {
+                        if (cliUuid == client.getUuid() && client.getRoomId() == roomId) {
                             _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client.getEndpoint());
-                            _logs.logTo(logInfo.data(), "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
+                            _logs.logTo(logInfo.data(), "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "] in room [" + std::to_string(client.getRoomId()) + "]");
+                            return;
                         }
-                    } else {
+                    } else if (client.getRoomId() == roomId) {
                         _socket.send_to(asio::buffer(&buffer, sizeof(buffer)), client.getEndpoint());
-                        _logs.logTo(logInfo.data(), "    Sent to [" + client.getUuid() + "]");
+                        _logs.logTo(logInfo.data(), "    Sent packet type [" + std::to_string(header.type) + "] to [" + client.getUuid() + "] in room [" + std::to_string(client.getRoomId()) + "]");
                     }
                 }
             }
 
             template<class T>
-            void sendSparseArray(const packet::packetTypes &type, sparse_array<T> &sparseArray, const std::string cliUuid = "")
+            void sendSparseArray(const packet::packetTypes &type, sparse_array<T> &sparseArray, std::uint64_t roomId, const std::string cliUuid = "")
             {
                 const std::size_t componentSize = sizeof(T);
                 const std::size_t componentsSize = (sizeof(bool) + componentSize) * sparseArray.size();
                 const std::size_t headerSize = sizeof(packet::packetHeader);
                 const std::size_t totalSize = headerSize + componentsSize;
 
-                packet::packetHeader header(type, componentsSize, true, 0U);
+                packet::packetHeader header(type, componentsSize, true, 0U, roomId);
                 std::vector<std::uint8_t> buffer(totalSize);
                 std::size_t offset = 0UL;
+                zlib::ZLib z;
 
                 for (auto &component : sparseArray) {
                     if (component.has_value()) {
@@ -142,31 +153,28 @@ namespace net
                     }
                     offset += componentSize;
                 }
-                if (cliUuid.empty() && !_clients.empty())
-                    _logs.logTo(logInfo.data(), "Sending packet type [" + std::to_string(header.type) + "] to all clients:");
-                for (Client &client : _clients) {
-                    if (!cliUuid.empty()) {
-                        if (cliUuid == client.getUuid()) {
-                            _socket.send_to(asio::buffer(buffer.data(), totalSize), client.getEndpoint());
-                            _logs.logTo(logInfo.data(), "Sent packet type [" + std::to_string(header.type) + "] to [" + cliUuid + "]");
-                        }
-                    } else {
-                        zlib::ZLib z;
-                        std::vector<std::uint8_t> compressedBuf;
-                        int result = z.compress(compressedBuf, header.compressedSize, buffer, Z_BEST_COMPRESSION);
-                        if (result == Z_OK) {
-                            const std::size_t compressedDiff = buffer.size() - compressedBuf.size();
-                            _logs.logTo(logInfo.data(), "Packet has been compressed by " + std::to_string(compressedDiff) + " bytes.");
-                            const std::size_t compressedSize = compressedBuf.size();
-                            std::vector<std::uint8_t> packetData(headerSize + compressedSize);
-                            std::memmove(packetData.data(), &header, headerSize);
-                            std::memmove(packetData.data() + headerSize, compressedBuf.data(), compressedSize);
+                std::vector<std::uint8_t> compressedBuf;
+                int result = z.compress(compressedBuf, header.compressedSize, buffer, Z_BEST_COMPRESSION);
+                if (result == Z_OK) {
+                    const std::size_t compressedDiff = buffer.size() - compressedBuf.size();
+                    const std::size_t compressedSize = compressedBuf.size();
+                    std::vector<std::uint8_t> packetData(headerSize + compressedSize);
+                    std::memmove(packetData.data(), &header, headerSize);
+                    std::memmove(packetData.data() + headerSize, compressedBuf.data(), compressedSize);
+                    for (Client &client : _clients) {
+                        if (!cliUuid.empty()) {
+                            if (cliUuid == client.getUuid() && client.getRoomId() == roomId) {
+                                _socket.send_to(asio::buffer(buffer.data(), totalSize), client.getEndpoint());
+                                return;
+                            }
+                        } else if (client.getRoomId() == roomId) {
                             _socket.send_to(asio::buffer(packetData.data(), headerSize + compressedSize), client.getEndpoint());
-                            _logs.logTo(logInfo.data(), "    Sent to [" + client.getUuid() + "]");
-                        } else
-                            std::cerr << "Compression failed with error code: " << result << std::endl;
+                        }
                     }
-                }
+                    (void)compressedDiff; // Remove if next line used
+                    //_logs.logTo(logInfo.data(), "Game update sent (compressed by " + std::to_string(compressedDiff) + " bytes.)");
+                } else
+                    std::cerr << "Compression failed with error code: " << result << std::endl;
             }
 
             void receiveCallback(const asio::error_code &errCode, std::size_t bytesReceived);
@@ -191,7 +199,7 @@ namespace net
                 std::exit(EXIT_SUCCESS);
             }
 
-            std::string addClient();
+            std::string addClient(std::uint64_t roomId);
 
             bool removeClient(const std::string &uuid);
 

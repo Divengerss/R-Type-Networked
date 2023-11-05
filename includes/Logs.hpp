@@ -53,7 +53,7 @@ namespace net
 #endif
 
                 _logdate = tm;
-                if (status == logInfo)
+                if (status == logInfo || status == logGameInfo)
                     std::cout << _logdate << " | " << status << " | " << msg << std::endl;
                 else
                     std::cerr << _logdate << " | " << status << " | " << msg << std::endl;

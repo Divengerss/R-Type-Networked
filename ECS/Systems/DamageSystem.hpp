@@ -26,13 +26,16 @@ class DamageSystem
 public:
     DamageSystem()
     {
-        sound.setBuffer(buffer);
         buffer.loadFromFile("assets/All SFX/SND.DAT_00027.wav");
+        sound.setBuffer(buffer);
+        sound.setLoop(false);
     }
     ~DamageSystem() = default;
 
     void damageSystem(Registry &r)
     {
+        nbPlayerInvincible = 0;
+
         for (int i = 0; i < r.get_entity_number(); i++)
         {
             if (!r.entity_has_component<Tag>(Entity(i)) ||
@@ -60,22 +63,29 @@ public:
 
                 if (b_sprite.getGlobalBounds().intersects(a_sprite.getGlobalBounds()))
                 {
-                    sound.play();
-                    if (a_tag == TagEnum::PLAYER && b_tag == TagEnum::ENEMY)
-                    {
-                        a_hp._hp = 0;
+                    if (a_tag == TagEnum::PLAYER && a_hp._invincible) {
+                        nbPlayerInvincible++;
                     }
-                    else if (a_tag == TagEnum::BULLET && b_tag == TagEnum::ENEMY)
+
+                    if (a_tag == TagEnum::BULLET && b_tag == TagEnum::ENEMY && b_hp._hp > 0)
                     {
                         a_hp._hp = 0;
                         b_hp._hp = 0;
+                        sound.play();
                     }
                 }
             }
         }
+
+        if (nbPlayerInvincible > lastNbPlayerInvincible) {
+            sound.play();
+        }
+        lastNbPlayerInvincible = nbPlayerInvincible;
     }
     sf::SoundBuffer buffer;
     sf::Sound sound;
+    int nbPlayerInvincible = 0;
+    int lastNbPlayerInvincible = 0;
 
 protected:
 private:

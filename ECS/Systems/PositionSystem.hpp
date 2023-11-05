@@ -40,7 +40,7 @@ class PositionSystem {
                 {
                     pos->_x -= vel->_velocity;
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
-                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Left));
+                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Left), client.getRoomId());
                     client.sendPacket(packet, event);
                     keyPressed = sf::Keyboard::Left;
                 }
@@ -48,7 +48,7 @@ class PositionSystem {
                 {
                     pos->_x += vel->_velocity;
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
-                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Right));
+                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Right), client.getRoomId());
                     client.sendPacket(packet, event);
                     keyPressed = sf::Keyboard::Right;
                 }
@@ -56,7 +56,7 @@ class PositionSystem {
                 {
                     pos->_y -= vel->_velocity;
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
-                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Up));
+                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Up), client.getRoomId());
                     client.sendPacket(packet, event);
                     keyPressed = sf::Keyboard::Up;
                 }
@@ -64,7 +64,7 @@ class PositionSystem {
                 {
                     pos->_y += vel->_velocity;
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
-                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Down));
+                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Down), client.getRoomId());
                     client.sendPacket(packet, event);
                     keyPressed = sf::Keyboard::Down;
                 }
@@ -72,13 +72,13 @@ class PositionSystem {
                 {
                     _spacePressed = 20;
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
-                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Space));
+                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Space), client.getRoomId());
                     client.sendPacket(packet, event);
                     keyPressed = sf::Keyboard::Space;
                 }
                 if (keyPressed != sf::Keyboard::Key::Unknown && !sf::Keyboard::isKeyPressed(keyPressed)) {
                     packet::packetHeader packet(packet::KEYBOARD_EVENT, sizeof(packet::keyboardEvent));
-                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Unknown));
+                    packet::keyboardEvent event(client.getUuid(), packet::ACCEPTED, int(sf::Keyboard::Unknown), client.getRoomId());
                     client.sendPacket(packet, event);
                     keyPressed = sf::Keyboard::Key::Unknown;
                 }

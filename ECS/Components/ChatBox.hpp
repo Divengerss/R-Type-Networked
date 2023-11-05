@@ -50,7 +50,7 @@ class ChatBox {
             text.setPosition(_shape.getPosition().x + 10, _shape.getPosition().y + 10 + _messages.size() * 30);
             if (_messages.size() == 5) {
                 _messages.erase(_messages.begin());
-                for (int i = 0; i < _messages.size(); i++) {
+                for (std::size_t i = 0; i < _messages.size(); i++) {
                     _messages[i].setPosition(_shape.getPosition().x + 10, _shape.getPosition().y + 10 + i * 30);
                 }
             }
