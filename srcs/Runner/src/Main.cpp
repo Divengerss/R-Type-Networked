@@ -42,9 +42,19 @@ int main() {
     reg.add_component<Scale>(Player, {3, 3});
     reg.add_component<Velocity>(Player, {10});
     reg.add_component<MovementPattern>(Player, {NONE});
-    reg.add_component<Controllable>(Player, {" "});
+    reg.add_component<Controllable>(Player, {"1"});
     reg.add_component<Destroyable>(Player, {3});
-    reg.add_component<Hitbox>(Player, {33, 17});
+    reg.add_component<Hitbox>(Player, {45, 75});
+
+
+    Entity Obstacle = reg.spawn_entity();
+    reg.add_component<Texture>(Obstacle, {"./assets/sprites/Coyotte.png", 360, 0, 60, 80});
+    reg.add_component<Scale>(Obstacle, {2, 2});
+    reg.add_component<Position>(Obstacle, {1920, 700});
+    reg.add_component<MovementPattern>(Obstacle, {STRAIGHTLEFT});
+    reg.add_component<Velocity>(Obstacle, {20});
+    reg.add_component<Hitbox>(Obstacle, {60, 80});
+
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         SDL_Log("Erreur lors de l'initialisation de SDL : %s", SDL_GetError());
@@ -102,6 +112,12 @@ int main() {
                 }
                 SDL_Texture* imageTexture = SDL_CreateTextureFromSurface(renderer, sprite);
                 SDL_Rect srcRect = { texture->_left, texture->_top, texture->_width, texture->_height };
+                // std::cout << texture->_path << " = " << position->_x << std::endl;
+                if (hitbox && pattern) {
+                    if (position->_x <= 0) {
+                        position->_x += 1920;
+                    }
+                }
                 SDL_Rect destRect = {position->_x, position->_y, static_cast<int>(texture->_width * scale->_scaleX), static_cast<int>(texture->_height * scale->_scaleY) };
                 SDL_RenderCopy(renderer, imageTexture, &srcRect, &destRect);
                 SDL_FreeSurface(sprite);
