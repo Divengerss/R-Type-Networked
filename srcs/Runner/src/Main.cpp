@@ -90,9 +90,6 @@ int main() {
         auto scales = reg.get_components<Scale>();
         auto positions = reg.get_components<Position>();
         auto patterns = reg.get_components<MovementPattern>();
-        auto velocities = reg.get_components<Velocity>();
-        auto controls = reg.get_components<Controllable>();
-        auto destroyables = reg.get_components<Destroyable>();
         auto hitboxes = reg.get_components<Hitbox>();
         for (std::size_t i = 0; i < textures.size(); ++i)
         {
@@ -100,9 +97,6 @@ int main() {
             auto &scale = scales[i];
             auto &position = positions[i];
             auto &pattern = patterns[i];
-            auto &velocity = velocities[i];
-            auto &control = controls[i];
-            auto &destoyable = destroyables[i];
             auto &hitbox = hitboxes[i];
             if (texture) {
                 SDL_Surface* sprite = IMG_Load(texture->_path.c_str());
@@ -111,14 +105,13 @@ int main() {
                     return 84;
                 }
                 SDL_Texture* imageTexture = SDL_CreateTextureFromSurface(renderer, sprite);
-                SDL_Rect srcRect = { texture->_left, texture->_top, texture->_width, texture->_height };
-                // std::cout << texture->_path << " = " << position->_x << std::endl;
+                SDL_Rect srcRect = {texture->_left, texture->_top, texture->_width, texture->_height };
                 if (hitbox && pattern) {
                     if (position->_x <= 0) {
                         position->_x += 1920;
                     }
                 }
-                SDL_Rect destRect = {position->_x, position->_y, static_cast<int>(texture->_width * scale->_scaleX), static_cast<int>(texture->_height * scale->_scaleY) };
+                SDL_Rect destRect = {static_cast<int>(position->_x), static_cast<int>(position->_y), static_cast<int>(texture->_width * scale->_scaleX), static_cast<int>(texture->_height * scale->_scaleY) };
                 SDL_RenderCopy(renderer, imageTexture, &srcRect, &destRect);
                 SDL_FreeSurface(sprite);
             }
